@@ -9,6 +9,7 @@
 #ifndef evolution_h
 #define evolution_h
 
+#include <algorithm>
 #include "island.h"
 #include "config.h"
 #include "utility.h"

@@ -9,11 +9,12 @@
 #ifndef config_h
 #define config_h
 
-const static unsigned int EVALS = 2000;
+const static unsigned int EVALS = 20000;
 const static unsigned int RUNS = 100;
 const static unsigned int LAMBDA = 200;
 const static unsigned int MU = 2000;
-const static unsigned int DIM = 8;
+const static unsigned int DIM = 5sort
+0;
 const static double MUTATION_RATE = 0.05;
 
 #endif /* config_h */
