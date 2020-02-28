@@ -80,7 +80,7 @@ struct island {
     
     void send_migrant() {
         
-        MPI_Send(&this->population[rand()%population.size()].input, DIM, MPI_DOUBLE, this->receivers[0], 0, MPI_COMM_WORLD);
+        MPI_Send(&this->population[0].input, DIM, MPI_DOUBLE, this->receivers[0], 0, MPI_COMM_WORLD);
         
         //printf("island %d sending migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[0], this->population[0].input[0], this->population[0].input[1]);
         

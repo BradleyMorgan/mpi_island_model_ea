@@ -80,6 +80,8 @@ int main(int argc, const char * argv[]) {
     
     MPI_Scatter(&population[0], num_islands, individual_type, &isle.population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
     
+    printf("rank %d starting population size is %d\r\n", isle.population.size());
+    
     // build a topology by assigning send \ receive neighbors ...
     
     create_topology(isle, world_size);
@@ -98,6 +100,9 @@ int main(int argc, const char * argv[]) {
         
         isle.receive_migrant();
         
+        population.clear();
+        population.resize(MU);
+        
         MPI_Gather(&isle.population[0], num_islands, individual_type, &population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
         
         if(world_rank == 0 && eval % 100 == 0) {
@@ -109,7 +114,13 @@ int main(int argc, const char * argv[]) {
             }
             
             double average_fitness = total_fitness / population.size();
-            printf("%d %d %2.10f\r\n", eval, world_rank, average_fitness);
+            printf("%d global average fitness %2.10f\r\n", eval, average_fitness);
+        }
+        
+        if(eval % 100 == 0) {
+            
+            printf("rank %d eval %d average population is %2.8f\r\n", world_rank, eval, isle.average_fitness());
+            
         }
         
     }
