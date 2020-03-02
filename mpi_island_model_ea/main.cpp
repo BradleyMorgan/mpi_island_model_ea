@@ -12,6 +12,7 @@
 #include <cmath>
 #include <sys/time.h>
 #include <vector>
+#include <fstream>
 #include "evolution.h"
 
 // populate an initial population with random inputs ...
@@ -67,6 +68,11 @@ int main(int argc, const char * argv[]) {
     gettimeofday(&time, NULL);
     srand((unsigned int)(time.tv_sec * 1000) + time.tv_usec);
     
+    // file io
+    
+    FILE *output;
+    output = fopen("island.out", "w");
+        
     std::vector<individual> population;
     
     island isle;
@@ -80,51 +86,57 @@ int main(int argc, const char * argv[]) {
     
     MPI_Scatter(&population[0], num_islands, individual_type, &isle.population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
     
-    printf("rank %d starting population size is %d\r\n", isle.population.size());
+    printf("rank %d starting population size is %lu\r\n", world_rank, isle.population.size());
     
     // build a topology by assigning send \ receive neighbors ...
     
     create_topology(isle, world_size);
     
     // evolve the populations ...
+    for(int run=1; run<=RUNS; run++) {
     
-    for(int eval = 1; eval <= EVALS; eval++) {
-    
-        isle.calc_cpd();
+        for(int eval=1; eval<=EVALS; eval++) {
         
-        std::vector<individual> children = crossover(isle);
-        
-        select_survivors(isle, children, MU/world_size);
+            isle.calc_cpd();
+            
+            std::vector<individual> children = crossover(isle);
+            
+            select_survivors(isle, children, MU/world_size);
 
-        isle.send_migrant();
-        
-        isle.receive_migrant();
-        
-        population.clear();
-        population.resize(MU);
-        
-        MPI_Gather(&isle.population[0], num_islands, individual_type, &population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
-        
-        if(world_rank == 0 && eval % 100 == 0) {
+            isle.send_migrant();
             
-            double total_fitness = 0.0;
+            isle.receive_migrant();
             
-            for(int i=0; i<population.size(); i++) {
-                total_fitness += population[i].fitness;
+            population.clear();
+            population.resize(MU);
+            
+            MPI_Gather(&isle.population[0], num_islands, individual_type, &population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
+            
+            if(world_rank == 0 && eval % 100 == 0) {
+                
+                double total_fitness = 0.0;
+                
+                for(int i=0; i<population.size(); i++) {
+                    total_fitness += population[i].fitness;
+                }
+                
+                double average_fitness = total_fitness / population.size();
+                printf("%d global average fitness %2.10f\r\n", eval, average_fitness);
             }
             
-            double average_fitness = total_fitness / population.size();
-            printf("%d global average fitness %2.10f\r\n", eval, average_fitness);
-        }
-        
-        if(eval % 100 == 0) {
-            
-            printf("rank %d eval %d average population is %2.8f\r\n", world_rank, eval, isle.average_fitness());
+            if(eval % 100 == 0) {
+                
+                std::fprintf(output, "%d %d %d %2.10f\r\n", run, eval, world_rank, isle.average_fitness());
+                printf("rank %d eval %d average population is %2.8f\r\n", world_rank, eval, isle.average_fitness());
+                
+            }
             
         }
         
     }
 
+    fclose(output);
+    
     MPI_Finalize();
     
 }
