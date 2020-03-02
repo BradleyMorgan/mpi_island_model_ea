@@ -121,12 +121,14 @@ int main(int argc, const char * argv[]) {
                 }
                 
                 double average_fitness = total_fitness / population.size();
+                
+                std::fprintf(output, "%d %d %2.10f\r\n", run, eval, average_fitness);
                 printf("%d global average fitness %2.10f\r\n", eval, average_fitness);
+                
             }
             
             if(eval % 100 == 0) {
                 
-                std::fprintf(output, "%d %d %d %2.10f\r\n", run, eval, world_rank, isle.average_fitness());
                 printf("rank %d eval %d average population is %2.8f\r\n", world_rank, eval, isle.average_fitness());
                 
             }
