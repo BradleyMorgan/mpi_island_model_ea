@@ -72,29 +72,29 @@ int main(int argc, const char * argv[]) {
     
     FILE *output;
     output = fopen("island.out", "w");
-        
-    std::vector<individual> population;
-    
-    island isle;
-    isle.id = world_rank;
-    
-    isle.population.resize(num_islands);
-    
-    if(world_rank == 0) { population = initial_population(); }
-    
-    // separate the single full population from the root process to subpopulations across all processes ...
-    
-    MPI_Scatter(&population[0], num_islands, individual_type, &isle.population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
-    
-    printf("rank %d starting population size is %lu\r\n", world_rank, isle.population.size());
-    
-    // build a topology by assigning send \ receive neighbors ...
-    
-    create_topology(isle, world_size);
     
     // evolve the populations ...
     for(int run=1; run<=RUNS; run++) {
     
+        std::vector<individual> population;
+        
+        island isle;
+        isle.id = world_rank;
+        
+        isle.population.resize(num_islands);
+        
+        if(world_rank == 0) { population = initial_population(); }
+        
+        // separate the single full population from the root process to subpopulations across all processes ...
+        
+        MPI_Scatter(&population[0], num_islands, individual_type, &isle.population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
+        
+        printf("rank %d starting population size is %lu\r\n", world_rank, isle.population.size());
+        
+        // build a topology by assigning send \ receive neighbors ...
+        
+        create_topology(isle, world_size);
+        
         for(int eval=1; eval<=EVALS; eval++) {
         
             isle.calc_cpd();
