@@ -135,6 +135,8 @@ int main(int argc, const char * argv[]) {
             
         }
         
+        fflush(output);
+        
     }
 
     fclose(output);
