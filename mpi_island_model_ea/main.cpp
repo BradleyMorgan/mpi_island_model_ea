@@ -94,6 +94,8 @@ int main(int argc, const char * argv[]) {
         // build a topology by assigning send \ receive neighbors ...
         
         create_topology(isle, world_size);
+    
+        std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
         
         for(int eval=1; eval<=EVALS; eval++) {
         
