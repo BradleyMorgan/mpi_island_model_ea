@@ -9,17 +9,19 @@
 /* Begin PBXBuildFile section */
 		9A6508972406B3C100C7A63D /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A6508962406B3C100C7A63D /* main.cpp */; };
 		9A65089F2406B40D00C7A63D /* libmpi.40.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A65089E2406B40D00C7A63D /* libmpi.40.dylib */; };
+		9A8A0AC42411425400DBB5DB /* config.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 9A8A0AC324113D5300DBB5DB /* config.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		9A6508912406B3C100C7A63D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 16;
 			files = (
+				9A8A0AC42411425400DBB5DB /* config.txt in CopyFiles */,
 			);
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -32,6 +34,7 @@
 		9A6508A22407592C00C7A63D /* island.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = island.h; sourceTree = "<group>"; };
 		9A6508A32407593900C7A63D /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9A6508A42407595800C7A63D /* utility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utility.h; sourceTree = "<group>"; };
+		9A8A0AC324113D5300DBB5DB /* config.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +75,7 @@
 				9A6508A22407592C00C7A63D /* island.h */,
 				9A6508A32407593900C7A63D /* config.h */,
 				9A6508A42407595800C7A63D /* utility.h */,
+				9A8A0AC324113D5300DBB5DB /* config.txt */,
 			);
 			path = mpi_island_model_ea;
 			sourceTree = "<group>";

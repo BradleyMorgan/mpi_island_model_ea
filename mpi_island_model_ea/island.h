@@ -13,21 +13,24 @@
 #include "utility.h"
 
 struct individual {
+    
     std::array<double, DIM> input;
-    double result;
+    
     double fitness;
     double selection_distribution;
+    
 };
 
 struct island {
     
     int id;
+    
+    double total_fitness;
+    
     std::vector<individual> population;
     std::vector<double> cpd;
     std::vector<int> senders;
     std::vector<int> receivers;
-    
-    double total_fitness;
     
     // calculate the island's total fitness for distribution ...
     
@@ -48,10 +51,10 @@ struct island {
     
     void calc_cpd() {
         
+        double cumulative_probability = 0.0;
+        
         this->calc_total_fitness();
         this->cpd.clear();
-        
-        double cumulative_probability = 0.0;
         
         for(int i=0; i<this->population.size(); i++) {
 
@@ -71,19 +74,19 @@ struct island {
         MPI_Status migrant_status;
         
         MPI_Recv(&x, DIM, MPI_DOUBLE, this->senders[0], 0, MPI_COMM_WORLD, &migrant_status);
-        
+                
         this->population[rand()%population.size()].input = x;
-        
+                
         //printf("island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
         
     }
     
     void send_migrant() {
-        
+                
         MPI_Send(&this->population[0].input, DIM, MPI_DOUBLE, this->receivers[0], 0, MPI_COMM_WORLD);
-        
+                
         //printf("island %d sending migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[0], this->population[0].input[0], this->population[0].input[1]);
-        
+                
     }
     
     double average_fitness() {

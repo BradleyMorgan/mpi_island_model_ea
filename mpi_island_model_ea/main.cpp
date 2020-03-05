@@ -14,6 +14,7 @@
 #include <vector>
 #include <fstream>
 #include "evolution.h"
+#include "config.h"
 
 // populate an initial population with random inputs ...
 
@@ -21,7 +22,7 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
     
     std::vector<individual> population;
     
-    for(int i=0; i<MU; i++) {
+    for(int i=0; i<config::mu; i++) {
         
         individual p;
         
@@ -29,8 +30,7 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
             p.input[j] = drand(-5.12, 5.12);
         }
         
-        p.result = offset_rastrigin(p.input, offsets);
-        p.fitness = p.result * -1;
+        p.fitness = offset_rastrigin(p.input, offsets);
         
         population.push_back(p);
         
@@ -42,6 +42,9 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
 
 int main(int argc, const char * argv[]) {
 
+    
+    // initialize MPI environment ...
+    
     MPI_Init(NULL, NULL);
 
     int world_size;
@@ -50,7 +53,11 @@ int main(int argc, const char * argv[]) {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    int num_islands = MU / world_size;
+    // load configuration items ...
+    
+    config::load("config.txt", world_size);
+    
+    int num_islands = config::mu / world_size;
     
     MPI_Datatype individual_type;
     
@@ -62,20 +69,12 @@ int main(int argc, const char * argv[]) {
     MPI_Type_create_struct(4, lengths, displacements, types, &individual_type);
     MPI_Type_commit(&individual_type);
     
-    // random number seeding ...
-
-    timeval time;
-    gettimeofday(&time, NULL);
-    srand((unsigned int)(time.tv_sec * 1000) + time.tv_usec);
-    
-    // file io
-    
-    FILE *output;
-    output = fopen("island.out", "w");
-    
     // evolve the populations ...
-    for(int run=1; run<=RUNS; run++) {
     
+    for(int run=1; run<=config::runs; run++) {
+    
+        // each MPI process will maintain its own population, so we define an island for each ...
+        
         std::vector<individual> population;
         
         island isle;
@@ -84,6 +83,8 @@ int main(int argc, const char * argv[]) {
         isle.population.resize(num_islands);
         
         std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
+        
+        // only the root process will create the full initial population ...
         
         if(world_rank == 0) { population = initial_population(offsets); }
         
@@ -97,20 +98,21 @@ int main(int argc, const char * argv[]) {
         
         create_topology(isle, world_size);
     
-        for(int eval=1; eval<=EVALS; eval++) {
+        // begin evolution ...
+        
+        for(int eval=1; eval<=config::evals; eval++) {
         
             isle.calc_cpd();
             
             std::vector<individual> children = crossover(isle, offsets);
             
-            select_survivors(isle, children, MU/world_size);
+            select_survivors(isle, children, config::mu/world_size);
 
             isle.send_migrant();
-            
             isle.receive_migrant();
             
             population.clear();
-            population.resize(MU);
+            population.resize(config::mu);
             
             MPI_Gather(&isle.population[0], num_islands, individual_type, &population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
             
@@ -124,7 +126,7 @@ int main(int argc, const char * argv[]) {
                 
                 double average_fitness = total_fitness / population.size();
                 
-                std::fprintf(output, "%d %d %2.10f\r\n", run, eval, average_fitness);
+                std::fprintf(config::stats_out, "%d %d %2.10f\r\n", run, eval, average_fitness);
                 printf("%d global average fitness %2.10f\r\n", eval, average_fitness);
                 
             }
@@ -137,11 +139,11 @@ int main(int argc, const char * argv[]) {
             
         }
         
-        fflush(output);
+        fflush(config::stats_out);
         
     }
 
-    fclose(output);
+    fclose(config::stats_out);
     
     MPI_Finalize();
     

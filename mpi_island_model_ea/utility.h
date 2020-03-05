@@ -41,7 +41,7 @@ double offset_rastrigin(std::array<double, DIM> x, std::array<double, DIM> &offs
     double sum = 10 * DIM;
     
     for (unsigned int i = 0; i < DIM; i++) {
-        sum += (std::pow(x[i],2) - (10 * std::cos(2 * M_PI * x[i]))) + offsets[i];
+        sum += (std::pow(x[i],2) - (10 * std::cos(2 * M_PI * x[i])));
     }
     
     return sum;
