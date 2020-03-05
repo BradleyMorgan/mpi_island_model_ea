@@ -64,7 +64,7 @@ int main(int argc, const char * argv[]) {
     // MPI derived datatype for population individual ...
     
     int lengths[4] = { DIM, 1, 1, 1};
-    MPI_Aint displacements[4] = { 0, sizeof(double)*DIM, sizeof(double)*(DIM+1), sizeof(double)*(DIM+2) };
+    MPI_Aint displacements[4] = { 0, sizeof(double)*DIM, sizeof(double)*(DIM+1) };
     MPI_Datatype types[4] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
     MPI_Type_create_struct(4, lengths, displacements, types, &individual_type);
     MPI_Type_commit(&individual_type);
