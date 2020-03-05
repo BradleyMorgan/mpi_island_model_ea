@@ -146,12 +146,15 @@ int main(int argc, const char * argv[]) {
                 }
                 
                 double average_fitness = total_fitness / population.size();
-                double average_gather_time = total_gather_time / population.size();
-                double average_scatter_time = total_scatter_time / population.size();
-                double average_migrate_time = total_migrate_time / population.size();
+                double average_gather_time = total_gather_time / eval;
+                double average_scatter_time = total_scatter_time / eval;
+                double average_migrate_time = total_migrate_time / eval;
                 
                 std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, average_scatter_time, average_gather_time, average_migrate_time);
                 printf("%d global average fitness %2.10f\r\n", eval, average_fitness);
+                printf("%d average gather time %2.10f\r\n", eval, average_gather_time);
+                printf("%d average scatter time %2.10f\r\n", eval, average_scatter_time);
+                printf("%d average migrate time %2.10f\r\n", eval, average_migrate_time);
                 
             }
             
