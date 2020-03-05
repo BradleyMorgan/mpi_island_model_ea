@@ -34,11 +34,11 @@ namespace config {
     char logs_subpath[100];
     char stats_subpath[100];
 
-    void load(const char *input, int world_size);
+    void load(const char *input, int world_size, int world_rank);
 
 };
 
-void config::load(const char *input, int world_size) {
+void config::load(const char *input, int world_size, int world_rank) {
     
     if(input == NULL) { input = (char *)"config.txt"; }
     
@@ -65,17 +65,21 @@ void config::load(const char *input, int world_size) {
     config::mu = stoi(config::items["mu"]);
     config::mutation_rate = stod(config::items["mutation_rate"]);
     
-    // create unique pathing for the supplied configuration so we can keep better track of results ...
+    if(world_rank == 0) {
     
-    sprintf(config::logs_subpath, "logs/%s_%ld", config::items["config_name"].c_str(), time(0));
-    mkdir(config::logs_subpath, 0740);
-    sprintf(config::stats_subpath, "stats/%s_%ld", config::items["config_name"].c_str(), time(0));
-    mkdir(config::stats_subpath, 0740);
+        // create unique pathing for the supplied configuration so we can keep better track of results ...
+        
+        sprintf(config::logs_subpath, "logs/%s_%ld", config::items["config_name"].c_str(), time(0));
+        mkdir(config::logs_subpath, 0740);
+        sprintf(config::stats_subpath, "stats/%s_%ld", config::items["config_name"].c_str(), time(0));
+        mkdir(config::stats_subpath, 0740);
     
-    // create and initialize the log file with the parsed configuration values ...
-    
-    sprintf(config::log_fname, "%s/%s_%d_%ld.txt", config::logs_subpath, config::items["log_file"].c_str(), world_size, time(0));
-    config::log_out = fopen(config::log_fname, "w");
+        // create and initialize the log file with the parsed configuration values ...
+        
+        sprintf(config::log_fname, "%s/%s_%d_%ld.txt", config::logs_subpath, config::items["log_file"].c_str(), world_size, time(0));
+        config::log_out = fopen(config::log_fname, "w");
+        
+    }
     
     // seed the rng ...
     
@@ -89,22 +93,30 @@ void config::load(const char *input, int world_size) {
                             
     srand(config::seed);
     
-    fprintf(config::log_out, "seed: %u\r\n", config::seed);
+    if(world_rank == 0) {
     
-    std::map <std::string, std::string>::iterator items_iterator;
+        fprintf(config::log_out, "seed: %u\r\n", config::seed);
     
-    for(items_iterator = std::next(items.begin()); items_iterator != items.end(); ++items_iterator) {
-        fprintf(config::log_out, "%s: %s\r\n", items_iterator->first.c_str(), items_iterator->second.c_str());
+        std::map <std::string, std::string>::iterator items_iterator;
+        
+        for(items_iterator = std::next(items.begin()); items_iterator != items.end(); ++items_iterator) {
+            fprintf(config::log_out, "%s: %s\r\n", items_iterator->first.c_str(), items_iterator->second.c_str());
+        }
+        
+        fprintf(config::log_out, "log file: %s\r\n", config::log_fname);
+        
+        fflush(config::log_out);
+            
     }
     
-    fprintf(config::log_out, "log file: %s\r\n", config::log_fname);
+    if(world_rank == 0) {
     
-    fflush(config::log_out);
+        sprintf(config::stats_fname, "%s/%s_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
+        config::stats_out = fopen(config::stats_fname, "w");
+        
+        fprintf(config::stats_out, "run,eval,average_global_fitness,average_best_fitness,average_scatter_time,average_gather_time,average_migrate_time\r\n");
     
-    sprintf(config::stats_fname, "%s/%s_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
-    config::stats_out = fopen(config::stats_fname, "w");
-    
-    fprintf(config::stats_out, "run\teval\taverage_global_fitness\taverage_best_fitness\taverage_island_comm_time\r\n");
+    }
     
 }
 
