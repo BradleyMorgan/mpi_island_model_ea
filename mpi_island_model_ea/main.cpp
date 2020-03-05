@@ -17,7 +17,7 @@
 
 // populate an initial population with random inputs ...
 
-std::vector<individual> initial_population() {
+std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
     
     std::vector<individual> population;
     
@@ -29,7 +29,7 @@ std::vector<individual> initial_population() {
             p.input[j] = drand(-5.12, 5.12);
         }
         
-        p.result = rastrigin(p.input);
+        p.result = offset_rastrigin(p.input, offsets);
         p.fitness = p.result * -1;
         
         population.push_back(p);
@@ -83,7 +83,9 @@ int main(int argc, const char * argv[]) {
         
         isle.population.resize(num_islands);
         
-        if(world_rank == 0) { population = initial_population(); }
+        std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
+        
+        if(world_rank == 0) { population = initial_population(offsets); }
         
         // separate the single full population from the root process to subpopulations across all processes ...
         
@@ -95,13 +97,11 @@ int main(int argc, const char * argv[]) {
         
         create_topology(isle, world_size);
     
-        std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
-        
         for(int eval=1; eval<=EVALS; eval++) {
         
             isle.calc_cpd();
             
-            std::vector<individual> children = crossover(isle);
+            std::vector<individual> children = crossover(isle, offsets);
             
             select_survivors(isle, children, MU/world_size);
 

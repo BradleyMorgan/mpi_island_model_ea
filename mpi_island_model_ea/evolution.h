@@ -62,7 +62,7 @@ void mutate(individual &mutant) {
     
 }
 
-std::vector<individual> crossover(const island &isle) {
+std::vector<individual> crossover(const island &isle, std::array<double, DIM> &offsets) {
 
     std::vector<individual> children;
     
@@ -83,7 +83,7 @@ std::vector<individual> crossover(const island &isle) {
         
         if(rand()/(RAND_MAX+1.0) < MUTATION_RATE) { mutate(child); }
         
-        child.result = rastrigin(child.input);
+        child.result = offset_rastrigin(child.input, offsets);
         child.fitness = child.result * -1;
         
         children.push_back(child);
