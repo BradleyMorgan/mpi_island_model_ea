@@ -50,7 +50,7 @@ void select_survivors(island &isle, std::vector<individual> &children, int islan
     isle.population.insert(isle.population.end(), children.begin(), children.end());
     
     std::sort(isle.population.begin(), isle.population.end(), compare_fitness);
-    //std::reverse(isle.population.begin(), isle.population.end());
+    std::reverse(isle.population.begin(), isle.population.end());
     
     isle.population.erase(isle.population.begin()+island_mu, isle.population.end());
     
@@ -75,9 +75,9 @@ std::vector<individual> crossover(const island &isle, std::array<double, DIM> &o
         
         for(int j=0; j<DIM; j++) {
             if(rand()%2 == 1) {
-                child.input[j] = p1.input[rand()%DIM] + offsets[j];
+                child.input[j] = p1.input[rand()%DIM];
             } else {
-                child.input[j] = p2.input[rand()%DIM] + offsets[j];
+                child.input[j] = p2.input[rand()%DIM];
             }
         }
         

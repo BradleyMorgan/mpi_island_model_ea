@@ -71,10 +71,11 @@ int main(int argc, const char * argv[]) {
     // evolve the populations ...
     
     for(int run=1; run<=config::runs; run++) {
-
+        
         double total_scatter_time = 0.0;
         double total_gather_time = 0.0;
         double total_migrate_time = 0.0;
+        double global_best_fitness = 0.0;
         
         // each MPI process will maintain its own population, so we define an island for each ...
         
@@ -82,7 +83,6 @@ int main(int argc, const char * argv[]) {
         
         island isle;
         isle.id = world_rank;
-        
         isle.population.resize(num_islands);
         
         std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
@@ -96,7 +96,6 @@ int main(int argc, const char * argv[]) {
         double scatter_start = MPI_Wtime();
         MPI_Scatter(&population[0], num_islands, individual_type, &isle.population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
         double scatter_end = MPI_Wtime();
-        
         double scatter_time = scatter_end - scatter_start;
         
         total_scatter_time += scatter_time;
@@ -121,7 +120,6 @@ int main(int argc, const char * argv[]) {
             isle.send_migrant();
             isle.receive_migrant();
             double migrate_end = MPI_Wtime();
-            
             double migrate_time = migrate_end - migrate_start;
             
             total_migrate_time += migrate_time;
@@ -132,7 +130,6 @@ int main(int argc, const char * argv[]) {
             double gather_start = MPI_Wtime();
             MPI_Gather(&isle.population[0], num_islands, individual_type, &population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
             double gather_end = MPI_Wtime();
-            
             double gather_time = gather_start - gather_end;
             
             total_gather_time += gather_time;
@@ -151,10 +148,6 @@ int main(int argc, const char * argv[]) {
                 double average_migrate_time = total_migrate_time / eval;
                 
                 std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, average_scatter_time, average_gather_time, average_migrate_time);
-                printf("%d global average fitness %2.10f\r\n", eval, average_fitness);
-                printf("%d average gather time %2.10f\r\n", eval, average_gather_time);
-                printf("%d average scatter time %2.10f\r\n", eval, average_scatter_time);
-                printf("%d average migrate time %2.10f\r\n", eval, average_migrate_time);
                 
             }
             
