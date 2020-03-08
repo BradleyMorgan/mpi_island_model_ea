@@ -42,9 +42,20 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
 
 int main(int argc, const char * argv[]) {
 
+    // initialize timer
+    
+    std::clock_t start;
+    
+    double init_duration;
+    double program_duration;
+
+    start = std::clock();
+    
     // initialize MPI environment ...
     
     MPI_Init(NULL, NULL);
+    
+    init_duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
 
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -89,7 +100,16 @@ int main(int argc, const char * argv[]) {
         
         // only the root process will create the full initial population ...
         
-        if(world_rank == 0) { population = initial_population(offsets); }
+        if(world_rank == 0) {
+            
+            population = initial_population(offsets);
+            
+            std::sort(population.begin(), population.end(), compare_fitness);
+            std::reverse(population.begin(), population.end());
+            
+            global_best_fitness = population[0].fitness;
+            
+        }
         
         // separate the single full population from the root process to subpopulations across all processes ...
         
@@ -136,6 +156,13 @@ int main(int argc, const char * argv[]) {
             
             if(world_rank == 0 && eval % 100 == 0) {
                 
+                std::sort(population.begin(), population.end(), compare_fitness);
+                std::reverse(population.begin(), population.end());
+                
+                if(population[0].fitness > global_best_fitness) {
+                    global_best_fitness = population[0].fitness;
+                }
+                
                 double total_fitness = 0.0;
                 
                 for(int i=0; i<population.size(); i++) {
@@ -147,7 +174,7 @@ int main(int argc, const char * argv[]) {
                 double average_scatter_time = total_scatter_time / eval;
                 double average_migrate_time = total_migrate_time / eval;
                 
-                std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, average_scatter_time, average_gather_time, average_migrate_time);
+                std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time);
                 
             }
             
@@ -166,5 +193,7 @@ int main(int argc, const char * argv[]) {
     fclose(config::stats_out);
     
     MPI_Finalize();
+    
+    program_duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
     
 }
