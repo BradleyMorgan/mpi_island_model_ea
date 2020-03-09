@@ -215,6 +215,8 @@ int main(int argc, const char * argv[]) {
     }
 
     fclose(config::stats_out);
+    fclose(config::run_stats_out);
+    fclose(config::log_out);
     
     MPI_Finalize();
     
