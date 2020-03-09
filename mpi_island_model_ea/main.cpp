@@ -47,7 +47,7 @@ int main(int argc, const char * argv[]) {
     std::clock_t start;
     
     double init_duration;
-    double program_duration;
+    double eval_duration;
 
     start = std::clock();
     
@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
     
     config::load("config.txt", world_size, world_rank);
     
-    int num_islands = config::mu / world_size;
+    int subpopulation_size = config::mu / world_size;
     
     MPI_Datatype individual_type;
     
@@ -83,10 +83,17 @@ int main(int argc, const char * argv[]) {
     
     for(int run=1; run<=config::runs; run++) {
         
+        double run_start = MPI_Wtime();
+        
         double total_scatter_time = 0.0;
         double total_gather_time = 0.0;
         double total_migrate_time = 0.0;
         double global_best_fitness = 0.0;
+        double average_local_best_fitness = 0.0;
+        double average_global_best_fitness = 0.0;
+        
+        std::vector<double> average_local_best_fitnesses;
+        std::vector<double> average_global_best_fitnesses;
         
         // each MPI process will maintain its own population, so we define an island for each ...
         
@@ -94,7 +101,7 @@ int main(int argc, const char * argv[]) {
         
         island isle;
         isle.id = world_rank;
-        isle.population.resize(num_islands);
+        isle.population.resize(subpopulation_size);
         
         std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
         
@@ -114,7 +121,7 @@ int main(int argc, const char * argv[]) {
         // separate the single full population from the root process to subpopulations across all processes ...
         
         double scatter_start = MPI_Wtime();
-        MPI_Scatter(&population[0], num_islands, individual_type, &isle.population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
+        MPI_Scatter(&population[0], subpopulation_size, individual_type, &isle.population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
         double scatter_end = MPI_Wtime();
         double scatter_time = scatter_end - scatter_start;
         
@@ -129,6 +136,8 @@ int main(int argc, const char * argv[]) {
         // begin evolution ...
         
         for(int eval=1; eval<=config::evals; eval++) {
+            
+            double eval_start = std::clock();
         
             isle.calc_cpd();
             
@@ -148,7 +157,7 @@ int main(int argc, const char * argv[]) {
             population.resize(config::mu);
             
             double gather_start = MPI_Wtime();
-            MPI_Gather(&isle.population[0], num_islands, individual_type, &population[0], num_islands, individual_type, 0, MPI_COMM_WORLD);
+            MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
             double gather_end = MPI_Wtime();
             double gather_time = gather_start - gather_end;
             
@@ -159,7 +168,11 @@ int main(int argc, const char * argv[]) {
                 std::sort(population.begin(), population.end(), compare_fitness);
                 std::reverse(population.begin(), population.end());
                 
+                double local_best_fitness = population[0].fitness;
+                average_local_best_fitnesses.push_back(population[0].fitness);
+                
                 if(population[0].fitness > global_best_fitness) {
+                    average_global_best_fitnesses.push_back(population[0].fitness);
                     global_best_fitness = population[0].fitness;
                 }
                 
@@ -169,12 +182,17 @@ int main(int argc, const char * argv[]) {
                     total_fitness += population[i].fitness;
                 }
                 
+                average_local_best_fitness = std::accumulate(average_local_best_fitnesses.begin(), average_local_best_fitnesses.end(), 0.0) / average_local_best_fitnesses.size();
+                average_global_best_fitness = std::accumulate(average_global_best_fitnesses.begin(), average_global_best_fitnesses.end(), 0.0) / average_global_best_fitnesses.size();
+                
                 double average_fitness = total_fitness / population.size();
                 double average_gather_time = total_gather_time / eval;
                 double average_scatter_time = total_scatter_time / eval;
                 double average_migrate_time = total_migrate_time / eval;
                 
-                std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time);
+                eval_duration = ( std::clock() - eval_start ) / (double) CLOCKS_PER_SEC;
+                
+                std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, local_best_fitness, global_best_fitness, average_local_best_fitness, average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, init_duration, eval_duration);
                 
             }
             
@@ -186,6 +204,15 @@ int main(int argc, const char * argv[]) {
             
         }
         
+        if(world_rank == 0) {
+            
+            double run_end = MPI_Wtime();
+            
+            std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, scatter_time, run_end - run_start, init_duration, world_size, subpopulation_size);
+            
+        }
+        
+        fflush(config::run_stats_out);
         fflush(config::stats_out);
         
     }
@@ -193,7 +220,5 @@ int main(int argc, const char * argv[]) {
     fclose(config::stats_out);
     
     MPI_Finalize();
-    
-    program_duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
     
 }

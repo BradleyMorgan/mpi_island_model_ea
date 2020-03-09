@@ -20,6 +20,7 @@ namespace config {
 
     FILE *log_out;
     FILE *stats_out;
+    FILE *run_stats_out;
 
     int evals = 0;
     int runs = 0;
@@ -31,6 +32,7 @@ namespace config {
 
     char log_fname[100];
     char stats_fname[100];
+    char run_stats_fname[100];
     char logs_subpath[100];
     char stats_subpath[100];
 
@@ -114,7 +116,12 @@ void config::load(const char *input, int world_size, int world_rank) {
         sprintf(config::stats_fname, "%s/%s_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
         config::stats_out = fopen(config::stats_fname, "w");
         
-        fprintf(config::stats_out, "run,eval,average_global_fitness,average_best_fitness,average_scatter_time,average_gather_time,average_migrate_time\r\n");
+        sprintf(config::run_stats_fname, "%s/%s_run_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
+        config::run_stats_out = fopen(config::run_stats_fname, "w");
+        
+        fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration\r\n");
+        
+        fprintf(config::run_stats_out, "run,global_best_fitness,average_local_best_fitness,average_global_best_fitness,scatter_time,run_duration,init_duration,world_size,subpopulation_size\r\n");
     
     }
     
