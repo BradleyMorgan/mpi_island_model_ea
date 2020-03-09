@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <vector>
 #include <fstream>
+#include <ctime>
 #include "evolution.h"
 #include "config.h"
 
