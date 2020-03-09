@@ -50,6 +50,8 @@ int main(int argc, const char * argv[]) {
     double init_duration;
     double eval_duration;
 
+    individual solution;
+    
     start = std::clock();
     
     // initialize MPI environment ...
@@ -158,7 +160,7 @@ int main(int argc, const char * argv[]) {
             double gather_start = MPI_Wtime();
             MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
             double gather_end = MPI_Wtime();
-            double gather_time = gather_start - gather_end;
+            double gather_time = gather_end - gather_start;
             
             total_gather_time += gather_time;
             
@@ -171,6 +173,7 @@ int main(int argc, const char * argv[]) {
                 average_local_best_fitnesses.push_back(population[0].fitness);
                 
                 if(population[0].fitness > global_best_fitness) {
+                    solution = population[0];
                     average_global_best_fitnesses.push_back(population[0].fitness);
                     global_best_fitness = population[0].fitness;
                 }
@@ -213,10 +216,15 @@ int main(int argc, const char * argv[]) {
         fflush(config::stats_out);
         
     }
+    
+    for(int i=0; i<DIM; i++) {
+        std::fprintf(config::solution_out, "%2.10f,", solution.input[i]);
+    }
 
     fclose(config::stats_out);
     fclose(config::run_stats_out);
     fclose(config::log_out);
+    fclose(config::solution_out);
     
     MPI_Finalize();
     
