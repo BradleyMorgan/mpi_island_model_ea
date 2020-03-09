@@ -106,8 +106,6 @@ void config::load(const char *input, int world_size, int world_rank) {
         }
         
         fprintf(config::log_out, "log file: %s\r\n", config::log_fname);
-        
-        fflush(config::log_out);
             
     }
     
@@ -122,7 +120,12 @@ void config::load(const char *input, int world_size, int world_rank) {
         fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration\r\n");
         
         fprintf(config::run_stats_out, "run,global_best_fitness,average_local_best_fitness,average_global_best_fitness,scatter_time,run_duration,init_duration,world_size,subpopulation_size\r\n");
+        
+        fprintf(config::log_out, "stats file: %s\r\n", config::stats_fname);
+        fprintf(config::log_out, "run stats file: %s\r\n", config::run_stats_fname);
     
+        fflush(config::log_out);
+        
     }
     
 }
