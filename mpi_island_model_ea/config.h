@@ -130,6 +130,6 @@ void config::load(const char *input, int world_size, int world_rank) {
     
 }
 
-const static unsigned int DIM = 20;
+const static unsigned int DIM = 10;
 
 #endif /* config_h */
