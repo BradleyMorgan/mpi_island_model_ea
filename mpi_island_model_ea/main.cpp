@@ -197,19 +197,15 @@ int main(int argc, const char * argv[]) {
                 
             }
             
-            if(eval % 100 == 0) {
-                
-                printf("rank %d eval %d average population is %2.8f\r\n", world_rank, eval, isle.average_fitness());
-                
-            }
-            
         }
         
         if(world_rank == 0) {
             
             double run_end = MPI_Wtime();
             
-            std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, scatter_time, run_end - run_start, init_duration, world_size, subpopulation_size);
+            std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, total_scatter_time, total_migrate_time, run_end - run_start, init_duration, world_size, subpopulation_size);
+            
+            printf("%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, total_scatter_time, total_migrate_time, total_gather_time, run_end - run_start, init_duration, world_size, subpopulation_size);
             
         }
         
