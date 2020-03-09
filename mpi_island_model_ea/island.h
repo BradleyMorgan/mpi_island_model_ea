@@ -107,7 +107,7 @@ void create_topology(island &isle, int world_size) {
     isle.receivers.push_back(next);
     isle.senders.push_back(prev);
     
-    printf("%d -> %d -> %d\r\n", prev, isle.id, next);
+    //printf("%d -> %d -> %d\r\n", prev, isle.id, next);
     
 }
 

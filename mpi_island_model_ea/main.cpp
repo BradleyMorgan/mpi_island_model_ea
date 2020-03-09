@@ -128,8 +128,6 @@ int main(int argc, const char * argv[]) {
         
         total_scatter_time += scatter_time;
         
-        printf("rank %d starting population size is %lu\r\n", world_rank, isle.population.size());
-        
         // build a topology by assigning send \ receive neighbors ...
         
         create_topology(isle, world_size);
@@ -195,8 +193,10 @@ int main(int argc, const char * argv[]) {
                 
                 std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, local_best_fitness, global_best_fitness, average_local_best_fitness, average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, init_duration, eval_duration);
                 
+                printf("%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, local_best_fitness, global_best_fitness, average_local_best_fitness, average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, init_duration, eval_duration);
+                
             }
-            
+                
         }
         
         if(world_rank == 0) {
