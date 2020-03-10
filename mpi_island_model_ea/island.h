@@ -32,6 +32,9 @@ struct island {
     std::vector<int> senders;
     std::vector<int> receivers;
     
+    int send[1];
+    int receive[1];
+    
     // calculate the island's total fitness for distribution ...
     
     void calc_total_fitness() {
@@ -106,6 +109,9 @@ void create_topology(island &isle, int world_size) {
     
     isle.receivers.push_back(next);
     isle.senders.push_back(prev);
+    
+    isle.receive[0] = next;
+    isle.send[0] = prev;
     
     //printf("%d -> %d -> %d\r\n", prev, isle.id, next);
     

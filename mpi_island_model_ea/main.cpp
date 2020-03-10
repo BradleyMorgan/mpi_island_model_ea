@@ -81,7 +81,7 @@ int main(int argc, const char * argv[]) {
     MPI_Datatype types[4] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
     MPI_Type_create_struct(4, lengths, displacements, types, &individual_type);
     MPI_Type_commit(&individual_type);
-    
+        
     // evolve the populations ...
     
     for(int run=1; run<=config::runs; run++) {
@@ -134,6 +134,24 @@ int main(int argc, const char * argv[]) {
         
         create_topology(isle, world_size);
     
+        MPI_Comm topology;
+        MPI_Info info;
+        
+        MPI_Info_create(&info);
+        MPI_Info_set(info, "MPIX_TOPOL_TYPE", "GRAPH");
+        
+        int source = world_rank;
+        
+        const int send[1] = { isle.send[0] };
+        const int receive[1] = { isle.receive[0] };
+        const int degrees[1] = { 1 };
+        const int weights[1] = { 1 };
+        
+        MPI_Comm oldcomm = MPI_COMM_WORLD;
+        
+        MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 0, &topology);
+        
+        
         // begin evolution ...
         
         for(int eval=1; eval<=config::evals; eval++) {
