@@ -110,6 +110,11 @@ int main(int argc, const char * argv[]) {
         
         // only the root process will create the full initial population ...
         
+        std::vector<int> island_ids;
+        island_ids.resize(world_size);
+        
+        MPI_Gather(&isle.id, 1, MPI_INT, &island_ids[0], world_size, MPI_INT, 0, MPI_COMM_WORLD);
+        
         if(world_rank == 0) {
             
             population = initial_population(offsets);
@@ -118,6 +123,8 @@ int main(int argc, const char * argv[]) {
             std::reverse(population.begin(), population.end());
             
             global_best_fitness = population[0].fitness;
+            
+            std::vector<group> topology = create_dynamic_topology(&island_ids);
             
         }
         
@@ -133,17 +140,15 @@ int main(int argc, const char * argv[]) {
         // build a topology by assigning send \ receive neighbors ...
         
         create_topology(isle, world_size);
-    
+        
         MPI_Comm topology;
         MPI_Info info;
         
         MPI_Info_create(&info);
         MPI_Info_set(info, "MPIX_TOPOL_TYPE", "GRAPH");
         
-        int source = world_rank;
-        
-        const int send[1] = { isle.send[0] };
-        const int receive[1] = { isle.receive[0] };
+        const int send[1] = { isle.senders[0] };
+        const int receive[1] = { isle.receivers[0] };
         const int degrees[1] = { 1 };
         const int weights[1] = { 1 };
         

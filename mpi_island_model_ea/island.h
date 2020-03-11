@@ -32,9 +32,6 @@ struct island {
     std::vector<int> senders;
     std::vector<int> receivers;
     
-    int send[1];
-    int receive[1];
-    
     // calculate the island's total fitness for distribution ...
     
     void calc_total_fitness() {
@@ -103,17 +100,87 @@ struct island {
 };
 
 void create_topology(island &isle, int world_size) {
-    
+
     int next = isle.id+1 < world_size ? isle.id+1 : 0;
     int prev = isle.id-1 < 0 ? (int)world_size-1 : isle.id-1;
     
     isle.receivers.push_back(next);
     isle.senders.push_back(prev);
     
-    isle.receive[0] = next;
-    isle.send[0] = prev;
-    
     //printf("%d -> %d -> %d\r\n", prev, isle.id, next);
+    
+}
+
+struct group {
+    
+    int node;
+    
+    std::vector<int> senders;
+    std::vector<int> receivers;
+    
+};
+
+std::vector<group> create_dynamic_topology(std::vector<int> *ids) {
+    
+    std::vector<group> topology;
+    
+    for(int i=0; i<=ids->size(); i++) {
+        
+        group g;
+        
+        g.node = i;
+        
+        std::vector<group>::iterator it;
+        
+        bool sfound = false;
+        bool rfound = false;
+        
+        for(it=topology.begin(); it!=topology.end(); ++it) {
+            std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), g.node);
+            if(s != it->senders.end()) {
+                g.receivers.push_back(*s);
+                rfound = true;
+            }
+            std::vector<int>::iterator r = std::find(it->receivers.begin(), it->receivers.end(), g.node);
+            if(r != it->receivers.end()) {
+                g.senders.push_back(*r);
+                sfound = true;
+            }
+        }
+        
+        if(!sfound) {
+        
+            int rnd_source = i;
+            
+            while(rnd_source == i) {
+                rnd_source = rand()%ids->size();
+            }
+            
+            g.senders.push_back(rnd_source);
+            
+        }
+        
+        if(!rfound) {
+        
+            int rnd_target = i;
+            
+            while(rnd_target == i) {
+                rnd_target = rand()%ids->size();
+            }
+            
+            g.receivers.push_back(rnd_target);
+            
+        }
+        
+        topology.push_back(g);
+        
+        ids->erase(std::find(ids->begin(), ids->end(), g.node));
+            
+        printf("%d -> %d -> %d\r\n", g.senders[0], g.node, g.receivers[0]);
+        
+    }
+
+    return topology;
     
 }
 
