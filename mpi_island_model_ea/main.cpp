@@ -84,9 +84,11 @@ int main(int argc, const char * argv[]) {
     MPI_Type_create_struct(4, lengths, displacements, types, &individual_type);
     MPI_Type_commit(&individual_type);
         
+    std::vector<int> island_ids;
+    
     // evolve the populations ...
     
-    for(int run=1; run<config::runs; run++) {
+    for(int run=1; run<=config::runs; run++) {
         
         double run_start = MPI_Wtime();
         
@@ -103,6 +105,8 @@ int main(int argc, const char * argv[]) {
         // each MPI process will maintain its own population, so we define an island for each ...
         
         std::vector<individual> population;
+        population.clear();
+        population.resize(config::mu);
         
         island isle;
         isle.id = world_rank;
@@ -112,23 +116,22 @@ int main(int argc, const char * argv[]) {
         
         // only the root process will create the full initial population ...
         
-        std::vector<int> island_ids;
-        island_ids.resize(world_size);
-
-        printf("gathering ...\r\n");
-        MPI_Gather(&isle.id, 1, MPI_INT, &island_ids[0], world_size, MPI_INT, 0, MPI_COMM_WORLD);
-        printf("gathered...\r\n");
+        printf("sending %d to gather ...\r\n", isle.id);
+        MPI_Gather(&isle.id, 1, MPI_INT, &island_ids, world_size, MPI_INT, 0, MPI_COMM_WORLD);
+        printf("sent %d to gather\r\n", isle.id);
         
         if(world_rank == 0) {
-            
+        
             population = initial_population(offsets);
+            
+            printf("received %lu isle ids\r\n", island_ids.size());
             
             std::sort(population.begin(), population.end(), compare_fitness);
             std::reverse(population.begin(), population.end());
             
             global_best_fitness = population[0].fitness;
             
-            std::vector<group> topology = create_dynamic_topology(&island_ids);
+            //std::vector<group> topology = create_dynamic_topology(&island_ids);
             
         }
         
@@ -180,9 +183,6 @@ int main(int argc, const char * argv[]) {
             double migrate_time = migrate_end - migrate_start;
             
             total_migrate_time += migrate_time;
-            
-            population.clear();
-            population.resize(config::mu);
             
             double gather_start = MPI_Wtime();
             MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
@@ -237,7 +237,7 @@ int main(int argc, const char * argv[]) {
             
             std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, total_scatter_time, total_gather_time, total_migrate_time, run_end - run_start, init_duration, world_size, subpopulation_size);
             
-            printf("%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, total_scatter_time, total_migrate_time, total_gather_time, run_end - run_start, init_duration, world_size, subpopulation_size);
+            //printf("%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, total_scatter_time, total_migrate_time, total_gather_time, run_end - run_start, init_duration, world_size, subpopulation_size);
             
         }
         
@@ -260,5 +260,5 @@ int main(int argc, const char * argv[]) {
     }
     
     MPI_Finalize();
-    
+        
 }
