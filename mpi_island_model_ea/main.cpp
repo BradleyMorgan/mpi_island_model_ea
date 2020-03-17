@@ -70,6 +70,8 @@ int main(int argc, const char * argv[]) {
     
     config::load("config.txt", world_size, world_rank);
     
+    // TODO: round for non-integer sizes ...
+    
     int subpopulation_size = config::mu / world_size;
     
     MPI_Datatype individual_type;
@@ -84,7 +86,7 @@ int main(int argc, const char * argv[]) {
         
     // evolve the populations ...
     
-    for(int run=1; run<=config::runs; run++) {
+    for(int run=1; run<config::runs; run++) {
         
         double run_start = MPI_Wtime();
         
@@ -112,8 +114,10 @@ int main(int argc, const char * argv[]) {
         
         std::vector<int> island_ids;
         island_ids.resize(world_size);
-        
+
+        printf("gathering ...\r\n");
         MPI_Gather(&isle.id, 1, MPI_INT, &island_ids[0], world_size, MPI_INT, 0, MPI_COMM_WORLD);
+        printf("gathered...\r\n");
         
         if(world_rank == 0) {
             
@@ -141,20 +145,20 @@ int main(int argc, const char * argv[]) {
         
         create_topology(isle, world_size);
         
-        MPI_Comm topology;
-        MPI_Info info;
-        
-        MPI_Info_create(&info);
-        MPI_Info_set(info, "MPIX_TOPOL_TYPE", "GRAPH");
-        
-        const int send[1] = { isle.senders[0] };
-        const int receive[1] = { isle.receivers[0] };
-        const int degrees[1] = { 1 };
-        const int weights[1] = { 1 };
-        
-        MPI_Comm oldcomm = MPI_COMM_WORLD;
-        
-        MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 0, &topology);
+//        MPI_Comm topology;
+//        MPI_Info info;
+//
+//        MPI_Info_create(&info);
+//        MPI_Info_set(info, "MPIX_TOPOL_TYPE", "GRAPH");
+//
+//        const int send[1] = { isle.senders[0] };
+//        const int receive[1] = { isle.receivers[0] };
+//        const int degrees[1] = { 1 };
+//        const int weights[1] = { 1 };
+//
+//        MPI_Comm oldcomm = MPI_COMM_WORLD;
+//
+//        MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 0, &topology);
         
         
         // begin evolution ...
@@ -188,6 +192,8 @@ int main(int argc, const char * argv[]) {
             total_gather_time += gather_time;
             
             if(world_rank == 0 && eval % 100 == 0) {
+            
+                printf("population size %lu, member = %2.10f\r\n", population.size(), population[population.size()-1].fitness);
                 
                 std::sort(population.begin(), population.end(), compare_fitness);
                 std::reverse(population.begin(), population.end());
@@ -239,15 +245,19 @@ int main(int argc, const char * argv[]) {
         fflush(config::stats_out);
         
     }
-    
-    for(int i=0; i<DIM; i++) {
-        std::fprintf(config::solution_out, "%2.10f,", solution.input[i]);
-    }
 
-    fclose(config::stats_out);
-    fclose(config::run_stats_out);
-    fclose(config::log_out);
-    fclose(config::solution_out);
+    if(world_rank == 0) {
+        
+        for(int i=0; i<DIM; i++) {
+            std::fprintf(config::solution_out, "%2.10f,", solution.input[i]);
+        }
+        
+        fclose(config::stats_out);
+        fclose(config::run_stats_out);
+        fclose(config::log_out);
+        fclose(config::solution_out);
+        
+    }
     
     MPI_Finalize();
     

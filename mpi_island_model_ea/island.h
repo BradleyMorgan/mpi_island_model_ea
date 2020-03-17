@@ -130,6 +130,8 @@ std::vector<group> create_dynamic_topology(std::vector<int> *ids) {
         
         g.node = i;
         
+        printf("assigning group %d\r\n", g.node);
+        
         std::vector<group>::iterator it;
         
         bool sfound = false;
@@ -138,12 +140,15 @@ std::vector<group> create_dynamic_topology(std::vector<int> *ids) {
         for(it=topology.begin(); it!=topology.end(); ++it) {
             std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), g.node);
             if(s != it->senders.end()) {
-                g.receivers.push_back(*s);
+                printf("assigning found receiver %d\r\n", it->node);
+                g.receivers.push_back(it->node);
                 rfound = true;
             }
+            
             std::vector<int>::iterator r = std::find(it->receivers.begin(), it->receivers.end(), g.node);
             if(r != it->receivers.end()) {
-                g.senders.push_back(*r);
+                printf("assigning found sender %d\r\n", it->node);
+                g.senders.push_back(it->node);
                 sfound = true;
             }
         }
@@ -156,6 +161,7 @@ std::vector<group> create_dynamic_topology(std::vector<int> *ids) {
                 rnd_source = rand()%ids->size();
             }
             
+            printf("assigning random sender %d\r\n", rnd_source);
             g.senders.push_back(rnd_source);
             
         }
@@ -168,13 +174,18 @@ std::vector<group> create_dynamic_topology(std::vector<int> *ids) {
                 rnd_target = rand()%ids->size();
             }
             
+            printf("assigning random receiver %d\r\n", rnd_target);
             g.receivers.push_back(rnd_target);
             
         }
         
+        printf( "adding node %d to topology\r\n", g.node);
+        
         topology.push_back(g);
         
-        ids->erase(std::find(ids->begin(), ids->end(), g.node));
+//        printf("erasing %d\r\n", g.node);
+//
+//        ids->erase(std::find(ids->begin(), ids->end(), g.node));
             
         printf("%d -> %d -> %d\r\n", g.senders[0], g.node, g.receivers[0]);
         

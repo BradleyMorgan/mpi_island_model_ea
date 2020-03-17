@@ -2,8 +2,8 @@ config_name:rastrigin
 log_file:rastrigin
 stats_file:rastrigin
 seed:0
-runs:30
-evals:10000
+runs:5
+evals:1000
 lambda:128
 mu:1280
 dim:100
