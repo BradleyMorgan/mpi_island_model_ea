@@ -85,6 +85,7 @@ int main(int argc, const char * argv[]) {
     MPI_Type_commit(&individual_type);
         
     std::vector<int> island_ids;
+    island_ids.resize(world_size);
     
     // evolve the populations ...
     
@@ -117,7 +118,7 @@ int main(int argc, const char * argv[]) {
         // only the root process will create the full initial population ...
         
         printf("sending %d to gather ...\r\n", isle.id);
-        MPI_Gather(&isle.id, 1, MPI_INT, &island_ids, world_size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Gather(&isle.id, 1, MPI_INT, &island_ids[0], world_size, MPI_INT, 0, MPI_COMM_WORLD);
         printf("sent %d to gather\r\n", isle.id);
         
         if(world_rank == 0) {
@@ -131,7 +132,7 @@ int main(int argc, const char * argv[]) {
             
             global_best_fitness = population[0].fitness;
             
-            //std::vector<group> topology = create_dynamic_topology(&island_ids);
+            std::vector<group> topology = create_dynamic_topology(&island_ids);
             
         }
         

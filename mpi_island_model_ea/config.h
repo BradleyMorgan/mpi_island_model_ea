@@ -57,7 +57,7 @@ void config::load(const char *input, int world_size, int world_rank) {
        getline(config_file, value, '\n');
        
        if(key != "") {
-           //printf("%s => %s\r\n", key.c_str(), value.c_str());
+           printf("%s => %s\r\n", key.c_str(), value.c_str());
            config::items[key] = value;
        }
        
