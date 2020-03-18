@@ -77,7 +77,7 @@ struct island {
                 
         this->population[rand()%population.size()].input = x;
                 
-        //printf("island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
+        printf("island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
         
     }
     
@@ -85,7 +85,7 @@ struct island {
                 
         MPI_Send(&this->population[0].input, DIM, MPI_DOUBLE, this->receivers[0], 0, MPI_COMM_WORLD);
                 
-        //printf("island %d sending migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[0], this->population[0].input[0], this->population[0].input[1]);
+        printf("island %d sending migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[0], this->population[0].input[0], this->population[0].input[1]);
                 
     }
     
@@ -124,7 +124,7 @@ std::vector<group> create_dynamic_topology(std::vector<int> *ids) {
     
     std::vector<group> topology;
     
-    for(int i=0; i<=ids->size(); i++) {
+    for(int i=0; i<ids->size(); i++) {
         
         group g;
         

@@ -149,21 +149,20 @@ int main(int argc, const char * argv[]) {
         
         create_topology(isle, world_size);
         
-//        MPI_Comm topology;
-//        MPI_Info info;
-//
-//        MPI_Info_create(&info);
-//        MPI_Info_set(info, "MPIX_TOPOL_TYPE", "GRAPH");
-//
-//        const int send[1] = { isle.senders[0] };
-//        const int receive[1] = { isle.receivers[0] };
-//        const int degrees[1] = { 1 };
-//        const int weights[1] = { 1 };
-//
-//        MPI_Comm oldcomm = MPI_COMM_WORLD;
-//
-//        MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 0, &topology);
-        
+        MPI_Comm topology;
+        MPI_Info info;
+
+        MPI_Info_create(&info);
+        MPI_Info_set(info, "MPIX_TOPOL_TYPE", "GRAPH");
+
+        const int send[1] = { isle.senders[0] };
+        const int receive[1] = { isle.receivers[0] };
+        const int degrees[1] = { 1 };
+        const int weights[1] = { 1 };
+
+        MPI_Comm oldcomm = MPI_COMM_WORLD;
+
+        MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 0, &topology);
         
         // begin evolution ...
         
