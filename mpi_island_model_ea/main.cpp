@@ -149,6 +149,13 @@ int main(int argc, const char * argv[]) {
         
         create_topology(isle, world_size);
         
+        int nlen;
+        char procname[MPI_MAX_PROCESSOR_NAME];
+        
+        MPI_Get_processor_name(procname, &nlen);
+        
+        printf("Process %d in world size %d on %s\r\n", world_rank, world_size, procname);
+        
         MPI_Comm topology;
         MPI_Info info;
 
@@ -163,6 +170,7 @@ int main(int argc, const char * argv[]) {
         MPI_Comm oldcomm = MPI_COMM_WORLD;
 
         MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 0, &topology);
+        
         
         // begin evolution ...
         
