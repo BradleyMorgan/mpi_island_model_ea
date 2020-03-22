@@ -157,12 +157,17 @@ int main(int argc, const char * argv[]) {
                 }
                 
                 LOG(4, "[%d] -> ", i);
-                fprintf(config::topo_out, "[%d] -> ", topology[i].node);
+                fprintf(config::topo_out, "[%d] -> ", i);
                 
                 for(int k=0; k<topology[i].receivers.size(); k++) {
                     
-                    LOG(4, "%d -> ", topology[i].receivers[k]);
-                    fprintf(config::topo_out, "%d -> ", topology[i].receivers[k]);
+                    if(k == topology[i].receivers.size()-1) {
+                        LOG(4, "%d", topology[i].receivers[k]);
+                        fprintf(config::topo_out, "%d", topology[i].receivers[k]);
+                    } else {
+                        LOG(4, "%d -> ", topology[i].receivers[k]);
+                        fprintf(config::topo_out, "%d -> ", topology[i].receivers[k]);
+                    }
                     
                 }
                 
