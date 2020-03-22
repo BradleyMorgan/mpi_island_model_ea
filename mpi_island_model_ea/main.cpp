@@ -157,7 +157,7 @@ int main(int argc, const char * argv[]) {
                 }
                 
                 LOG(4, "[%d] -> ", topology[i].node);
-                fprintf(config::topo_out, "[%d] -> ", topology[i].node);
+                fprintf(config::topo_out, "[%d] -> ", i);
                 
                 for(int k=0; k<topology[i].receivers.size(); k++) {
                     
