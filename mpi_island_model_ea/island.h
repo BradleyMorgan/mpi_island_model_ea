@@ -177,7 +177,7 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
                 rnd_target = rand()%topology.size();
             }
             
-            LOG(6, "assigning random receiver %d -> %d\r\n", rnd_target, node);
+            LOG(6, "assigning random receiver %d -> %d\r\n", node, rnd_target);
             topology[node].receivers.push_back(rnd_target);
             
             add_neighbors(rnd_target, size-1, topology);

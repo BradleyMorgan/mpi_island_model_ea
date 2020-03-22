@@ -149,28 +149,39 @@ int main(int argc, const char * argv[]) {
             
             for(int i=0; i<island_ids.size(); i++) {
                 
-                for(int k=0; k<topology[i].senders.size(); k++) {
-                    
-                    LOG(4, "%d -> ", topology[i].senders[k]);
-                    fprintf(config::topo_out, "%d -> ", topology[i].senders[k]);
-                    
-                }
+//                for(int k=0; k<topology[i].senders.size(); k++) {
+//
+//                    LOG(4, "%d -> ", topology[i].senders[k]);
+//                    fprintf(config::topo_out, "%d -> ", topology[i].senders[k]);
+//
+//                }
+//
+//                LOG(4, "[%d] -> ", i);
+//                fprintf(config::topo_out, "[%d] -> ", i);
+//
+//                for(int k=0; k<topology[i].receivers.size(); k++) {
+//
+//                    if(k >= topology[i].receivers.size()-1) {
+//                        LOG(4, "%d", topology[i].receivers[k]);
+//                        fprintf(config::topo_out, "%d", topology[i].receivers[k]);
+//                    } else {
+//                        LOG(4, "%d -> ", topology[i].receivers[k]);
+//                        fprintf(config::topo_out, "%d -> ", topology[i].receivers[k]);
+//                    }
+//
+//                }
                 
-                LOG(4, "[%d] -> ", i);
-                fprintf(config::topo_out, "[%d] -> ", i);
-                
-                for(int k=0; k<topology[i].receivers.size(); k++) {
+                for(int j=0; j<island_ids.size(); j++) {
                     
-                    if(k == topology[i].receivers.size()-1) {
-                        LOG(4, "%d", topology[i].receivers[k]);
-                        fprintf(config::topo_out, "%d", topology[i].receivers[k]);
+                    if(std::find(topology[i].receivers.begin(), topology[i].receivers.end(), j) != topology[i].receivers.end()) {
+                        LOG(4, "1, ");
+                        fprintf(config::topo_out,"1, ");
                     } else {
-                        LOG(4, "%d -> ", topology[i].receivers[k]);
-                        fprintf(config::topo_out, "%d -> ", topology[i].receivers[k]);
+                        LOG(4, "0, ");
+                        fprintf(config::topo_out,"0, ");
                     }
                     
                 }
-                
                 
                 LOG(4, "\r\n");
                 fprintf(config::topo_out, "\r\n");
