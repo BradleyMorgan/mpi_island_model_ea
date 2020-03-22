@@ -151,30 +151,28 @@ int main(int argc, const char * argv[]) {
                 
                 for(int k=0; k<topology[i].senders.size(); k++) {
                     
-                    LOG(6, "%d -> ", topology[i].senders[k]);
+                    LOG(4, "%d -> ", topology[i].senders[k]);
                     fprintf(config::topo_out, "%d -> ", topology[i].senders[k]);
                     
                 }
                 
-                LOG(6, "[%d] -> ", topology[i].node);
+                LOG(4, "[%d] -> ", topology[i].node);
                 fprintf(config::topo_out, "[%d] -> ", topology[i].node);
                 
                 for(int k=0; k<topology[i].receivers.size(); k++) {
                     
-                    LOG(6, "%d -> ", topology[i].receivers[k]);
+                    LOG(4, "%d -> ", topology[i].receivers[k]);
                     fprintf(config::topo_out, "%d -> ", topology[i].receivers[k]);
                     
                 }
                 
                 
-                LOG(6, "\r\n");
+                LOG(4, "\r\n");
                 fprintf(config::topo_out, "\r\n");
                 
                 fflush(config::topo_out);
                 
             }
-            
-            fprintf(config::topo_out, "\r\n------------\r\n");
             
             for(int i=0; i<world_size; i++) {
                 
