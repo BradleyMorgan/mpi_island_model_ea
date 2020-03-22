@@ -136,7 +136,7 @@ int main(int argc, const char * argv[]) {
         
             population = initial_population(offsets);
             
-            LOG(10, "received %lu isle ids\r\n", island_ids.size());
+            LOG(4, "received %lu isle ids\r\n", island_ids.size());
             
             std::sort(population.begin(), population.end(), compare_fitness);
             std::reverse(population.begin(), population.end());
@@ -156,8 +156,8 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                LOG(4, "[%d] -> ", topology[i].node);
-                fprintf(config::topo_out, "[%d] -> ", i);
+                LOG(4, "[%d] -> ", i);
+                fprintf(config::topo_out, "[%d] -> ", topology[i].node);
                 
                 for(int k=0; k<topology[i].receivers.size(); k++) {
                     
