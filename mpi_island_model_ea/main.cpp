@@ -157,6 +157,7 @@ int main(int argc, const char * argv[]) {
                 }
                 
                 printf("[%d] -> ", topology[i].node);
+                fprintf(config::topo_out, "[%d] -> ", topology[i].node);
                 
                 for(int k=0; k<topology[i].receivers.size(); k++) {
                     
@@ -167,6 +168,10 @@ int main(int argc, const char * argv[]) {
                 
                 
                 printf("\r\n");
+                fprintf(config::topo_out, "\r\n");
+                
+                fflush(config::topo_out);
+                
             }
             
             fprintf(config::topo_out, "\r\n------------\r\n");
@@ -325,6 +330,7 @@ int main(int argc, const char * argv[]) {
         fclose(config::run_stats_out);
         fclose(config::log_out);
         fclose(config::solution_out);
+        fclose(config::topo_out);
         
     }
     
