@@ -10,6 +10,7 @@
 #define utility_h
 
 #include <random>
+#include <cpuid.h>
 #include "config.h"
 
 // return a random double between min and max ...
@@ -66,4 +67,32 @@ std::array<double, DIM> generate_offsets(double min, double max, double step) {
     
 }
 
+//void log(const char *message, int level) {
+//    
+//    if(level <= stoi(config::items["loglevel"])) {
+//        
+//        printf("%s", message);
+//        
+//    }
+//    
+//}
+
+#define CPUID(INFO, LEAF, SUBLEAF) __cpuid_count(LEAF, SUBLEAF, INFO[0], INFO[1], INFO[2], INFO[3])
+
+#define GETCPU(CPU) {                              \
+        uint32_t CPUInfo[4];                           \
+        CPUID(CPUInfo, 1, 0);                          \
+        /* CPUInfo[1] is EBX, bits 24-31 are APIC ID */ \
+        if ( (CPUInfo[3] & (1 << 9)) == 0) {           \
+          CPU = -1;  /* no APIC on chip */             \
+        }                                              \
+        else {                                         \
+          CPU = (unsigned)CPUInfo[1] >> 24;                    \
+        }                                              \
+        if (CPU < 0) CPU = 0;                          \
+      }
+
 #endif /* utility_h */
+
+//#define LOG(level, format, ...) if(level <= stoi(config::items["loglevel"])){ fprintf(stderr, "%s -- %d -- ", __FUNCTION__, __LINE__); fprintf(stderr, format, ##__VA_ARGS__);}
+#define LOG(level, format, ...) if(level <= stoi(config::items["loglevel"])){ fprintf(stderr, format, ##__VA_ARGS__);}

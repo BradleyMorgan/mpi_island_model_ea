@@ -1,10 +1,12 @@
 config_name:rastrigin
 log_file:rastrigin
 stats_file:rastrigin
+topo_file:rastrigin
 seed:0
-runs:5
-evals:1000
+runs:30
+evals:2000
 lambda:128
-mu:1280
+mu:1296
 dim:100
 mutation_rate:0.05
+loglevel:10
