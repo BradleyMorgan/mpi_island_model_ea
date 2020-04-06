@@ -169,7 +169,7 @@ int main(int argc, const char * argv[]) {
 
         MPI_Comm oldcomm = MPI_COMM_WORLD;
 
-        MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 0, &topology);
+        MPI_Dist_graph_create(oldcomm, 1, send, degrees, receive, weights, info, 1, &topology);
         
         
         // begin evolution ...
