@@ -17,6 +17,7 @@
 #include "evolution.h"
 #include "config.h"
 #include "utility.h"
+#include "stats.h"
 
 // populate an initial population with random inputs ...
 
@@ -35,6 +36,26 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
         p.fitness = offset_rastrigin(p.input, offsets);
         
         population.push_back(p);
+        
+    }
+    
+    return population;
+    
+}
+
+// populate an initial population with random inputs ...
+
+std::vector<group> initial_topo_population(std::vector<int> *ids) {
+    
+    std::vector<group> population;
+    
+    for(int i=0; i<config::mu; i++) {
+        
+        group g;
+        
+        create_dynamic_topology(ids);
+        
+        population.push_back(g);
         
     }
     
@@ -148,28 +169,6 @@ int main(int argc, const char * argv[]) {
             fprintf(config::topo_out, "---- RUN %d TOPOLOGY ----\r\n\r\n", run);
             
             for(int i=0; i<island_ids.size(); i++) {
-                
-//                for(int k=0; k<topology[i].senders.size(); k++) {
-//
-//                    LOG(4, "%d -> ", topology[i].senders[k]);
-//                    fprintf(config::topo_out, "%d -> ", topology[i].senders[k]);
-//
-//                }
-//
-//                LOG(4, "[%d] -> ", i);
-//                fprintf(config::topo_out, "[%d] -> ", i);
-//
-//                for(int k=0; k<topology[i].receivers.size(); k++) {
-//
-//                    if(k >= topology[i].receivers.size()-1) {
-//                        LOG(4, "%d", topology[i].receivers[k]);
-//                        fprintf(config::topo_out, "%d", topology[i].receivers[k]);
-//                    } else {
-//                        LOG(4, "%d -> ", topology[i].receivers[k]);
-//                        fprintf(config::topo_out, "%d -> ", topology[i].receivers[k]);
-//                    }
-//
-//                }
                 
                 for(int j=0; j<island_ids.size(); j++) {
                     
@@ -289,31 +288,7 @@ int main(int argc, const char * argv[]) {
                 double local_best_fitness = population[0].fitness;
                 average_local_best_fitnesses.push_back(population[0].fitness);
                 
-                if(population[0].fitness > global_best_fitness) {
-                    solution = population[0];
-                    average_global_best_fitnesses.push_back(population[0].fitness);
-                    global_best_fitness = population[0].fitness;
-                }
-                
-                double total_fitness = 0.0;
-                
-                for(int i=0; i<population.size(); i++) {
-                    total_fitness += population[i].fitness;
-                }
-                
-                average_local_best_fitness = std::accumulate(average_local_best_fitnesses.begin(), average_local_best_fitnesses.end(), 0.0) / average_local_best_fitnesses.size();
-                average_global_best_fitness = std::accumulate(average_global_best_fitnesses.begin(), average_global_best_fitnesses.end(), 0.0) / average_global_best_fitnesses.size();
-                
-                double average_fitness = total_fitness / population.size();
-                double average_gather_time = total_gather_time / eval;
-                double average_scatter_time = total_scatter_time / eval;
-                double average_migrate_time = total_migrate_time / eval;
-                
-                eval_duration = ( std::clock() - eval_start ) / (double) CLOCKS_PER_SEC;
-                
-                std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, local_best_fitness, global_best_fitness, average_local_best_fitness, average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, init_duration, eval_duration);
-                
-                LOG(4, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, local_best_fitness, global_best_fitness, average_local_best_fitness, average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, init_duration, eval_duration);
+                log_fn_eval_stats(population, run, eval, solution, eval_start);
                 
             }
                 

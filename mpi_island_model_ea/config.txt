@@ -9,4 +9,4 @@ lambda:128
 mu:1296
 dim:100
 mutation_rate:0.05
-loglevel:4
+loglevel:8
