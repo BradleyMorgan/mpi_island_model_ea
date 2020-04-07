@@ -32,7 +32,7 @@ void init_stats() {
     
 }
 
-void log_fn_eval_stats(std::vector<individual> &population, int &run, int &eval, individual &solution, MPI_Wtime &eval_start) {
+void log_fn_eval_stats(std::vector<individual> &population, int &run, int &eval, individual &solution, double &eval_start, double &init_duration) {
     
     double local_best_fitness = population[0].fitness;
     average_local_best_fitnesses.push_back(population[0].fitness);

@@ -288,7 +288,7 @@ int main(int argc, const char * argv[]) {
                 double local_best_fitness = population[0].fitness;
                 average_local_best_fitnesses.push_back(population[0].fitness);
                 
-                log_fn_eval_stats(population, run, eval, solution, eval_start);
+                log_fn_eval_stats(population, run, eval, solution, eval_start, init_duration);
                 
             }
                 

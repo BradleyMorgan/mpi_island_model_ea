@@ -136,7 +136,9 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
         bool rfound = false;
         
         for(it=topology.begin(); it!=topology.end(); ++it) {
+            // search for this node in the set of senders for the currently iterated node ...
             std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), node);
+            // if this node is found as a sender, and it does not already exist, add it to the receivers list ...
             if(s != it->senders.end() && std::find(topology[node].receivers.begin(), topology[node].receivers.end(), it->node) == topology[node].receivers.end()) {
                 LOG(6, "assigning found receiver %d -> %d\r\n", node, it->node);
                 topology[node].receivers.push_back(it->node);
