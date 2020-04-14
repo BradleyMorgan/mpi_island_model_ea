@@ -34,7 +34,7 @@ double rastrigin(std::array<double, DIM> x) {
         sum += (std::pow(x[i],2) - (10 * std::cos(2 * M_PI * x[i])));
     }
     
-    return sum;
+    return sum * -1;
 }
 
 double offset_rastrigin(std::array<double, DIM> x, std::array<double, DIM> &offsets) {
@@ -67,16 +67,6 @@ std::array<double, DIM> generate_offsets(double min, double max, double step) {
     
 }
 
-//void log(const char *message, int level) {
-//    
-//    if(level <= stoi(config::items["loglevel"])) {
-//        
-//        printf("%s", message);
-//        
-//    }
-//    
-//}
-
 #define CPUID(INFO, LEAF, SUBLEAF) __cpuid_count(LEAF, SUBLEAF, INFO[0], INFO[1], INFO[2], INFO[3])
 
 #define GETCPU(CPU) {                              \
@@ -95,4 +85,4 @@ std::array<double, DIM> generate_offsets(double min, double max, double step) {
 #endif /* utility_h */
 
 //#define LOG(level, format, ...) if(level <= stoi(config::items["loglevel"])){ fprintf(stderr, "%s -- %d -- ", __FUNCTION__, __LINE__); fprintf(stderr, format, ##__VA_ARGS__);}
-#define LOG(level, format, ...) if(level <= stoi(config::items["loglevel"])){ fprintf(stderr, format, ##__VA_ARGS__);}
+#define LOG(level, rank, target, format, ...) if(level <= stoi(config::items["loglevel"]) && rank==target){ fprintf(stderr, format, ##__VA_ARGS__);}

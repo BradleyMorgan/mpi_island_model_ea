@@ -45,20 +45,22 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
 
 // populate an initial population with random inputs ...
 
-std::vector<group> initial_topo_population(std::vector<int> *ids) {
+std::vector<topology> initial_topo_population(std::vector<int> &ids) {
     
-    std::vector<group> population;
+    LOG(10, 0, 0, "initializing topology population for %lu islands\r\n", ids.size());
+    std::vector<topology> population;
     
-    for(int i=0; i<config::mu; i++) {
+    for(int i=0; i<config::topo_mu; i++) {
         
-        group g;
+        topology t;
         
-        create_dynamic_topology(ids);
-        
-        population.push_back(g);
+        LOG(10, 0, 0, "adding topology %d\r\n", i);
+        t.comm = create_dyn_topology(ids);
+        population.push_back(t);
         
     }
     
+    LOG(10, 0, 0, "initialized population for %lu islands\r\n", ids.size());
     return population;
     
 }
@@ -67,20 +69,15 @@ int main(int argc, const char * argv[]) {
 
     // initialize timer
     
-    std::clock_t start;
+    std::clock_t start = std::clock();
     
-    double init_duration;
-    double eval_duration;
-
-    individual solution;
-    
-    start = std::clock();
+    rstats run_stats;
     
     // initialize MPI environment ...
     
     MPI_Init(NULL, NULL);
     
-    init_duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    run_stats.init_duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
 
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -109,26 +106,23 @@ int main(int argc, const char * argv[]) {
     // evolve the populations ...
     
     for(int run=1; run<=config::runs; run++) {
-        
+    
+        printf("**** RUN %d ****\r\n", run);
         MPI_Barrier(MPI_COMM_WORLD);
         
         double run_start = MPI_Wtime();
-        
-        double total_scatter_time = 0.0;
-        double total_gather_time = 0.0;
-        double total_migrate_time = 0.0;
-        double global_best_fitness = 0.0;
-        double average_local_best_fitness = 0.0;
-        double average_global_best_fitness = 0.0;
-        
-        std::vector<double> average_local_best_fitnesses;
-        std::vector<double> average_global_best_fitnesses;
+
+        estats eval_stats;
         
         // each MPI process will maintain its own population, so we define an island for each ...
         
         std::vector<individual> population;
         population.clear();
         population.resize(config::mu);
+        
+        std::vector<topology> topologies;
+        topologies.clear();
+        topologies.resize(config::topo_mu);
         
         island isle;
         isle.id = world_rank;
@@ -146,84 +140,23 @@ int main(int argc, const char * argv[]) {
             
         }
         
-        std::vector<group> topology;
-        topology.clear();
-        topology.resize(world_size);
-        
         int send_size = 0;
         int rec_size = 0;
         
         if(world_rank == 0) {
         
             population = initial_population(offsets);
+            topologies = initial_topo_population(island_ids);
             
-            LOG(4, "received %lu isle ids\r\n", island_ids.size());
+            LOG(4, 0, 0, "received %lu isle ids for %lu topologies\r\n", island_ids.size(), topologies.size());
             
             std::sort(population.begin(), population.end(), compare_fitness);
             std::reverse(population.begin(), population.end());
             
-            global_best_fitness = population[0].fitness;
-            
-            topology = create_dyn_topology(&island_ids);
-            
-            fprintf(config::topo_out, "---- RUN %d TOPOLOGY ----\r\n\r\n", run);
-            
-            for(int i=0; i<island_ids.size(); i++) {
-                
-                for(int j=0; j<island_ids.size(); j++) {
-                    
-                    if(std::find(topology[i].receivers.begin(), topology[i].receivers.end(), j) != topology[i].receivers.end()) {
-                        LOG(4, "1, ");
-                        fprintf(config::topo_out,"1, ");
-                    } else {
-                        LOG(4, "0, ");
-                        fprintf(config::topo_out,"0, ");
-                    }
-                    
-                }
-                
-                LOG(4, "\r\n");
-                fprintf(config::topo_out, "\r\n");
-                
-                fflush(config::topo_out);
-                
-            }
-            
-            for(int i=0; i<world_size; i++) {
-                
-                LOG(10, "sending topology to %d ...\r\n", i);
-                
-                send_size = (int)topology[i].senders.size();
-                rec_size = (int)topology[i].receivers.size();
-                
-                LOG(10, "sending %d senders to rank %d ...\r\n", send_size, i);
-                MPI_Send(&send_size, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
-                MPI_Send(&topology[i].senders[0], send_size, MPI_INT, i, 2, MPI_COMM_WORLD);
-                
-                LOG(10, "sending %d receivers to rank %d ...\r\n", rec_size, i);
-                MPI_Send(&rec_size, 1, MPI_INT, i, 3, MPI_COMM_WORLD);
-                MPI_Send(&topology[i].receivers[0], rec_size, MPI_INT, i, 4, MPI_COMM_WORLD);
-                
-            }
-            
+            eval_stats.global_best_fitness = population[0].fitness;
+            eval_stats.best_topology = topologies[0];
             
         }
-        
-        MPI_Recv(&send_size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        isle.senders.resize(send_size);
-        
-        MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        LOG(10, "rank %d received %lu senders: ", world_rank, isle.senders.size());
-        for(int i=0; i<isle.senders.size(); i++) { LOG(10, "%d ", isle.senders[i]); }
-        LOG(10, "\r\n");
-        
-        MPI_Recv(&rec_size, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        isle.receivers.resize(rec_size);
-        
-        MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        LOG(10, "rank %d got %lu receivers: ", world_rank, isle.receivers.size());
-        for(int i=0; i<isle.receivers.size(); i++) { LOG(10, "%d ", isle.receivers[i]); }
-        LOG(10, "\r\n");
 
         MPI_Comm tcomm = MPI_COMM_WORLD;
 
@@ -234,26 +167,118 @@ int main(int argc, const char * argv[]) {
         
         GETCPU(procnum);
         
-        LOG(4, "** Process %d in world size %d on core %d processor %s\r\n", world_rank, world_size, procnum, procname);
+        LOG(4, 0, 0, "** Process %d in world size %d on core %d processor %s\r\n", world_rank, world_size, procnum, procname);
         
         // separate the single full population from the root process to subpopulations across all processes ...
         
-        LOG(10, "scattering population ...\r\n");
+        LOG(10, world_rank, 0, "scattering population ...\r\n");
         double scatter_start = MPI_Wtime();
         MPI_Scatter(&population[0], subpopulation_size, individual_type, &isle.population[0], subpopulation_size, individual_type, 0, tcomm);
         double scatter_end = MPI_Wtime();
         double scatter_time = scatter_end - scatter_start;
-        LOG(10, "population scattered...\r\n");
+        LOG(10, world_rank, 0, "population scattered...\r\n");
         
-        total_scatter_time += scatter_time;
+        eval_stats.total_scatter_time += scatter_time;
         
         // begin evolution ...
         
         for(int eval=1; eval<=config::evals; eval++) {
             
-            MPI_Barrier(MPI_COMM_WORLD);
+            int t = (eval-1)%(config::topo_mu);
+        
+            if(world_rank == 0) {
+        
+                printf("T = (%d)mod(%d) = %d\r\n", eval-1, config::topo_mu, t);
+                
+                for(int i=0; i<world_size; i++) {
+                    
+                    LOG(10, 0, 0, "sending topology %d to %d ...\r\n", t, i);
+                    
+                    send_size = (int)topologies[t].comm[i].senders.size();
+                    rec_size = (int)topologies[t].comm[i].receivers.size();
+                    
+                    LOG(10, 0, 0, "sending %d senders to rank %d ...\r\n", send_size, i);
+                    MPI_Send(&send_size, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+                    MPI_Send(&topologies[t].comm[i].senders[0], send_size, MPI_INT, i, 2, MPI_COMM_WORLD);
+                    
+                    LOG(10, 0, 0, "sending %d receivers to rank %d ...\r\n", rec_size, i);
+                    MPI_Send(&rec_size, 1, MPI_INT, i, 3, MPI_COMM_WORLD);
+                    MPI_Send(&topologies[t].comm[i].receivers[0], rec_size, MPI_INT, i, 4, MPI_COMM_WORLD);
+                    
+                }
+                
+                if(t == 0) {
+                
+                    printf("adding children...\r\n");
+                    std::vector<topology> children = topo_gen(topologies, world_size);
+                    topologies.insert(topologies.end(), children.begin(), children.end());
+                    
+                    printf("added %lu children to topologies, new topologies size %lu\r\n", children.size(), topologies.size());
+                    
+                    std::vector<topology>::iterator it;
+                    
+                    for(it = children.begin(); it != children.end(); ++it) {
+                        
+                        for(int i=0; i<world_size; i++) {
+                            
+                            LOG(10, 0, 0, "sending child topology %d to %d ...\r\n", t, i);
+                            
+                            send_size = (int)it->comm[i].senders.size();
+                            rec_size = (int)it->comm[i].receivers.size();
+                            
+                            LOG(10, 0, 0, "sending %d child senders to rank %d ...\r\n", send_size, i);
+                            MPI_Send(&send_size, 1, MPI_INT, i, 5, MPI_COMM_WORLD);
+                            MPI_Send(&it->comm[i].senders[0], send_size, MPI_INT, i, 6, MPI_COMM_WORLD);
+                            
+                            LOG(10, 0, 0, "sending %d child receivers to rank %d ...\r\n", rec_size, i);
+                            MPI_Send(&rec_size, 1, MPI_INT, i, 7, MPI_COMM_WORLD);
+                            MPI_Send(&it->comm[i].receivers[0], rec_size, MPI_INT, i, 8, MPI_COMM_WORLD);
+                            
+                        }
+                        
+                    }
+                    
+                }
+                
+            }
             
-            double eval_start = std::clock();
+            MPI_Recv(&send_size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            isle.senders.resize(send_size);
+            
+            MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            LOG(10, 0, 0, "rank %d received %lu senders: ", world_rank, isle.senders.size());
+            for(int i=0; i<isle.senders.size(); i++) { LOG(10, 0, 0, "%d ", isle.senders[i]); }
+            LOG(10, 0, 0, "\r\n");
+            
+            MPI_Recv(&rec_size, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            isle.receivers.resize(rec_size);
+            
+            MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            LOG(10, 0, 0, "rank %d got %lu receivers: ", world_rank, isle.receivers.size());
+            for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
+            LOG(10, 0, 0, "\r\n");
+            
+            if(t == 0) {
+                
+                MPI_Recv(&send_size, 1, MPI_INT, 0, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                isle.senders.resize(send_size);
+                
+                MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 6, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                LOG(10, 0, 0, "rank %d received %lu child senders: ", world_rank, isle.senders.size());
+                for(int i=0; i<isle.senders.size(); i++) { LOG(10, 0, 0, "%d ", isle.senders[i]); }
+                LOG(10, 0, 0, "\r\n");
+                
+                MPI_Recv(&rec_size, 1, MPI_INT, 0, 7, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                isle.receivers.resize(rec_size);
+                
+                MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 8, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                LOG(10, 0, 0, "rank %d got %lu child receivers: ", world_rank, isle.receivers.size());
+                for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
+                LOG(10, 0, 0, "\r\n");
+                    
+            }
+            
+            eval_stats.eval_start = std::clock();
         
             isle.calc_cpd();
             
@@ -267,28 +292,82 @@ int main(int argc, const char * argv[]) {
             double migrate_end = MPI_Wtime();
             double migrate_time = migrate_end - migrate_start;
             
-            total_migrate_time += migrate_time;
+            eval_stats.total_migrate_time += migrate_time;
             
-            LOG(10, "gathering population, subpopulation %d size %d ...\r\n", world_rank, subpopulation_size);
+            MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+            topologies[t].rounds++;
+            topologies[t].fitness = topologies[t].fitness * -1;
+            topologies[t].round_fitness += (topologies[t].fitness * -1);
+            
+            LOG(10, world_rank, 0, "rank %d migrate time = %2.10f sending to topology %d of %lu size %lu fitness %2.10f rounds %d\r\n", world_rank, migrate_time, t, topologies.size(), topologies[t].comm.size(), topologies[t].fitness, topologies[t].rounds);
+            
+            LOG(10, 0, 0, "gathering population, subpopulation %d size %d ...\r\n", world_rank, subpopulation_size);
             double gather_start = MPI_Wtime();
             MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, tcomm);
             double gather_end = MPI_Wtime();
             double gather_time = gather_end - gather_start;
-            LOG(10, "population gathered ...\r\n");
+            LOG(10, world_rank, 0, "population gathered ...\r\n");
             
-            total_gather_time += gather_time;
+            eval_stats.total_gather_time += gather_time;
             
             if(world_rank == 0 && eval % 100 == 0) {
             
-                LOG(8, "population size %lu, member = %2.10f\r\n", population.size(), population[population.size()-1].fitness);
+                LOG(8, 0, 0, "population size %lu, member = %2.10f\r\n", population.size(), population[population.size()-1].fitness);
                 
                 std::sort(population.begin(), population.end(), compare_fitness);
                 std::reverse(population.begin(), population.end());
                 
-                double local_best_fitness = population[0].fitness;
-                average_local_best_fitnesses.push_back(population[0].fitness);
+                log_fn_eval_stats(population, run, eval, eval_stats, run_stats);
                 
-                log_fn_eval_stats(population, run, eval, solution, eval_start, init_duration);
+            }
+            
+            if (world_rank == 0) {
+                
+                LOG(10, 0, 0, "run %d eval %d topology %d fitness = %2.10f (round %2.10f)\r\n", run, eval, t, topologies[t].fitness, topologies[t].round_fitness);
+
+                eval_stats.topo_migrate_time = 0.0;
+                
+                if(topologies[t].fitness <= eval_stats.best_topology.fitness) {
+                    
+                    eval_stats.best_topology = topologies[t];
+                    
+                    fprintf(config::topo_out, "---- RUN %d EVAL %d TOPOLOGY BEST FITNESS %3.10f ----\r\n\r\n", run, eval, topologies[t].fitness);
+
+                    for(int i=0; i<island_ids.size(); i++) {
+                      
+                      for(int j=0; j<island_ids.size(); j++) {
+                          
+                          if(std::find(topologies[t].comm[i].receivers.begin(), topologies[t].comm[i].receivers.end(), j) != topologies[t].comm[i].receivers.end()) {
+                              LOG(4, 0, 0, "1, ");
+                              fprintf(config::topo_out,"1, ");
+                          } else {
+                              LOG(4, 0, 0, "0, ");
+                              fprintf(config::topo_out,"0, ");
+                          }
+                          
+                      }
+                      
+                      LOG(4, 0, 0, "\r\n");
+                      fprintf(config::topo_out, "\r\n");
+                      fflush(config::topo_out);
+                      
+                    }
+                    
+                }
+                
+                if(t == 0) {
+
+                    printf("truncating ...\r\n");
+
+                    std::sort(topologies.begin(),topologies.end(), compare_topo_fitness);
+                    std::reverse(topologies.begin(), topologies.end());
+                    
+                    topologies.erase(topologies.begin()+config::topo_mu, topologies.end());
+
+                    printf("topology 0 fitness = %2.10f\r\n", topologies[0].fitness);
+
+                }
                 
             }
                 
@@ -298,9 +377,9 @@ int main(int argc, const char * argv[]) {
             
             double run_end = MPI_Wtime();
             
-            std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, total_scatter_time, total_gather_time, total_migrate_time, run_end - run_start, init_duration, world_size, subpopulation_size);
+            std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, eval_stats.total_scatter_time, eval_stats.total_gather_time, eval_stats.total_migrate_time, run_end - run_start, run_stats.init_duration, world_size, subpopulation_size);
             
-            LOG(2, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, global_best_fitness, average_local_best_fitness, average_global_best_fitness, total_scatter_time, total_migrate_time, total_gather_time, run_end - run_start, init_duration, world_size, subpopulation_size);
+            LOG(2, 0, 0, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d\r\n", run, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, eval_stats.total_scatter_time, eval_stats.total_migrate_time, eval_stats.total_gather_time, run_end - run_start, run_stats.init_duration, world_size, subpopulation_size);
             
         }
         
@@ -312,7 +391,7 @@ int main(int argc, const char * argv[]) {
     if(world_rank == 0) {
         
         for(int i=0; i<DIM; i++) {
-            std::fprintf(config::solution_out, "%2.10f,", solution.input[i]);
+            std::fprintf(config::solution_out, "%2.10f,", run_stats.solution.input[i]);
         }
         
         fclose(config::stats_out);

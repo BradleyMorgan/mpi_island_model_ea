@@ -7,6 +7,8 @@ runs:5
 evals:1000
 lambda:128
 mu:1296
-dim:100
+topo_lambda:6
+topo_mu:100
+dim:10
 mutation_rate:0.05
-loglevel:8
+loglevel:10

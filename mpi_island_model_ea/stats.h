@@ -11,36 +11,46 @@
 
 #include <mpi.h>
 
-double total_scatter_time = 0.0;
-double total_gather_time = 0.0;
-double total_migrate_time = 0.0;
-double global_best_fitness = 0.0;
-double average_local_best_fitness = 0.0;
-double average_global_best_fitness = 0.0;
+struct rstats {
+    
+    individual solution;
+    
+    double init_duration;
+    
+};
 
-std::vector<double> average_local_best_fitnesses;
-std::vector<double> average_global_best_fitnesses;
+struct estats {
+    
+    double init_duration = 0.0;
+    double eval_start = 0.0;
+    double eval_duration = 0.0;
+    double total_scatter_time = 0.0;
+    double total_gather_time = 0.0;
+    double total_migrate_time = 0.0;
+    double topo_migrate_time = 0.0;
+    double local_best_fitness = 0.0;
+    double global_best_fitness = 0.0;
+    double average_local_best_fitness = 0.0;
+    double average_global_best_fitness = 0.0;
+    
+    topology best_topology;
+    
+    std::vector<double> average_local_best_fitnesses;
+    std::vector<double> average_global_best_fitnesses;
+    
+    individual solution;
+    
+};
 
-void init_stats() {
+void log_fn_eval_stats(std::vector<individual> &population, int &run, int &eval, estats &eval_stats, rstats &run_stats) {
     
-    total_scatter_time = 0.0;
-    total_gather_time = 0.0;
-    total_migrate_time = 0.0;
-    global_best_fitness = 0.0;
-    average_local_best_fitness = 0.0;
-    average_global_best_fitness = 0.0;
+    eval_stats.local_best_fitness = population[0].fitness;
+    eval_stats.average_local_best_fitnesses.push_back(population[0].fitness);
     
-}
-
-void log_fn_eval_stats(std::vector<individual> &population, int &run, int &eval, individual &solution, double &eval_start, double &init_duration) {
-    
-    double local_best_fitness = population[0].fitness;
-    average_local_best_fitnesses.push_back(population[0].fitness);
-    
-    if(population[0].fitness > global_best_fitness) {
-        solution = population[0];
-        average_global_best_fitnesses.push_back(population[0].fitness);
-        global_best_fitness = population[0].fitness;
+    if(population[0].fitness > eval_stats.global_best_fitness) {
+        eval_stats.solution = population[0];
+        eval_stats.average_global_best_fitnesses.push_back(population[0].fitness);
+        eval_stats.global_best_fitness = population[0].fitness;
     }
     
     double total_fitness = 0.0;
@@ -49,19 +59,21 @@ void log_fn_eval_stats(std::vector<individual> &population, int &run, int &eval,
         total_fitness += population[i].fitness;
     }
     
-    average_local_best_fitness = std::accumulate(average_local_best_fitnesses.begin(), average_local_best_fitnesses.end(), 0.0) / average_local_best_fitnesses.size();
-    average_global_best_fitness = std::accumulate(average_global_best_fitnesses.begin(), average_global_best_fitnesses.end(), 0.0) / average_global_best_fitnesses.size();
+    printf("total fit: %2.10f\r\n", total_fitness);
+    
+    eval_stats.average_local_best_fitness = std::accumulate(eval_stats.average_local_best_fitnesses.begin(), eval_stats.average_local_best_fitnesses.end(), 0.0) / eval_stats.average_local_best_fitnesses.size();
+    eval_stats.average_global_best_fitness = std::accumulate(eval_stats.average_global_best_fitnesses.begin(), eval_stats.average_global_best_fitnesses.end(), 0.0) / eval_stats.average_global_best_fitnesses.size();
     
     double average_fitness = total_fitness / population.size();
-    double average_gather_time = total_gather_time / eval;
-    double average_scatter_time = total_scatter_time / eval;
-    double average_migrate_time = total_migrate_time / eval;
+    double average_gather_time = eval_stats.total_gather_time / eval;
+    double average_scatter_time = eval_stats.total_scatter_time / eval;
+    double average_migrate_time = eval_stats.total_migrate_time / eval;
     
-    double eval_duration = ( std::clock() - eval_start ) / (double) CLOCKS_PER_SEC;
+    double eval_duration = ( std::clock() - eval_stats.eval_start ) / (double) CLOCKS_PER_SEC;
     
-    std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, local_best_fitness, global_best_fitness, average_local_best_fitness, average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, init_duration, eval_duration);
+    std::fprintf(config::stats_out, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, eval_stats.init_duration, eval_duration);
     
-    LOG(4, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, local_best_fitness, global_best_fitness, average_local_best_fitness, average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, init_duration, eval_duration);
+    LOG(2, 0, 0, "%d,%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f\r\n", run, eval, average_fitness, eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration);
     
 }
 

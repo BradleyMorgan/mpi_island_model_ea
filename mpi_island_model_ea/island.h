@@ -74,10 +74,10 @@ struct island {
         MPI_Status migrant_status;
         
         for(int i=0; i<this->senders.size(); i++) {
-            LOG(6, "island %d waiting for migrant from island %d ... \r\n", this->id, this->senders[i]);
+            LOG(6, 0, 0, "island %d waiting for migrant from island %d ... \r\n", this->id, this->senders[i]);
             MPI_Recv(&x, DIM, MPI_DOUBLE, this->senders[i], 0, MPI_COMM_WORLD, &migrant_status);
             this->population[rand()%population.size()].input = x;
-            LOG(6, "island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
+            LOG(6, 0, 0, "island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
         }
         
     }
@@ -85,9 +85,9 @@ struct island {
     void send_migrant(MPI_Comm &comm) {
         
         for(int i=0; i<this->receivers.size(); i++) {
-            LOG(6, "island %d sending migrant to island %d ... \r\n", this->id, this->receivers[i]);
+            LOG(6, 0, 0, "island %d sending migrant to island %d ... \r\n", this->id, this->receivers[i]);
             MPI_Send(&this->population[i].input, DIM, MPI_DOUBLE, this->receivers[i], 0, comm);
-            LOG(6, "island %d sent migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[i], this->population[i].input[0], this->population[i].input[1]);
+            LOG(6, 0, 0, "island %d sent migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[i], this->population[i].input[0], this->population[i].input[1]);
         }
                 
     }
@@ -110,7 +110,7 @@ void create_topology(island &isle, int world_size) {
     isle.receivers.push_back(next);
     isle.senders.push_back(prev);
     
-    LOG(8, "%d -> %d -> %d\r\n", prev, isle.id, next);
+    LOG(8, 0, 0, "%d -> %d -> %d\r\n", prev, isle.id, next);
     
 }
 
@@ -125,7 +125,187 @@ struct group {
     
 };
 
-void add_neighbors(int node, int size, std::vector<group> &topology) {
+struct topology {
+  
+    int rounds;
+    
+    double fitness;
+    double round_fitness;
+    double selection_distribution;
+    
+    std::vector<group> comm;
+    
+};
+
+std::vector<group> create_group(std::vector<std::vector<int>> matrix) {
+    
+    std::vector<group> comm;
+    
+    comm.resize(matrix.size());
+    
+    for(int i=0; i<matrix.size(); i++) {
+        
+        std::vector<int> *receivers = new std::vector<int>();
+        
+        for(int j=0; j<matrix[i].size(); j++) {
+        
+            printf("%d ", matrix[i][j]);
+            
+            if(matrix[i][j] == 1) {
+                
+                receivers->push_back(j);
+                
+                comm[i].receivers = *receivers;
+                comm[j].senders.push_back(i);
+                
+            }
+            
+        }
+        
+        printf("\r\n");
+        
+    }
+    
+    return comm;
+    
+}
+
+std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> comm, int world_size) {
+    
+    std::vector<std::vector<int>> matrix;
+    matrix.resize(world_size);
+
+    for(int i=0; i<world_size; i++) {
+
+        matrix[i].resize(world_size);
+        
+        for(int j=0; j<world_size; j++) {
+            
+            if(std::find(comm[i].receivers.begin(), comm[i].receivers.end(), j) != comm[i].receivers.end()) {
+                matrix[i][j] = 1;
+            } else {
+                matrix[i][j] = 0;
+            }
+            
+        }
+        
+    }
+    
+    return matrix;
+    
+}
+
+std::vector<double> topo_cpd(std::vector<topology> &topologies) {
+    
+    printf("generating cpd\r\n");
+           
+    double total_fitness = 0.0;
+    double cumulative_probability = 0.0;
+    
+    std::vector<double> cpd;
+    
+    for(int i=0; i<topologies.size(); i++) {
+    
+        total_fitness += topologies[i].fitness;
+        
+    }
+    
+    for(int i=0; i<topologies.size(); i++) {
+
+        topologies[i].selection_distribution = (double)topologies[i].fitness / total_fitness;
+
+        cumulative_probability += topologies[i].selection_distribution;
+        cpd.push_back(cumulative_probability);
+        
+    }
+    
+    return cpd;
+    
+}
+
+topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &topologies) {
+    
+    printf("selecting topo parent\r\n");
+    
+    topology t;
+    
+    int i = 1;
+    
+    double r = ((double)rand()/(double)RAND_MAX);
+    
+    while (cpd[i] < r ) { i++; }
+    
+    t = topologies[i];
+    
+    return t;
+    
+}
+
+std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size) {
+    
+    std::vector<double> cpd = topo_cpd(topologies);
+    
+    std::vector<topology> children;
+    
+    for(int i = 0; i < config::topo_lambda; i++) {
+
+        printf("creating topo kids\r\n");
+
+        topology t1 = select_topo_parent(cpd, topologies);
+        topology t2 = select_topo_parent(cpd, topologies);
+        
+        printf("parents t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
+        
+        topology child;
+        
+        child.fitness = (t1.fitness + t2.fitness) / 2;
+        std::vector<std::vector<int>> m1 = create_adjaceny_matrix(t1.comm, world_size);
+        std::vector<std::vector<int>> m2 = create_adjaceny_matrix(t2.comm, world_size);
+        
+        std::vector<std::vector<int>> child_matrix;
+        child_matrix.resize(world_size);
+        
+        for(int i=0; i<m1.size(); i++) {
+            
+            child_matrix[i].resize(world_size);
+            
+            for(int j=0; j<m2.size(); j++) {
+                
+                if(i != j) {
+                    
+                    if(rand()%2 == 1) {
+                        printf("assigning child m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
+                        child_matrix[i][j] = m1[i][j];
+                    } else {
+                        printf("assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
+                        child_matrix[i][j] = m1[i][j];
+                    }
+                    
+                } else {
+                    
+                    child_matrix[i][j] = 0;
+                    
+                }
+                
+            }
+            
+            printf("------\r\n");
+            
+        }
+        
+        child.comm = create_group(child_matrix);
+
+        children.push_back(child);
+
+    }
+    
+    return children;
+    
+}
+
+void add_neighbors(int node, int size, int world_size, std::vector<group> &topology) {
+    
+    LOG(10, 0, 0, "entered add_neighbors with size %d for node %d...\r\n", size, node);
     
     if(size > 0) {
         
@@ -140,7 +320,7 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
             std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), node);
             // if this node is found as a sender, and it does not already exist, add it to the receivers list ...
             if(s != it->senders.end() && std::find(topology[node].receivers.begin(), topology[node].receivers.end(), it->node) == topology[node].receivers.end()) {
-                LOG(6, "assigning found receiver %d -> %d\r\n", node, it->node);
+                LOG(6, 0, 0, "assigning found receiver %d -> %d\r\n", node, it->node);
                 topology[node].receivers.push_back(it->node);
                 rfound = true;
             }
@@ -151,7 +331,7 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
         for(it=topology.begin(); it!=topology.end(); ++it) {
             std::vector<int>::iterator s = std::find(it->receivers.begin(), it->receivers.end(), node);
             if(s != it->receivers.end() && std::find(topology[node].senders.begin(), topology[node].senders.end(), it->node) == topology[node].senders.end()) {
-                LOG(6, "assigning found sender %d -> %d\r\n", it->node, node);
+                LOG(6, 0, 0, "assigning found sender %d -> %d\r\n", it->node, node);
                 topology[node].senders.push_back(it->node);
                 sfound = true;
             }
@@ -160,31 +340,37 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
         
         if(!rfound) {
     
+            if(topology[node].senders.size() == world_size-1) { return; }
+            
             int rnd_source = node;
             
             while(rnd_source == node || std::find(topology[node].senders.begin(), topology[node].senders.end(), rnd_source) != topology[node].senders.end()) {
+                //LOG(10, "finding random node...\r\n");
                 rnd_source = rand()%topology.size();
             }
             
-            LOG(6, "assigning random sender %d -> %d\r\n", rnd_source, node);
+            LOG(6, 0, 0, "assigning random sender %d -> %d\r\n", rnd_source, node);
             topology[node].senders.push_back(rnd_source);
             
-            add_neighbors(rnd_source, size-1, topology);
+            add_neighbors(rnd_source, size-1, world_size, topology);
                 
         }
         
         if(!sfound) {
             
+            if(topology[node].receivers.size() == world_size-1) { return; }
+            
             int rnd_target = node;
             
             while(rnd_target == node || std::find(topology[node].receivers.begin(), topology[node].receivers.end(), rnd_target) != topology[node].receivers.end()) {
+                //LOG(10, "finding random node...\r\n");
                 rnd_target = rand()%topology.size();
             }
             
-            LOG(6, "assigning random receiver %d -> %d\r\n", node, rnd_target);
+            LOG(6, 0, 0, "assigning random receiver %d -> %d\r\n", node, rnd_target);
             topology[node].receivers.push_back(rnd_target);
             
-            add_neighbors(rnd_target, size-1, topology);
+            add_neighbors(rnd_target, size-1, world_size, topology);
         
         }
         
@@ -195,7 +381,7 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
         for(it=topology.begin(); it!=topology.end(); ++it) {
             std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), node);
             if(s != it->senders.end() && std::find(topology[node].receivers.begin(), topology[node].receivers.end(), it->node) == topology[node].receivers.end()) {
-                LOG(6, "assigning found receiver %d -> %d\r\n", node, it->node);
+                LOG(6, 0, 0, "assigning found receiver %d -> %d\r\n", node, it->node);
                 topology[node].receivers.push_back(it->node);
             }
         }
@@ -203,10 +389,12 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
         for(it=topology.begin(); it!=topology.end(); ++it) {
             std::vector<int>::iterator s = std::find(it->receivers.begin(), it->receivers.end(), node);
             if(s != it->receivers.end() && std::find(topology[node].senders.begin(), topology[node].senders.end(), it->node) == topology[node].senders.end()) {
-                LOG(6, "assigning found sender %d -> %d\r\n", it->node, node);
+                LOG(6, 0, 0, "assigning found sender %d -> %d\r\n", it->node, node);
                 topology[node].senders.push_back(it->node);
             }
         }
+        
+        LOG(10, 0, 0, "returning from add_neighbors...\r\n");
         
         return;
         
@@ -214,106 +402,16 @@ void add_neighbors(int node, int size, std::vector<group> &topology) {
     
 }
 
-std::vector<group> create_dyn_topology(std::vector<int> *ids) {
+std::vector<group> create_dyn_topology(std::vector<int> ids) {
     
     std::vector<group> topology;
-    topology.resize(ids->size());
+    topology.resize(ids.size());
     
-    add_neighbors(0, (int)ids->size(), topology);
+    add_neighbors(0, (int)ids.size(), (int)ids.size(), topology);
     
     return topology;
     
 }
 
-std::vector<group> create_dynamic_topology(std::vector<int> *ids) {
-    
-    std::vector<group> topology;
-    
-    for(int i=0; i<ids->size(); i++) {
-        
-        group g;
-        
-        g.node = i;
-        
-        LOG(6, "assigning group %d\r\n", g.node);
-        
-        std::vector<group>::iterator it;
-        
-        bool sfound = false;
-        bool rfound = false;
-        
-        for(it=topology.begin(); it!=topology.end(); ++it) {
-            std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), g.node);
-            if(s != it->senders.end()) {
-                LOG(6, "assigning found receiver %d\r\n", it->node);
-                g.receivers.push_back(it->node);
-                rfound = true;
-            }
-            
-            std::vector<int>::iterator r = std::find(it->receivers.begin(), it->receivers.end(), g.node);
-            if(r != it->receivers.end()) {
-                LOG(6, "assigning found sender %d\r\n", it->node);
-                g.senders.push_back(it->node);
-                sfound = true;
-            }
-        }
-        
-        if(!sfound) {
-        
-            int rnd_source = i;
-            
-            while(rnd_source == i) {
-                rnd_source = rand()%ids->size();
-            }
-            
-            LOG(6, "assigning random sender %d\r\n", rnd_source);
-            g.senders.push_back(rnd_source);
-            
-        }
-        
-        if(!rfound) {
-        
-            int rnd_target = i;
-            
-            while(rnd_target == i) {
-                rnd_target = rand()%ids->size();
-            }
-            
-            LOG(6, "assigning random receiver %d\r\n", rnd_target);
-            g.receivers.push_back(rnd_target);
-            
-        }
-        
-        LOG(10, "adding node %d to topology\r\n", g.node);
-        
-        topology.push_back(g);
-    
-        
-    }
-    
-    for(int i=0; i<ids->size(); i++) {
-    
-        for(int k=0; k<topology[i].senders.size(); k++) {
-            
-            printf("%d -> ", topology[i].senders[k]);
-            
-        }
-        
-        printf("[%d] -> ", topology[i].node);
-        
-        for(int k=0; k<topology[i].receivers.size(); k++) {
-            
-            printf("%d -> ", topology[i].receivers[k]);
-            
-        }
-        
-        
-        printf("\r\n");
-        
-    }
-    
-    return topology;
-    
-}
 
 #endif /* island_h */

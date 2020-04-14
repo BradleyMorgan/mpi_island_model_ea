@@ -28,6 +28,8 @@ namespace config {
     int runs = 0;
     int lambda = 0;
     int mu = 0;
+    int topo_lambda = 0;
+    int topo_mu = 0;
     int seed = 0;
 
     double mutation_rate = 0.0;
@@ -59,17 +61,23 @@ void config::load(const char *input, int world_size, int world_rank) {
        getline(config_file, value, '\n');
        
        if(key != "") {
-           //printf("%s => %s\r\n", key.c_str(), value.c_str());
+           printf("%s => %s\r\n", key.c_str(), value.c_str());
            config::items[key] = value;
        }
        
     }
     
+    printf("converting\r\n");
+    
     config::runs = stoi(config::items["runs"]);
     config::evals = stoi(config::items["evals"]);
     config::lambda = stoi(config::items["lambda"]);
     config::mu = stoi(config::items["mu"]);
+    config::topo_lambda = stoi(config::items["topo_lambda"]);
+    config::topo_mu = stoi(config::items["topo_mu"]);
     config::mutation_rate = stod(config::items["mutation_rate"]);
+    
+    printf("converted\r\n");
     
     if(world_rank == 0) {
     
