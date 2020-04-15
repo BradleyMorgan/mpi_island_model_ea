@@ -133,7 +133,7 @@ void config::load(const char *input, int world_size, int world_rank) {
         
         fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration,average_topo_fitness, local_best_topo_fitness, global_best_topo_fitnes, average_local_best_topo_fitness, average_global_best_topo_fitness\r\n");
         
-        fprintf(config::run_stats_out, "run,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_migration_time,total_gather_time,run_duration,init_duration,world_size,subpopulation_size\r\n");
+        fprintf(config::run_stats_out, "run,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_migration_time,total_gather_time,run_duration,init_duration,world_size,subpopulation_size, global_best_topo_fitness, average_local_best_topo_fitness, average_global_best_topo_fitness\r\n");
         
         fprintf(config::log_out, "stats file: %s\r\n", config::stats_fname);
         fprintf(config::log_out, "run stats file: %s\r\n", config::run_stats_fname);
