@@ -4,7 +4,7 @@ stats_file:rastrigin
 topo_file:rastrigin
 seed:0
 runs:5
-evals:1000
+evals:3000
 lambda:128
 mu:1296
 topo_lambda:6

@@ -298,8 +298,15 @@ int main(int argc, const char * argv[]) {
             MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
             topologies[t].rounds++;
-            topologies[t].fitness = topologies[t].fitness * -1;
-            topologies[t].round_fitness += (topologies[t].fitness * -1);
+            
+            if(topologies[t].fitness >= 0.0) {
+                topologies[t].fitness = topologies[t].fitness * -1;
+                topologies[t].round_fitness += (topologies[t].fitness * -1);
+            } else {
+                LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology %d\r\n", topologies[t].fitness, t);
+                topologies[t].fitness = topologies[t].fitness;
+                topologies[t].round_fitness += topologies[t].fitness;
+            }
             
             LOG(10, world_rank, 0, "rank %d migrate time = %2.10f sending to topology %d of %lu size %lu fitness %2.10f rounds %d\r\n", world_rank, migrate_time, t, topologies.size(), topologies[t].comm.size(), topologies[t].fitness, topologies[t].rounds);
             
@@ -319,7 +326,6 @@ int main(int argc, const char * argv[]) {
                 std::sort(population.begin(), population.end(), compare_fitness);
                 std::reverse(population.begin(), population.end());
                 
-                //std::vector<topology>::iterator max = std::max_element(topologies.begin(), topologies.end(), compare_topo_fitness);
                 std::vector<topology>::iterator min = std::min_element(topologies.begin(), topologies.end(), compare_topo_fitness);
                 std::replace_if(topologies.begin(), topologies.end(), is_zero, *min);
                 
