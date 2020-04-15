@@ -107,7 +107,7 @@ int main(int argc, const char * argv[]) {
     
     for(int run=1; run<=config::runs; run++) {
     
-        printf("**** RUN %d ****\r\n", run);
+        LOG(4, world_rank, 0, "**** RUN %d ****\r\n", run);
         MPI_Barrier(MPI_COMM_WORLD);
         
         double run_start = MPI_Wtime();
@@ -148,13 +148,14 @@ int main(int argc, const char * argv[]) {
             population = initial_population(offsets);
             topologies = initial_topo_population(island_ids);
             
-            LOG(4, 0, 0, "received %lu isle ids for %lu topologies\r\n", island_ids.size(), topologies.size());
+            LOG(6, 0, 0, "received %lu isle ids for %lu topologies\r\n", island_ids.size(), topologies.size());
             
             std::sort(population.begin(), population.end(), compare_fitness);
             std::reverse(population.begin(), population.end());
             
             eval_stats.global_best_fitness = population[0].fitness;
             eval_stats.best_topology = topologies[0];
+            
             
         }
 
@@ -167,7 +168,7 @@ int main(int argc, const char * argv[]) {
         
         GETCPU(procnum);
         
-        LOG(4, 0, 0, "** Process %d in world size %d on core %d processor %s\r\n", world_rank, world_size, procnum, procname);
+        LOG(6, 0, 0, "** Process %d in world size %d on core %d processor %s\r\n", world_rank, world_size, procnum, procname);
         
         // separate the single full population from the root process to subpopulations across all processes ...
         
@@ -188,7 +189,7 @@ int main(int argc, const char * argv[]) {
         
             if(world_rank == 0) {
         
-                printf("T = (%d)mod(%d) = %d\r\n", eval-1, config::topo_mu, t);
+                LOG(10, world_rank, 0, "T = (%d)mod(%d) = %d\r\n", eval-1, config::topo_mu, t);
                 
                 for(int i=0; i<world_size; i++) {
                     
@@ -209,11 +210,11 @@ int main(int argc, const char * argv[]) {
                 
                 if(t == 0) {
                 
-                    printf("adding children...\r\n");
+                    LOG(10, world_rank, 0, "adding children...\r\n");
                     std::vector<topology> children = topo_gen(topologies, world_size);
                     topologies.insert(topologies.end(), children.begin(), children.end());
                     
-                    printf("added %lu children to topologies, new topologies size %lu\r\n", children.size(), topologies.size());
+                    LOG(8, world_rank, 0, "added %lu children to topologies, new topologies size %lu\r\n", children.size(), topologies.size());
                     
                     std::vector<topology>::iterator it;
                     
@@ -318,7 +319,14 @@ int main(int argc, const char * argv[]) {
                 std::sort(population.begin(), population.end(), compare_fitness);
                 std::reverse(population.begin(), population.end());
                 
-                log_fn_eval_stats(population, run, eval, eval_stats, run_stats);
+                //std::vector<topology>::iterator max = std::max_element(topologies.begin(), topologies.end(), compare_topo_fitness);
+                std::vector<topology>::iterator min = std::min_element(topologies.begin(), topologies.end(), compare_topo_fitness);
+                std::replace_if(topologies.begin(), topologies.end(), is_zero, *min);
+                
+                std::sort(topologies.begin(),topologies.end(), compare_topo_fitness);
+                std::reverse(topologies.begin(), topologies.end());
+                
+                log_fn_eval_stats(population, topologies, run, eval, eval_stats, run_stats);
                 
             }
             
@@ -339,16 +347,16 @@ int main(int argc, const char * argv[]) {
                       for(int j=0; j<island_ids.size(); j++) {
                           
                           if(std::find(topologies[t].comm[i].receivers.begin(), topologies[t].comm[i].receivers.end(), j) != topologies[t].comm[i].receivers.end()) {
-                              LOG(4, 0, 0, "1, ");
+                              LOG(8, 0, 0, "1, ");
                               fprintf(config::topo_out,"1, ");
                           } else {
-                              LOG(4, 0, 0, "0, ");
+                              LOG(8, 0, 0, "0, ");
                               fprintf(config::topo_out,"0, ");
                           }
                           
                       }
                       
-                      LOG(4, 0, 0, "\r\n");
+                      LOG(8, 0, 0, "\r\n");
                       fprintf(config::topo_out, "\r\n");
                       fflush(config::topo_out);
                       
@@ -356,16 +364,19 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(t == 0) {
+                if(eval%(config::topo_mu+config::topo_lambda) == 0) {
 
-                    printf("truncating ...\r\n");
+                    LOG(10, world_rank, 0, "truncating ...\r\n");
 
+                    std::vector<topology>::iterator min = std::min_element(topologies.begin(), topologies.end(), compare_topo_fitness);
+                    std::replace_if(topologies.begin(), topologies.end(), is_zero, *min);
+                    
                     std::sort(topologies.begin(),topologies.end(), compare_topo_fitness);
                     std::reverse(topologies.begin(), topologies.end());
                     
                     topologies.erase(topologies.begin()+config::topo_mu, topologies.end());
 
-                    printf("topology 0 fitness = %2.10f\r\n", topologies[0].fitness);
+                    LOG(6, world_rank, 0, "topology 0 fitness = %2.10f\r\n", topologies[0].fitness);
 
                 }
                 

@@ -149,7 +149,7 @@ std::vector<group> create_group(std::vector<std::vector<int>> matrix) {
         
         for(int j=0; j<matrix[i].size(); j++) {
         
-            printf("%d ", matrix[i][j]);
+            LOG(10, 0, 0, "%d ", matrix[i][j]);
             
             if(matrix[i][j] == 1) {
                 
@@ -162,7 +162,7 @@ std::vector<group> create_group(std::vector<std::vector<int>> matrix) {
             
         }
         
-        printf("\r\n");
+        LOG(10, 0, 0, "\r\n");
         
     }
     
@@ -197,7 +197,7 @@ std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> comm, in
 
 std::vector<double> topo_cpd(std::vector<topology> &topologies) {
     
-    printf("generating cpd\r\n");
+    LOG(10, 0, 0, "generating cpd\r\n");
            
     double total_fitness = 0.0;
     double cumulative_probability = 0.0;
@@ -225,7 +225,7 @@ std::vector<double> topo_cpd(std::vector<topology> &topologies) {
 
 topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &topologies) {
     
-    printf("selecting topo parent\r\n");
+    LOG(10, 0, 0, "selecting topo parent\r\n");
     
     topology t;
     
@@ -249,12 +249,12 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
     
     for(int i = 0; i < config::topo_lambda; i++) {
 
-        printf("creating topo kids\r\n");
+        LOG(10, 0, 0, "creating topo kids\r\n");
 
         topology t1 = select_topo_parent(cpd, topologies);
         topology t2 = select_topo_parent(cpd, topologies);
         
-        printf("parents t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
+       LOG(8, 0, 0, "parents t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
         
         topology child;
         
@@ -274,10 +274,10 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                 if(i != j) {
                     
                     if(rand()%2 == 1) {
-                        printf("assigning child m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
+                        LOG(10, 0, 0, "assigning child m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
                         child_matrix[i][j] = m1[i][j];
                     } else {
-                        printf("assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
+                        LOG(10, 0, 0, "assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
                         child_matrix[i][j] = m1[i][j];
                     }
                     
@@ -289,7 +289,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                 
             }
             
-            printf("------\r\n");
+            LOG(10, 0, 0, "------\r\n");
             
         }
         

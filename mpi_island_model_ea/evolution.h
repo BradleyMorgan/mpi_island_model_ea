@@ -49,6 +49,10 @@ bool compare_topo_fitness(const topology &t1, const topology &t2) {
     
 }
 
+bool is_zero(topology t) {
+    return t.fitness == 0.0;
+}
+
 void select_survivors(island &isle, std::vector<individual> &children, int island_mu) {
 
     // truncation: add new children to the population, and then kill the weakest

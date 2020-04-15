@@ -61,13 +61,11 @@ void config::load(const char *input, int world_size, int world_rank) {
        getline(config_file, value, '\n');
        
        if(key != "") {
-           printf("%s => %s\r\n", key.c_str(), value.c_str());
+           //printf("%s => %s\r\n", key.c_str(), value.c_str());
            config::items[key] = value;
        }
        
     }
-    
-    printf("converting\r\n");
     
     config::runs = stoi(config::items["runs"]);
     config::evals = stoi(config::items["evals"]);
@@ -76,8 +74,6 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::topo_lambda = stoi(config::items["topo_lambda"]);
     config::topo_mu = stoi(config::items["topo_mu"]);
     config::mutation_rate = stod(config::items["mutation_rate"]);
-    
-    printf("converted\r\n");
     
     if(world_rank == 0) {
     
@@ -135,7 +131,7 @@ void config::load(const char *input, int world_size, int world_rank) {
         sprintf(config::topo_fname, "%s/%s_topo_%d_%ld.txt", config::stats_subpath, config::items["topo_file"].c_str(), world_size, time(0));
         config::topo_out = fopen(config::topo_fname, "w");
         
-        fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration\r\n");
+        fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration,average_topo_fitness, local_best_topo_fitness, global_best_topo_fitnes, average_local_best_topo_fitness, average_global_best_topo_fitness\r\n");
         
         fprintf(config::run_stats_out, "run,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_migration_time,total_gather_time,run_duration,init_duration,world_size,subpopulation_size\r\n");
         
