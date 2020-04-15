@@ -3,10 +3,10 @@ log_file:rastrigin
 stats_file:rastrigin
 topo_file:rastrigin
 seed:0
-runs:5
-evals:3000
-lambda:128
-mu:1296
+runs:30
+evals:10000
+lambda:256
+mu:5120
 topo_lambda:6
 topo_mu:100
 dim:10
