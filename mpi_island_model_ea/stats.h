@@ -63,6 +63,10 @@ void log_fn_eval_stats(std::vector<individual> &population, std::vector<topology
         eval_stats.global_best_fitness = population[0].fitness;
     }
     
+    if(topologies[0].fitness > 0) {
+        LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology\r\n", topologies[0].fitness);        
+    }
+    
     if(topologies[0].fitness > eval_stats.global_best_topo_fitness || eval_stats.global_best_topo_fitness == 0.0) {
         eval_stats.best_topology = topologies[0];
         eval_stats.average_global_best_topo_fitnesses.push_back(topologies[0].fitness);
