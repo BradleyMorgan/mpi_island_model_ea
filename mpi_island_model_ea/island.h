@@ -118,7 +118,7 @@ struct group {
     
     int node;
     
-    double fitness;
+    double fitness = 0.0;
     
     std::vector<int> senders;
     std::vector<int> receivers;
@@ -129,8 +129,8 @@ struct topology {
   
     int rounds = 0;
     
-    double fitness;
-    double round_fitness;
+    double fitness = 0.0;
+    double round_fitness = 0.0;
     double selection_distribution;
     
     std::vector<group> comm;

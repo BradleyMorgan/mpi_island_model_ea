@@ -293,7 +293,7 @@ int main(int argc, const char * argv[]) {
             double migrate_end = MPI_Wtime();
             double migrate_time = migrate_end - migrate_start;
             
-            LOG(1, 0, 0, "migrate start = %3.10f, migrate end = %3.10f, migrate time = %3.10f\r\n", migrate_start, migrate_end, migrate_time);
+            LOG(8, 0, 0, "migrate start = %3.10f, migrate end = %3.10f, migrate time = %3.10f\r\n", migrate_start, migrate_end, migrate_time);
             
             eval_stats.total_migrate_time += migrate_time;
             
