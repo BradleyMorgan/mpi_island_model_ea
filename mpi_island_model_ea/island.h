@@ -67,7 +67,7 @@ struct island {
         
     }
     
-    void receive_migrant(MPI_Comm comm) {
+    void receive_migrant(MPI_Comm &comm) {
         
         std::array<double, DIM> x;
         
@@ -75,14 +75,14 @@ struct island {
         
         for(int i=0; i<this->senders.size(); i++) {
             LOG(6, 0, 0, "island %d waiting for migrant from island %d ... \r\n", this->id, this->senders[i]);
-            MPI_Recv(&x, DIM, MPI_DOUBLE, this->senders[i], 0, MPI_COMM_WORLD, &migrant_status);
+            MPI_Recv(&x, DIM, MPI_DOUBLE, this->senders[i], 0, comm, &migrant_status);
             this->population[rand()%population.size()].input = x;
             LOG(6, 0, 0, "island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
         }
         
     }
     
-    void send_migrant(MPI_Comm comm) {
+    void send_migrant(MPI_Comm &comm) {
         
         for(int i=0; i<this->receivers.size(); i++) {
             LOG(6, 0, 0, "island %d sending migrant to island %d ... \r\n", this->id, this->receivers[i]);

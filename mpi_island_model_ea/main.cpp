@@ -108,7 +108,6 @@ int main(int argc, const char * argv[]) {
     for(int run=1; run<=config::runs; run++) {
     
         LOG(4, world_rank, 0, "**** RUN %d ****\r\n", run);
-        MPI_Barrier(MPI_COMM_WORLD);
         
         double run_start = MPI_Wtime();
 
@@ -126,7 +125,11 @@ int main(int argc, const char * argv[]) {
         
         island isle;
         isle.id = world_rank;
+        isle.senders.clear();
+        isle.receivers.clear();
+        isle.population.clear();
         isle.population.resize(subpopulation_size);
+        isle.cpd.clear();
         
         std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
         
@@ -159,22 +162,23 @@ int main(int argc, const char * argv[]) {
             
         }
 
-        //MPI_Comm tcomm = MPI_COMM_WORLD;
-
-        int procnum, proclen;
-        char procname[MPI_MAX_PROCESSOR_NAME];
-
-        MPI_Get_processor_name(procname, &proclen);
+        MPI_Comm tcomm = MPI_COMM_WORLD;
+        MPI_Comm_dup(MPI_COMM_WORLD, &tcomm);
         
-        GETCPU(procnum);
-        
-        LOG(6, 0, 0, "** Process %d in world size %d on core %d processor %s\r\n", world_rank, world_size, procnum, procname);
+//        int procnum, proclen;
+//        char procname[MPI_MAX_PROCESSOR_NAME];
+//
+//        MPI_Get_processor_name(procname, &proclen);
+//
+//        GETCPU(procnum);
+//
+//        LOG(6, 0, 0, "** Process %d in world size %d on core %d processor %s\r\n", world_rank, world_size, procnum, procname);
         
         // separate the single full population from the root process to subpopulations across all processes ...
         
         LOG(10, world_rank, 0, "scattering population ...\r\n");
         double scatter_start = MPI_Wtime();
-        MPI_Scatter(&population[0], subpopulation_size, individual_type, &isle.population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
+        MPI_Scatter(&population[0], subpopulation_size, individual_type, &isle.population[0], subpopulation_size, individual_type, 0, tcomm);
         double scatter_end = MPI_Wtime();
         double scatter_time = scatter_end - scatter_start;
         LOG(10, world_rank, 0, "population scattered...\r\n");
@@ -199,12 +203,12 @@ int main(int argc, const char * argv[]) {
                     rec_size = (int)topologies[t].comm[i].receivers.size();
                     
                     LOG(10, 0, 0, "sending %d senders to rank %d ...\r\n", send_size, i);
-                    MPI_Send(&send_size, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
-                    MPI_Send(&topologies[t].comm[i].senders[0], send_size, MPI_INT, i, 2, MPI_COMM_WORLD);
+                    MPI_Send(&send_size, 1, MPI_INT, i, 1, tcomm);
+                    MPI_Send(&topologies[t].comm[i].senders[0], send_size, MPI_INT, i, 2, tcomm);
                     
                     LOG(10, 0, 0, "sending %d receivers to rank %d ...\r\n", rec_size, i);
-                    MPI_Send(&rec_size, 1, MPI_INT, i, 3, MPI_COMM_WORLD);
-                    MPI_Send(&topologies[t].comm[i].receivers[0], rec_size, MPI_INT, i, 4, MPI_COMM_WORLD);
+                    MPI_Send(&rec_size, 1, MPI_INT, i, 3, tcomm);
+                    MPI_Send(&topologies[t].comm[i].receivers[0], rec_size, MPI_INT, i, 4, tcomm);
                     
                 }
                 
@@ -228,12 +232,12 @@ int main(int argc, const char * argv[]) {
                             rec_size = (int)it->comm[i].receivers.size();
                             
                             LOG(10, 0, 0, "sending %d child senders to rank %d ...\r\n", send_size, i);
-                            MPI_Send(&send_size, 1, MPI_INT, i, 5, MPI_COMM_WORLD);
-                            MPI_Send(&it->comm[i].senders[0], send_size, MPI_INT, i, 6, MPI_COMM_WORLD);
+                            MPI_Send(&send_size, 1, MPI_INT, i, 5, tcomm);
+                            MPI_Send(&it->comm[i].senders[0], send_size, MPI_INT, i, 6, tcomm);
                             
                             LOG(10, 0, 0, "sending %d child receivers to rank %d ...\r\n", rec_size, i);
-                            MPI_Send(&rec_size, 1, MPI_INT, i, 7, MPI_COMM_WORLD);
-                            MPI_Send(&it->comm[i].receivers[0], rec_size, MPI_INT, i, 8, MPI_COMM_WORLD);
+                            MPI_Send(&rec_size, 1, MPI_INT, i, 7, tcomm);
+                            MPI_Send(&it->comm[i].receivers[0], rec_size, MPI_INT, i, 8, tcomm);
                             
                         }
                         
@@ -243,36 +247,40 @@ int main(int argc, const char * argv[]) {
                 
             }
             
-            MPI_Recv(&send_size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&send_size, 1, MPI_INT, 0, 1, tcomm, MPI_STATUS_IGNORE);
+            isle.senders.clear();
             isle.senders.resize(send_size);
             
-            MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 2, tcomm, MPI_STATUS_IGNORE);
             LOG(10, 0, 0, "rank %d received %lu senders: ", world_rank, isle.senders.size());
             for(int i=0; i<isle.senders.size(); i++) { LOG(10, 0, 0, "%d ", isle.senders[i]); }
             LOG(10, 0, 0, "\r\n");
             
-            MPI_Recv(&rec_size, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&rec_size, 1, MPI_INT, 0, 3, tcomm, MPI_STATUS_IGNORE);
+            isle.receivers.clear();
             isle.receivers.resize(rec_size);
             
-            MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 4, tcomm, MPI_STATUS_IGNORE);
             LOG(10, 0, 0, "rank %d got %lu receivers: ", world_rank, isle.receivers.size());
             for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
             LOG(10, 0, 0, "\r\n");
             
-            if(eval != 1 &&  t == 0) {
+            if(eval != 1 && t == 0) {
                 
-                MPI_Recv(&send_size, 1, MPI_INT, 0, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(&send_size, 1, MPI_INT, 0, 5, tcomm, MPI_STATUS_IGNORE);
+                isle.senders.clear();
                 isle.senders.resize(send_size);
                 
-                MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 6, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 6, tcomm, MPI_STATUS_IGNORE);
                 LOG(10, 0, 0, "rank %d received %lu child senders: ", world_rank, isle.senders.size());
                 for(int i=0; i<isle.senders.size(); i++) { LOG(10, 0, 0, "%d ", isle.senders[i]); }
                 LOG(10, 0, 0, "\r\n");
                 
-                MPI_Recv(&rec_size, 1, MPI_INT, 0, 7, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(&rec_size, 1, MPI_INT, 0, 7, tcomm, MPI_STATUS_IGNORE);
+                isle.receivers.clear();
                 isle.receivers.resize(rec_size);
                 
-                MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 8, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 8, tcomm, MPI_STATUS_IGNORE);
                 LOG(10, 0, 0, "rank %d got %lu child receivers: ", world_rank, isle.receivers.size());
                 for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
                 LOG(10, 0, 0, "\r\n");
@@ -288,8 +296,8 @@ int main(int argc, const char * argv[]) {
             select_survivors(isle, children, config::mu/world_size);
 
             double migrate_start = MPI_Wtime();
-            isle.send_migrant(MPI_COMM_WORLD);
-            isle.receive_migrant(MPI_COMM_WORLD);
+            isle.send_migrant(tcomm);
+            isle.receive_migrant(tcomm);
             double migrate_end = MPI_Wtime();
             double migrate_time = migrate_end - migrate_start;
             
@@ -297,7 +305,7 @@ int main(int argc, const char * argv[]) {
             
             eval_stats.total_migrate_time += migrate_time;
             
-            MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, tcomm);
 
             LOG(5, world_rank, 0, "total migration time -> %2.10f\r\n", topologies[t].fitness);
             
@@ -314,7 +322,7 @@ int main(int argc, const char * argv[]) {
             
             LOG(10, 0, 0, "gathering population, subpopulation %d size %d ...\r\n", world_rank, subpopulation_size);
             double gather_start = MPI_Wtime();
-            MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
+            MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, tcomm);
             double gather_end = MPI_Wtime();
             double gather_time = gather_end - gather_start;
             LOG(10, world_rank, 0, "population gathered ...\r\n");

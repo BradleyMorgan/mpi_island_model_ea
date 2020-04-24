@@ -11,4 +11,4 @@ topo_lambda:20
 topo_mu:100
 dim:10
 mutation_rate:0.05
-loglevel:4
+loglevel:2
