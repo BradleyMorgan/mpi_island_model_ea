@@ -295,8 +295,12 @@ int main(int argc, const char * argv[]) {
             
             eval_stats.total_migrate_time += migrate_time;
             
+            MPI_Barrier(MPI_COMM_WORLD);
+            
             MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
+            LOG(5, world_rank, 0, "total migration time -> %2.10f\r\n", topologies[t].fitness);
+            
             topologies[t].rounds++;
             
             if(topologies[t].fitness >= 0.0) {
@@ -331,6 +335,10 @@ int main(int argc, const char * argv[]) {
                 
                 std::sort(topologies.begin(),topologies.end(), compare_topo_fitness);
                 std::reverse(topologies.begin(), topologies.end());
+                
+                if(topologies[0].fitness >= 0.0) {
+                    printf("topology 0 fit\r\n");
+                }
                 
                 log_fn_eval_stats(population, topologies, run, eval, eval_stats, run_stats);
                 
