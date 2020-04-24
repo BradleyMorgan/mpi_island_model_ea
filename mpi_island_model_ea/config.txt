@@ -7,7 +7,7 @@ runs:30
 evals:10000
 lambda:256
 mu:5120
-topo_lambda:6
+topo_lambda:20
 topo_mu:100
 dim:10
 mutation_rate:0.05

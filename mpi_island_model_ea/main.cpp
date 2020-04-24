@@ -208,7 +208,7 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(t == 0) {
+                if(eval != 1 && t == 0) {
                 
                     LOG(10, world_rank, 0, "adding children...\r\n");
                     std::vector<topology> children = topo_gen(topologies, world_size);
@@ -259,7 +259,7 @@ int main(int argc, const char * argv[]) {
             for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
             LOG(10, 0, 0, "\r\n");
             
-            if(t == 0) {
+            if(eval != 1 &&  t == 0) {
                 
                 MPI_Recv(&send_size, 1, MPI_INT, 0, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 isle.senders.resize(send_size);
@@ -297,8 +297,6 @@ int main(int argc, const char * argv[]) {
             
             eval_stats.total_migrate_time += migrate_time;
             
-            MPI_Barrier(MPI_COMM_WORLD);
-            
             MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
             LOG(5, world_rank, 0, "total migration time -> %2.10f\r\n", topologies[t].fitness);
@@ -307,11 +305,9 @@ int main(int argc, const char * argv[]) {
             
             if(topologies[t].fitness >= 0.0) {
                 topologies[t].fitness = topologies[t].fitness * -1;
-                topologies[t].round_fitness += (topologies[t].fitness * -1);
+                topologies[t].round_fitness += topologies[t].fitness;
             } else {
                 LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology %d\r\n", topologies[t].fitness, t);
-                topologies[t].fitness = topologies[t].fitness;
-                topologies[t].round_fitness += topologies[t].fitness;
             }
             
             LOG(10, world_rank, 0, "rank %d migrate time = %2.10f sending to topology %d of %lu size %lu fitness %2.10f rounds %d\r\n", world_rank, migrate_time, t, topologies.size(), topologies[t].comm.size(), topologies[t].fitness, topologies[t].rounds);

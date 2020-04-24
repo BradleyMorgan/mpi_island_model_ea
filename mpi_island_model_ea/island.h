@@ -210,6 +210,8 @@ std::vector<double> topo_cpd(std::vector<topology> &topologies) {
         
     }
     
+    std::reverse(topologies.begin(), topologies.end());
+    
     for(int i=0; i<topologies.size(); i++) {
 
         topologies[i].selection_distribution = (double)topologies[i].fitness / total_fitness;
@@ -225,7 +227,7 @@ std::vector<double> topo_cpd(std::vector<topology> &topologies) {
 
 topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &topologies) {
     
-    LOG(10, 0, 0, "selecting topo parent\r\n");
+    LOG(7, 0, 0, "selecting topo parent: ");
     
     topology t;
     
@@ -237,6 +239,8 @@ topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &top
     
     t = topologies[i];
     
+    LOG(7, 0, 0, "%d\r\n", i);
+    
     return t;
     
 }
@@ -244,6 +248,8 @@ topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &top
 std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size) {
     
     std::vector<double> cpd = topo_cpd(topologies);
+    
+    std::reverse(topologies.begin(), topologies.end());
     
     std::vector<topology> children;
     
