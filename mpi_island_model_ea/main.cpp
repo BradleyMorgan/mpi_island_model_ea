@@ -287,6 +287,8 @@ int main(int argc, const char * argv[]) {
                     
             }
             
+            MPI_Barrier(tcomm);
+            
             eval_stats.eval_start = std::clock();
         
             isle.calc_cpd();
