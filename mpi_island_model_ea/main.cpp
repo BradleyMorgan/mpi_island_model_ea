@@ -159,7 +159,7 @@ int main(int argc, const char * argv[]) {
             
         }
 
-        MPI_Comm tcomm = MPI_COMM_WORLD;
+        //MPI_Comm tcomm = MPI_COMM_WORLD;
 
         int procnum, proclen;
         char procname[MPI_MAX_PROCESSOR_NAME];
@@ -174,7 +174,7 @@ int main(int argc, const char * argv[]) {
         
         LOG(10, world_rank, 0, "scattering population ...\r\n");
         double scatter_start = MPI_Wtime();
-        MPI_Scatter(&population[0], subpopulation_size, individual_type, &isle.population[0], subpopulation_size, individual_type, 0, tcomm);
+        MPI_Scatter(&population[0], subpopulation_size, individual_type, &isle.population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
         double scatter_end = MPI_Wtime();
         double scatter_time = scatter_end - scatter_start;
         LOG(10, world_rank, 0, "population scattered...\r\n");
@@ -288,8 +288,8 @@ int main(int argc, const char * argv[]) {
             select_survivors(isle, children, config::mu/world_size);
 
             double migrate_start = MPI_Wtime();
-            isle.send_migrant(tcomm);
-            isle.receive_migrant(tcomm);
+            isle.send_migrant(MPI_COMM_WORLD);
+            isle.receive_migrant(MPI_COMM_WORLD);
             double migrate_end = MPI_Wtime();
             double migrate_time = migrate_end - migrate_start;
             
@@ -316,7 +316,7 @@ int main(int argc, const char * argv[]) {
             
             LOG(10, 0, 0, "gathering population, subpopulation %d size %d ...\r\n", world_rank, subpopulation_size);
             double gather_start = MPI_Wtime();
-            MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, tcomm);
+            MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, MPI_COMM_WORLD);
             double gather_end = MPI_Wtime();
             double gather_time = gather_end - gather_start;
             LOG(10, world_rank, 0, "population gathered ...\r\n");

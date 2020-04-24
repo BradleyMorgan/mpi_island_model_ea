@@ -67,7 +67,7 @@ struct island {
         
     }
     
-    void receive_migrant(MPI_Comm &comm) {
+    void receive_migrant(MPI_Comm comm) {
         
         std::array<double, DIM> x;
         
@@ -82,7 +82,7 @@ struct island {
         
     }
     
-    void send_migrant(MPI_Comm &comm) {
+    void send_migrant(MPI_Comm comm) {
         
         for(int i=0; i<this->receivers.size(); i++) {
             LOG(6, 0, 0, "island %d sending migrant to island %d ... \r\n", this->id, this->receivers[i]);
