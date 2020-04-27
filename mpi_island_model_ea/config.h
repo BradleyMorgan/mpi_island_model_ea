@@ -75,7 +75,7 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::topo_lambda = stoi(config::items["topo_lambda"]);
     config::topo_mu = stoi(config::items["topo_mu"]);
     config::mutation_rate = stod(config::items["mutation_rate"]);
-    config::mutation_rate = stod(config::items["sparsity"]);
+    config::sparsity = stod(config::items["sparsity"]);
     
     if(world_rank == 0) {
     
