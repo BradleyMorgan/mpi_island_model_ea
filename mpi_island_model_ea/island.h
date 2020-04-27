@@ -139,13 +139,15 @@ struct topology {
 
 std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     
+    LOG(10, 0, 0, "creating group...\r\n");
+    
     std::vector<group> comm;
     
     comm.resize(matrix.size());
     
     for(int i=0; i<matrix.size(); i++) {
         
-        std::vector<int> *receivers = new std::vector<int>();
+        //std::vector<int> *receivers = new std::vector<int>();
         
         for(int j=0; j<matrix[i].size(); j++) {
         
@@ -153,9 +155,10 @@ std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
             
             if(matrix[i][j] == 1) {
                 
-                receivers->push_back(j);
+                LOG(10, 0, 0, "adding receiver to %d and sender to %d\r\n", i, j);
+                //receivers->push_back(j);
                 
-                comm[i].receivers = *receivers;
+                comm[i].receivers.push_back(j);
                 comm[j].senders.push_back(i);
                 
             }
@@ -260,7 +263,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         topology t1 = select_topo_parent(cpd, topologies);
         topology t2 = select_topo_parent(cpd, topologies);
         
-       LOG(8, 0, 0, "parents t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
+        LOG(8, 0, 0, "parents t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
         
         topology child;
         
