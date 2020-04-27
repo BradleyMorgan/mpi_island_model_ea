@@ -302,23 +302,23 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
             
         }
         
-        if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
-            
-            for(int i=0; i<child_matrix.size(); i++) {
-                
-                for(int j=0; j<child_matrix[i].size(); j++) {
-                    
-                    if(rand()%2 == 1) {
-                     
-                        child_matrix[i][j] == 0 ? child_matrix[i][j] = 1 : child_matrix[i][j] = 0;
-                        
-                    }
-                    
-                }
-                
-            }
-            
-        }
+//        if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+//
+//            for(int i=0; i<child_matrix.size(); i++) {
+//
+//                for(int j=0; j<child_matrix[i].size(); j++) {
+//
+//                    if(rand()%2 == 1) {
+//
+//                        child_matrix[i][j] == 0 ? child_matrix[i][j] = 1 : child_matrix[i][j] = 0;
+//
+//                    }
+//
+//                }
+//
+//            }
+//
+//        }
         
         child.comm = create_group(child_matrix);
 
