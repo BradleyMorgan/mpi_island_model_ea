@@ -252,10 +252,8 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
     std::reverse(topologies.begin(), topologies.end());
     
     std::vector<topology> children;
-    children.clear();
-    children.resize(config::topo_lambda);
-    
-    for(int i = 0; i < config::topo_lambda; i++) {
+
+    for(int n = 0; n < config::topo_lambda; n++) {
 
         LOG(10, 0, 0, "creating topo kids\r\n");
 
@@ -321,9 +319,8 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         
         child.comm = create_group(child_matrix);
 
-        LOG(8, 0, 0, "child %d created from matrix with %lu senders and %lu receivers\r\n", i, child.comm[i].senders.size(), child.comm[i].receivers.size());
-        //children.push_back(child);
-        children[i] = child;
+        LOG(8, 0, 0, "child %d created from matrix with %lu senders and %lu receivers\r\n", n, child.comm[n].senders.size(), child.comm[n].receivers.size());
+        children.push_back(child);
 
     }
     
