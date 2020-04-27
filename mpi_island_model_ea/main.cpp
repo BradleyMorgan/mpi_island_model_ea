@@ -243,6 +243,8 @@ int main(int argc, const char * argv[]) {
                         
                     }
                     
+                    MPI_Barrier(tcomm);
+                    
                 }
                 
             }
@@ -267,6 +269,8 @@ int main(int argc, const char * argv[]) {
             
             if(eval != 1 && t == 0) {
                 
+                LOG(10, 0, 0, "rank %d awaiting topology...\r\n", world_rank);
+                
                 MPI_Recv(&send_size, 1, MPI_INT, 0, 5, tcomm, MPI_STATUS_IGNORE);
                 isle.senders.clear();
                 isle.senders.resize(send_size);
@@ -284,10 +288,10 @@ int main(int argc, const char * argv[]) {
                 LOG(10, 0, 0, "rank %d got %lu child receivers: ", world_rank, isle.receivers.size());
                 for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
                 LOG(10, 0, 0, "\r\n");
+                
+                MPI_Barrier(tcomm);
                     
             }
-            
-            MPI_Barrier(tcomm);
             
             eval_stats.eval_start = std::clock();
         
