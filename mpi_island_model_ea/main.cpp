@@ -47,7 +47,7 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
 
 std::vector<topology> initial_topo_population(std::vector<int> &ids) {
     
-    LOG(10, 0, 0, "initializing topology population for %lu islands\r\n", ids.size());
+    LOG(8, 0, 0, "initializing topology population for %lu islands\r\n", ids.size());
     std::vector<topology> population;
     
     for(int i=0; i<config::topo_mu; i++) {
@@ -60,7 +60,7 @@ std::vector<topology> initial_topo_population(std::vector<int> &ids) {
         
     }
     
-    LOG(10, 0, 0, "initialized population for %lu islands\r\n", ids.size());
+    LOG(8, 0, 0, "initialized population for %lu islands\r\n", ids.size());
     return population;
     
 }
@@ -197,10 +197,10 @@ int main(int argc, const char * argv[]) {
                 
                 for(int i=0; i<world_size; i++) {
                     
-                    LOG(10, 0, 0, "sending topology %d to %d ...\r\n", t, i);
-                    
                     send_size = (int)topologies[t].comm[i].senders.size();
                     rec_size = (int)topologies[t].comm[i].receivers.size();
+                    
+                    LOG(8, 0, 0, "sending topology %d (senders = %d, receivers = %d) to %d ...\r\n", t, send_size, rec_size, i);
                     
                     LOG(10, 0, 0, "sending %d senders to rank %d ...\r\n", send_size, i);
                     MPI_Send(&send_size, 1, MPI_INT, i, 1, tcomm);
@@ -226,10 +226,10 @@ int main(int argc, const char * argv[]) {
                         
                         for(int i=0; i<world_size; i++) {
                             
-                            LOG(10, 0, 0, "sending child topology %d to %d ...\r\n", t, i);
-                            
                             send_size = (int)it->comm[i].senders.size();
                             rec_size = (int)it->comm[i].receivers.size();
+                            
+                            LOG(8, 0, 0, "sending child topology %d (senders = %d, receivers = %d) to %d ...\r\n", t, send_size, rec_size, i);
                             
                             LOG(10, 0, 0, "sending %d child senders to rank %d ...\r\n", send_size, i);
                             MPI_Send(&send_size, 1, MPI_INT, i, 5, tcomm);
@@ -242,8 +242,6 @@ int main(int argc, const char * argv[]) {
                         }
                         
                     }
-                    
-                    MPI_Barrier(tcomm);
                     
                 }
                 
@@ -269,7 +267,7 @@ int main(int argc, const char * argv[]) {
             
             if(eval != 1 && t == 0) {
                 
-                LOG(10, 0, 0, "rank %d awaiting topology...\r\n", world_rank);
+                LOG(8, 0, 0, "rank %d awaiting topology...\r\n", world_rank);
                 
                 MPI_Recv(&send_size, 1, MPI_INT, 0, 5, tcomm, MPI_STATUS_IGNORE);
                 isle.senders.clear();
@@ -289,8 +287,8 @@ int main(int argc, const char * argv[]) {
                 for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
                 LOG(10, 0, 0, "\r\n");
                 
-                MPI_Barrier(tcomm);
-                    
+                LOG(8, 0, 0, "rank %d got topology (senders = %lu, receivers = %lu)\r\n", world_rank, isle.senders.size(), isle.receivers.size());
+                
             }
             
             eval_stats.eval_start = std::clock();
@@ -348,10 +346,6 @@ int main(int argc, const char * argv[]) {
                 std::sort(topologies.begin(),topologies.end(), compare_topo_fitness);
                 std::reverse(topologies.begin(), topologies.end());
                 
-                if(topologies[0].fitness >= 0.0) {
-                    printf("topology 0 fit\r\n");
-                }
-                
                 log_fn_eval_stats(population, topologies, run, eval, eval_stats, run_stats);
                 
             }
@@ -390,9 +384,9 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(eval%(config::topo_mu+config::topo_lambda) == 0) {
+                if(world_rank == 0 & eval%(config::topo_mu+config::topo_lambda) == 0) {
 
-                    LOG(10, world_rank, 0, "truncating ...\r\n");
+                    LOG(8, world_rank, 0, "truncating ...\r\n");
 
                     std::vector<topology>::iterator min = std::min_element(topologies.begin(), topologies.end(), compare_topo_fitness);
                     std::replace_if(topologies.begin(), topologies.end(), is_zero, *min);
