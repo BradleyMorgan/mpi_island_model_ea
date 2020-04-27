@@ -351,6 +351,8 @@ int main(int argc, const char * argv[]) {
                 
             }
             
+            MPI_Barrier(tcomm);
+            
             if (world_rank == 0) {
                 
                 LOG(10, 0, 0, "run %d eval %d topology %d fitness = %2.10f (round %2.10f)\r\n", run, eval, t, topologies[t].fitness, topologies[t].round_fitness);
@@ -384,8 +386,6 @@ int main(int argc, const char * argv[]) {
                     }
                     
                 }
-                
-                MPI_Barrier(tcomm);
                 
                 if(world_rank == 0 & eval%(config::topo_mu+config::topo_lambda) == 0) {
 
