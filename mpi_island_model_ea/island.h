@@ -173,7 +173,7 @@ std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     
 }
 
-std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> comm, int world_size) {
+std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> &comm, int world_size) {
     
     std::vector<std::vector<int>> matrix;
     matrix.resize(world_size);
