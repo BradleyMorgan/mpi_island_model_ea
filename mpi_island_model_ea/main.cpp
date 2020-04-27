@@ -180,10 +180,10 @@ int main(int argc, const char * argv[]) {
         
         for(int eval=1; eval<=config::evals; eval++) {
             
-            //MPI_Barrier(tcomm);
-            
             int t = (eval-1)%(config::topo_mu);
         
+            MPI_Barrier(tcomm);
+            
             if(world_rank == 0) {
         
                 LOG(10, world_rank, 0, "T = (%d)mod(%d) = %d\r\n", eval-1, config::topo_mu, t);
