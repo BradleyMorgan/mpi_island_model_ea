@@ -213,7 +213,7 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
         
         for(int j=0; j<world_size; j++) {
             
-            if(prob_true(0.35) && i != j) {
+            if(prob_true(config::sparsity) && i != j) {
                 matrix[i][j] = 1;
             } else {
                 matrix[i][j] = 0;
