@@ -198,6 +198,8 @@ int main(int argc, const char * argv[]) {
                     
                     std::vector<topology>::iterator it;
                     
+                    int count = 0;
+                    
                     for(it = children.begin(); it != children.end(); ++it) {
                         
                         for(int i=0; i<world_size; i++) {
@@ -205,7 +207,7 @@ int main(int argc, const char * argv[]) {
                             send_size = (int)it->comm[i].senders.size();
                             rec_size = (int)it->comm[i].receivers.size();
                             
-                            LOG(8, 0, 0, "sending child topology %d (senders = %d, receivers = %d) to %d ...\r\n", t, send_size, rec_size, i);
+                            LOG(8, 0, 0, "sending child topology %d (senders = %d, receivers = %d) to %d ...\r\n", count, send_size, rec_size, i);
                             
                             LOG(10, 0, 0, "sending %d child senders to rank %d ...\r\n", send_size, i);
                             MPI_Send(&send_size, 1, MPI_INT, i, 5, tcomm);
@@ -216,6 +218,8 @@ int main(int argc, const char * argv[]) {
                             MPI_Send(&it->comm[i].receivers[0], rec_size, MPI_INT, i, 8, tcomm);
                             
                         }
+                        
+                        count++;
                         
                     }
                     
@@ -380,6 +384,8 @@ int main(int argc, const char * argv[]) {
                     }
                     
                 }
+                
+                MPI_Barrier(tcomm);
                 
                 if(world_rank == 0 & eval%(config::topo_mu+config::topo_lambda) == 0) {
 
