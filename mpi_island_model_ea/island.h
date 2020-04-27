@@ -137,7 +137,7 @@ struct topology {
     
 };
 
-std::vector<group> create_group(std::vector<std::vector<int>> matrix) {
+std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     
     std::vector<group> comm;
     
@@ -252,6 +252,8 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
     std::reverse(topologies.begin(), topologies.end());
     
     std::vector<topology> children;
+    children.clear();
+    children.resize(config::topo_lambda);
     
     for(int i = 0; i < config::topo_lambda; i++) {
 
@@ -319,6 +321,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         
         child.comm = create_group(child_matrix);
 
+        LOG(8, 0, 0, "child %d created from matrix with %lu senders and %lu receivers\r\n", i, child.comm[i].senders.size(), child.comm[i].receivers.size());
         children.push_back(child);
 
     }
