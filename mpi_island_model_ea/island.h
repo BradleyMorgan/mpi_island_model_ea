@@ -302,23 +302,23 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
             
         }
         
-//        if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
-//
-//            for(int i=0; i<child_matrix.size(); i++) {
-//
-//                for(int j=0; j<child_matrix[i].size(); j++) {
-//
-//                    if(rand()%2 == 1) {
-//
-//                        child_matrix[i][j] == 0 ? child_matrix[i][j] = 1 : child_matrix[i][j] = 0;
-//
-//                    }
-//
-//                }
-//
-//            }
-//
-//        }
+        if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+
+            for(int i=0; i<child_matrix.size(); i++) {
+
+                for(int j=0; j<child_matrix[i].size(); j++) {
+
+                    if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+
+                        child_matrix[i][j] == 0 ? child_matrix[i][j] = 1 : child_matrix[i][j] = 0;
+
+                    }
+
+                }
+
+            }
+
+        }
         
         child.comm = create_group(child_matrix);
 
@@ -333,7 +333,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
 
 void add_neighbors(int node, int size, int world_size, std::vector<group> &topology) {
     
-    LOG(10, 0, 0, "entered add_neighbors with size %d for node %d...\r\n", size, node);
+    LOG(6, 0, 0, "entered add_neighbors with size %d for node %d...\r\n", size, node);
     
     if(size > 0) {
         
@@ -373,7 +373,6 @@ void add_neighbors(int node, int size, int world_size, std::vector<group> &topol
             int rnd_source = node;
             
             while(rnd_source == node || std::find(topology[node].senders.begin(), topology[node].senders.end(), rnd_source) != topology[node].senders.end()) {
-                //LOG(10, "finding random node...\r\n");
                 rnd_source = rand()%topology.size();
             }
             
@@ -391,7 +390,6 @@ void add_neighbors(int node, int size, int world_size, std::vector<group> &topol
             int rnd_target = node;
             
             while(rnd_target == node || std::find(topology[node].receivers.begin(), topology[node].receivers.end(), rnd_target) != topology[node].receivers.end()) {
-                //LOG(10, "finding random node...\r\n");
                 rnd_target = rand()%topology.size();
             }
             
@@ -422,7 +420,7 @@ void add_neighbors(int node, int size, int world_size, std::vector<group> &topol
             }
         }
         
-        LOG(10, 0, 0, "returning from add_neighbors...\r\n");
+        LOG(6, 0, 0, "returning from add_neighbors ...\r\n");
         
         return;
         
