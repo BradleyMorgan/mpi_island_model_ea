@@ -162,7 +162,7 @@ int main(int argc, const char * argv[]) {
             
         }
 
-        MPI_Comm tcomm = MPI_COMM_WORLD;
+        MPI_Comm tcomm;
         MPI_Comm_dup(MPI_COMM_WORLD, &tcomm);
         
 //        int procnum, proclen;
@@ -265,6 +265,8 @@ int main(int argc, const char * argv[]) {
             for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
             LOG(10, 0, 0, "\r\n");
             
+            MPI_Barrier(tcomm);
+            
             if(eval != 1 && t == 0) {
                 
                 LOG(8, 0, 0, "rank %d awaiting topology...\r\n", world_rank);
@@ -288,6 +290,8 @@ int main(int argc, const char * argv[]) {
                 LOG(10, 0, 0, "\r\n");
                 
                 LOG(8, 0, 0, "rank %d got topology (senders = %lu, receivers = %lu)\r\n", world_rank, isle.senders.size(), isle.receivers.size());
+                
+                MPI_Barrier(tcomm);
                 
             }
             
