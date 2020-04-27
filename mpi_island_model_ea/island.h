@@ -322,7 +322,8 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         child.comm = create_group(child_matrix);
 
         LOG(8, 0, 0, "child %d created from matrix with %lu senders and %lu receivers\r\n", i, child.comm[i].senders.size(), child.comm[i].receivers.size());
-        children.push_back(child);
+        //children.push_back(child);
+        children[i] = child;
 
     }
     
