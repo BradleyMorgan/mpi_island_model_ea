@@ -180,6 +180,8 @@ int main(int argc, const char * argv[]) {
         
         for(int eval=1; eval<=config::evals; eval++) {
             
+            //MPI_Barrier(tcomm);
+            
             int t = (eval-1)%(config::topo_mu);
         
             if(world_rank == 0) {
@@ -263,8 +265,6 @@ int main(int argc, const char * argv[]) {
                 LOG(10, 0, 0, "\r\n");
                 
                 LOG(8, 0, 0, "rank %d got topology (senders = %lu, receivers = %lu)\r\n", world_rank, isle.senders.size(), isle.receivers.size());
-                
-                MPI_Barrier(tcomm);
                 
             } else {
                 
