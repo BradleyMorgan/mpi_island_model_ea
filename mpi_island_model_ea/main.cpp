@@ -165,6 +165,15 @@ int main(int argc, const char * argv[]) {
         MPI_Comm tcomm;
         MPI_Comm_dup(MPI_COMM_WORLD, &tcomm);
         
+//        int procnum, proclen;
+//        char procname[MPI_MAX_PROCESSOR_NAME];
+//
+//        MPI_Get_processor_name(procname, &proclen);
+//
+//        GETCPU(procnum);
+//
+//        LOG(6, 0, 0, "** Process %d in world size %d on core %d processor %s\r\n", world_rank, world_size, procnum, procname);
+        
         // separate the single full population from the root process to subpopulations across all processes ...
         
         LOG(10, world_rank, 0, "scattering population ...\r\n");
@@ -182,11 +191,26 @@ int main(int argc, const char * argv[]) {
             
             int t = (eval-1)%(config::topo_mu);
         
-            MPI_Barrier(tcomm);
-            
             if(world_rank == 0) {
         
                 LOG(10, world_rank, 0, "T = (%d)mod(%d) = %d\r\n", eval-1, config::topo_mu, t);
+                
+                for(int i=0; i<world_size; i++) {
+                    
+                    send_size = (int)topologies[t].comm[i].senders.size();
+                    rec_size = (int)topologies[t].comm[i].receivers.size();
+                    
+                    LOG(8, 0, 0, "sending topology %d (senders = %d, receivers = %d) to %d ...\r\n", t, send_size, rec_size, i);
+                    
+                    LOG(10, 0, 0, "sending %d senders to rank %d ...\r\n", send_size, i);
+                    MPI_Send(&send_size, 1, MPI_INT, i, 1, tcomm);
+                    MPI_Send(&topologies[t].comm[i].senders[0], send_size, MPI_INT, i, 2, tcomm);
+                    
+                    LOG(10, 0, 0, "sending %d receivers to rank %d ...\r\n", rec_size, i);
+                    MPI_Send(&rec_size, 1, MPI_INT, i, 3, tcomm);
+                    MPI_Send(&topologies[t].comm[i].receivers[0], rec_size, MPI_INT, i, 4, tcomm);
+                    
+                }
                 
                 if(eval != 1 && t == 0) {
                 
@@ -198,8 +222,6 @@ int main(int argc, const char * argv[]) {
                     
                     std::vector<topology>::iterator it;
                     
-                    int count = 0;
-                    
                     for(it = children.begin(); it != children.end(); ++it) {
                         
                         for(int i=0; i<world_size; i++) {
@@ -207,7 +229,7 @@ int main(int argc, const char * argv[]) {
                             send_size = (int)it->comm[i].senders.size();
                             rec_size = (int)it->comm[i].receivers.size();
                             
-                            LOG(8, 0, 0, "sending child topology %d (senders = %d, receivers = %d) to %d ...\r\n", count, send_size, rec_size, i);
+                            LOG(8, 0, 0, "sending child topology %d (senders = %d, receivers = %d) to %d ...\r\n", t, send_size, rec_size, i);
                             
                             LOG(10, 0, 0, "sending %d child senders to rank %d ...\r\n", send_size, i);
                             MPI_Send(&send_size, 1, MPI_INT, i, 5, tcomm);
@@ -219,34 +241,29 @@ int main(int argc, const char * argv[]) {
                             
                         }
                         
-                        count++;
-                        
-                    }
-                    
-                } else {
-                    
-                    for(int i=0; i<world_size; i++) {
-                        
-                        send_size = (int)topologies[t].comm[i].senders.size();
-                        rec_size = (int)topologies[t].comm[i].receivers.size();
-                        
-                        LOG(8, 0, 0, "sending topology %d (senders = %d, receivers = %d) to %d ...\r\n", t, send_size, rec_size, i);
-                        
-                        LOG(10, 0, 0, "sending %d senders to rank %d ...\r\n", send_size, i);
-                        MPI_Send(&send_size, 1, MPI_INT, i, 1, tcomm);
-                        MPI_Send(&topologies[t].comm[i].senders[0], send_size, MPI_INT, i, 2, tcomm);
-                        
-                        LOG(10, 0, 0, "sending %d receivers to rank %d ...\r\n", rec_size, i);
-                        MPI_Send(&rec_size, 1, MPI_INT, i, 3, tcomm);
-                        MPI_Send(&topologies[t].comm[i].receivers[0], rec_size, MPI_INT, i, 4, tcomm);
-                        
                     }
                     
                 }
                 
             }
             
-            MPI_Barrier(tcomm);
+            MPI_Recv(&send_size, 1, MPI_INT, 0, 1, tcomm, MPI_STATUS_IGNORE);
+            isle.senders.clear();
+            isle.senders.resize(send_size);
+            
+            MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 2, tcomm, MPI_STATUS_IGNORE);
+            LOG(10, 0, 0, "rank %d received %lu senders: ", world_rank, isle.senders.size());
+            for(int i=0; i<isle.senders.size(); i++) { LOG(10, 0, 0, "%d ", isle.senders[i]); }
+            LOG(10, 0, 0, "\r\n");
+            
+            MPI_Recv(&rec_size, 1, MPI_INT, 0, 3, tcomm, MPI_STATUS_IGNORE);
+            isle.receivers.clear();
+            isle.receivers.resize(rec_size);
+            
+            MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 4, tcomm, MPI_STATUS_IGNORE);
+            LOG(10, 0, 0, "rank %d got %lu receivers: ", world_rank, isle.receivers.size());
+            for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
+            LOG(10, 0, 0, "\r\n");
             
             if(eval != 1 && t == 0) {
                 
@@ -272,30 +289,8 @@ int main(int argc, const char * argv[]) {
                 
                 LOG(8, 0, 0, "rank %d got topology (senders = %lu, receivers = %lu)\r\n", world_rank, isle.senders.size(), isle.receivers.size());
                 
-            } else {
-                
-                MPI_Recv(&send_size, 1, MPI_INT, 0, 1, tcomm, MPI_STATUS_IGNORE);
-                isle.senders.clear();
-                isle.senders.resize(send_size);
-                
-                MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 2, tcomm, MPI_STATUS_IGNORE);
-                LOG(10, 0, 0, "rank %d received %lu senders: ", world_rank, isle.senders.size());
-                for(int i=0; i<isle.senders.size(); i++) { LOG(10, 0, 0, "%d ", isle.senders[i]); }
-                LOG(10, 0, 0, "\r\n");
-                
-                MPI_Recv(&rec_size, 1, MPI_INT, 0, 3, tcomm, MPI_STATUS_IGNORE);
-                isle.receivers.clear();
-                isle.receivers.resize(rec_size);
-                
-                MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, 4, tcomm, MPI_STATUS_IGNORE);
-                LOG(10, 0, 0, "rank %d got %lu receivers: ", world_rank, isle.receivers.size());
-                for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
-                LOG(10, 0, 0, "\r\n");
-                
             }
             
-            MPI_Barrier(tcomm);
-    
             eval_stats.eval_start = std::clock();
         
             isle.calc_cpd();
@@ -316,8 +311,6 @@ int main(int argc, const char * argv[]) {
             
             MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, tcomm);
 
-            MPI_Barrier(tcomm);
-            
             LOG(5, world_rank, 0, "total migration time -> %2.10f\r\n", topologies[t].fitness);
             
             topologies[t].rounds++;
@@ -340,8 +333,6 @@ int main(int argc, const char * argv[]) {
             
             eval_stats.total_gather_time += gather_time;
             
-            MPI_Barrier(tcomm);
-            
             if(world_rank == 0 && eval % 100 == 0) {
             
                 LOG(8, 0, 0, "population size %lu, member = %2.10f\r\n", population.size(), population[population.size()-1].fitness);
@@ -358,8 +349,6 @@ int main(int argc, const char * argv[]) {
                 log_fn_eval_stats(population, topologies, run, eval, eval_stats, run_stats);
                 
             }
-            
-            MPI_Barrier(tcomm);
             
             if (world_rank == 0) {
                 
@@ -378,16 +367,16 @@ int main(int argc, const char * argv[]) {
                       for(int j=0; j<island_ids.size(); j++) {
                           
                           if(std::find(topologies[t].comm[i].receivers.begin(), topologies[t].comm[i].receivers.end(), j) != topologies[t].comm[i].receivers.end()) {
-                              LOG(10, 0, 0, "1, ");
+                              LOG(8, 0, 0, "1, ");
                               fprintf(config::topo_out,"1, ");
                           } else {
-                              LOG(10, 0, 0, "0, ");
+                              LOG(8, 0, 0, "0, ");
                               fprintf(config::topo_out,"0, ");
                           }
                           
                       }
                       
-                      LOG(10, 0, 0, "\r\n");
+                      LOG(8, 0, 0, "\r\n");
                       fprintf(config::topo_out, "\r\n");
                       fflush(config::topo_out);
                       
@@ -412,8 +401,6 @@ int main(int argc, const char * argv[]) {
                 }
                 
             }
-            
-            MPI_Barrier(tcomm);
                 
         }
         
