@@ -246,6 +246,8 @@ int main(int argc, const char * argv[]) {
                 
             }
             
+            MPI_Barrier(tcomm);
+            
             if(eval != 1 && t == 0) {
                 
                 LOG(8, 0, 0, "rank %d awaiting topology...\r\n", world_rank);
@@ -292,6 +294,8 @@ int main(int argc, const char * argv[]) {
                 
             }
             
+            MPI_Barrier(tcomm);
+    
             eval_stats.eval_start = std::clock();
         
             isle.calc_cpd();
@@ -312,6 +316,8 @@ int main(int argc, const char * argv[]) {
             
             MPI_Reduce(&migrate_time, &topologies[t].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, tcomm);
 
+            MPI_Barrier(tcomm);
+            
             LOG(5, world_rank, 0, "total migration time -> %2.10f\r\n", topologies[t].fitness);
             
             topologies[t].rounds++;
@@ -333,6 +339,8 @@ int main(int argc, const char * argv[]) {
             LOG(10, world_rank, 0, "population gathered ...\r\n");
             
             eval_stats.total_gather_time += gather_time;
+            
+            MPI_Barrier(tcomm);
             
             if(world_rank == 0 && eval % 100 == 0) {
             
@@ -379,7 +387,7 @@ int main(int argc, const char * argv[]) {
                           
                       }
                       
-                      LOG(8, 0, 0, "\r\n");
+                      LOG(10, 0, 0, "\r\n");
                       fprintf(config::topo_out, "\r\n");
                       fflush(config::topo_out);
                       
@@ -404,6 +412,8 @@ int main(int argc, const char * argv[]) {
                 }
                 
             }
+            
+            MPI_Barrier(tcomm);
                 
         }
         
