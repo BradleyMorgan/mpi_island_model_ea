@@ -472,10 +472,8 @@ std::vector<group> create_dyn_topology2(std::vector<int> ids) {
     
     std::vector<group> topology;
     
-    for(int i=0; i<ids.size(); i++) {
-        std::vector<std::vector<int>> matrix = create_dyn_adjaceny_matrix((int)ids.size());
-        topology = create_group(matrix);
-    }
+    std::vector<std::vector<int>> matrix = create_dyn_adjaceny_matrix((int)ids.size());
+    topology = create_group(matrix);
     
     return topology;
     
