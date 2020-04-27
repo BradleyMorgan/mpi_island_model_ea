@@ -74,10 +74,10 @@ struct island {
         MPI_Status migrant_status;
         
         for(int i=0; i<this->senders.size(); i++) {
-            LOG(6, 0, 0, "island %d waiting for migrant from island %d ... \r\n", this->id, this->senders[i]);
+            LOG(10, 0, 0, "island %d waiting for migrant from island %d ... \r\n", this->id, this->senders[i]);
             MPI_Recv(&x, DIM, MPI_DOUBLE, this->senders[i], 0, comm, &migrant_status);
             this->population[rand()%population.size()].input = x;
-            LOG(6, 0, 0, "island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
+            LOG(10, 0, 0, "island %d received migrant from island %d: [%f,%f] with status %d\r\n", this->id, migrant_status.MPI_SOURCE, this->population[0].input[0], this->population[0].input[0], migrant_status.MPI_ERROR);
         }
         
     }
@@ -85,9 +85,9 @@ struct island {
     void send_migrant(MPI_Comm &comm) {
         
         for(int i=0; i<this->receivers.size(); i++) {
-            LOG(6, 0, 0, "island %d sending migrant to island %d ... \r\n", this->id, this->receivers[i]);
+            LOG(10, 0, 0, "island %d sending migrant to island %d ... \r\n", this->id, this->receivers[i]);
             MPI_Send(&this->population[i].input, DIM, MPI_DOUBLE, this->receivers[i], 0, comm);
-            LOG(6, 0, 0, "island %d sent migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[i], this->population[i].input[0], this->population[i].input[1]);
+            LOG(10, 0, 0, "island %d sent migrant to island %d: [%f,%f]\r\n", this->id, this->receivers[i], this->population[i].input[0], this->population[i].input[1]);
         }
                 
     }

@@ -364,10 +364,10 @@ int main(int argc, const char * argv[]) {
                       for(int j=0; j<island_ids.size(); j++) {
                           
                           if(std::find(topologies[t].comm[i].receivers.begin(), topologies[t].comm[i].receivers.end(), j) != topologies[t].comm[i].receivers.end()) {
-                              LOG(8, 0, 0, "1, ");
+                              LOG(10, 0, 0, "1, ");
                               fprintf(config::topo_out,"1, ");
                           } else {
-                              LOG(8, 0, 0, "0, ");
+                              LOG(10, 0, 0, "0, ");
                               fprintf(config::topo_out,"0, ");
                           }
                           
