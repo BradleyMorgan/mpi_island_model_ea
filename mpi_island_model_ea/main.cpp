@@ -55,7 +55,7 @@ std::vector<topology> initial_topo_population(std::vector<int> &ids) {
         topology t;
         
         LOG(10, 0, 0, "adding topology %d\r\n", i);
-        t.comm = create_dyn_topology(ids);
+        t.comm = create_dyn_topology2(ids);
         population.push_back(t);
         
     }
@@ -148,6 +148,8 @@ int main(int argc, const char * argv[]) {
         
         if(world_rank == 0) {
         
+            create_dyn_adjaceny_matrix(world_size);
+            
             population = initial_population(offsets);
             topologies = initial_topo_population(island_ids);
             

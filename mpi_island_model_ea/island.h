@@ -198,6 +198,35 @@ std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> &comm, i
     
 }
 
+bool prob_true(double p){
+    return rand()/(RAND_MAX+1.0) < p;
+}
+
+std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
+    
+    std::vector<std::vector<int>> matrix;
+    matrix.resize(world_size);
+
+    for(int i=0; i<world_size; i++) {
+
+        matrix[i].resize(world_size);
+        
+        for(int j=0; j<world_size; j++) {
+            
+            if(prob_true(0.35) && i != j) {
+                matrix[i][j] = 1;
+            } else {
+                matrix[i][j] = 0;
+            }
+            
+        }
+        
+    }
+    
+    return matrix;
+    
+}
+
 std::vector<double> topo_cpd(std::vector<topology> &topologies) {
     
     LOG(10, 0, 0, "generating cpd\r\n");
@@ -434,6 +463,19 @@ std::vector<group> create_dyn_topology(std::vector<int> ids) {
     topology.resize(ids.size());
     
     add_neighbors(0, (int)ids.size(), (int)ids.size(), topology);
+    
+    return topology;
+    
+}
+
+std::vector<group> create_dyn_topology2(std::vector<int> ids) {
+    
+    std::vector<group> topology;
+    
+    for(int i=0; i<ids.size(); i++) {
+        std::vector<std::vector<int>> matrix = create_dyn_adjaceny_matrix((int)ids.size());
+        topology = create_group(matrix);
+    }
     
     return topology;
     
