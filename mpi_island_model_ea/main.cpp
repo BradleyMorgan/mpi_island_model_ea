@@ -353,7 +353,7 @@ int main(int argc, const char * argv[]) {
 
                 eval_stats.topo_migrate_time = 0.0;
                 
-                if(topologies[t].fitness <= eval_stats.best_topology.fitness) {
+                if(topologies[t].fitness >= eval_stats.best_topology.fitness) {
                     
                     eval_stats.best_topology = topologies[t];
                     
