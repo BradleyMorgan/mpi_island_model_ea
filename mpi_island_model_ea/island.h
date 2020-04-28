@@ -296,7 +296,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         
         topology child;
         
-        child.fitness = (t1.fitness + t2.fitness) / 2;
+        child.fitness = t1.fitness + t2.fitness;
         std::vector<std::vector<int>> m1 = create_adjaceny_matrix(t1.comm, world_size);
         std::vector<std::vector<int>> m2 = create_adjaceny_matrix(t2.comm, world_size);
         
@@ -337,7 +337,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
 
                 for(int j=0; j<child_matrix[i].size(); j++) {
 
-                    if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+                    if(rand()/(RAND_MAX+1.0) < config::sparsity) {
 
                         child_matrix[i][j] == 0 ? child_matrix[i][j] = 1 : child_matrix[i][j] = 0;
 

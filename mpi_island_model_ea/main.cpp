@@ -388,6 +388,8 @@ int main(int argc, const char * argv[]) {
                     std::vector<topology>::iterator min = std::min_element(topologies.begin(), topologies.end(), compare_topo_fitness);
                     std::replace_if(topologies.begin(), topologies.end(), is_zero, *min);
                     
+                    LOG(6, world_rank, 0, "replacing 0 fit with %2.10f\r\n", min->fitness);
+                    
                     std::sort(topologies.begin(),topologies.end(), compare_topo_fitness);
                     std::reverse(topologies.begin(), topologies.end());
                     
