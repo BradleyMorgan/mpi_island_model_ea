@@ -219,7 +219,7 @@ int main(int argc, const char * argv[]) {
                         
                     }
                     
-                } else {
+                } else if(t == 0) {
                     
                     for(int i=0; i<world_size; i++) {
                         
@@ -266,7 +266,7 @@ int main(int argc, const char * argv[]) {
                 
                 LOG(8, 0, 0, "rank %d got topology (senders = %lu, receivers = %lu)\r\n", world_rank, isle.senders.size(), isle.receivers.size());
                 
-            } else {
+            } else if(t == 0) { 
     
                 MPI_Recv(&send_size, 1, MPI_INT, 0, 1, tcomm, MPI_STATUS_IGNORE);
                 isle.senders.clear();
