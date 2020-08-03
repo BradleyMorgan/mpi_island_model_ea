@@ -43,7 +43,7 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
     
 }
 
-// populate an initial population with random inputs ...
+// populate an initial population of topologies ...
 
 std::vector<topology> initial_topo_population(std::vector<int> &ids) {
     
@@ -55,12 +55,13 @@ std::vector<topology> initial_topo_population(std::vector<int> &ids) {
         topology t;
         
         LOG(10, 0, 0, "adding topology %d\r\n", i);
-        t.comm = create_dyn_topology2(ids);
+        t.comm = create_dyn_topology(ids);
         population.push_back(t);
         
     }
     
-    LOG(8, 0, 0, "initialized population for %lu islands\r\n", ids.size());
+    LOG(8, 0, 0, "initialized topology population for %lu islands\r\n", ids.size());
+    
     return population;
     
 }
@@ -107,6 +108,8 @@ int main(int argc, const char * argv[]) {
     
     for(int run=1; run<=config::runs; run++) {
     
+        // start of experimental run
+        
         LOG(4, world_rank, 0, "**** RUN %d ****\r\n", run);
         
         double run_start = MPI_Wtime();
@@ -147,8 +150,8 @@ int main(int argc, const char * argv[]) {
         int rec_size = 0;
         
         if(world_rank == 0) {
-        
-            create_dyn_adjaceny_matrix(world_size);
+            
+            // create two populations, one for the objective function and one for the island topologies
             
             population = initial_population(offsets);
             topologies = initial_topo_population(island_ids);

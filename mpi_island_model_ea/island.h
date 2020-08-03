@@ -67,6 +67,8 @@ struct island {
         
     }
     
+    // create a receive channel for every island in this island's senders list ...
+    
     void receive_migrant(MPI_Comm &comm) {
         
         std::array<double, DIM> x;
@@ -81,6 +83,8 @@ struct island {
         }
         
     }
+    
+    // create a send channel for every island in this island's receivers list ...
     
     void send_migrant(MPI_Comm &comm) {
         
@@ -102,17 +106,7 @@ struct island {
     
 };
 
-void create_topology(island &isle, int world_size) {
-
-    int next = isle.id+1 < world_size ? isle.id+1 : 0;
-    int prev = isle.id-1 < 0 ? (int)world_size-1 : isle.id-1;
-    
-    isle.receivers.push_back(next);
-    isle.senders.push_back(prev);
-    
-    LOG(8, 0, 0, "%d -> %d -> %d\r\n", prev, isle.id, next);
-    
-}
+// struct to hold a node's (or island's) senders and receivers
 
 struct group {
     
@@ -124,6 +118,8 @@ struct group {
     std::vector<int> receivers;
     
 };
+
+// struct to hold the full island topology using a vector of the individual group objects
 
 struct topology {
   
@@ -137,6 +133,9 @@ struct topology {
     
 };
 
+// from a provided adjacency matrix, create sender and receiver arrays for
+// each island for easier use with MPI send and receive ...
+
 std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     
     LOG(10, 0, 0, "creating group...\r\n");
@@ -145,21 +144,21 @@ std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     
     comm.resize(matrix.size());
     
-    for(int i=0; i<matrix.size(); i++) {
+    // iterate through the adjacency matrix and assign any marked channels
+    // to corresponding island sender or receiver array ...
+    
+    for(int i=0; i<matrix.size(); i++) {  // matrix row
         
-        //std::vector<int> *receivers = new std::vector<int>();
-        
-        for(int j=0; j<matrix[i].size(); j++) {
+        for(int j=0; j<matrix[i].size(); j++) { // matrix column
         
             LOG(10, 0, 0, "%d ", matrix[i][j]);
             
-            if(matrix[i][j] == 1) {
+            if(matrix[i][j] == 1) { // i sends to j ...
                 
-                LOG(10, 0, 0, "adding receiver to %d and sender to %d\r\n", i, j);
-                //receivers->push_back(j);
+                LOG(10, 0, 0, "adding receiver %d to %d and sender %d to %d\r\n", j, i, i, j);
                 
-                comm[i].receivers.push_back(j);
-                comm[j].senders.push_back(i);
+                comm[i].receivers.push_back(j); // add island j to island i receivers list
+                comm[j].senders.push_back(i); // add island i to island j senders list
                 
             }
             
@@ -173,20 +172,39 @@ std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     
 }
 
+// with a provided vector of topology groups (which holds an island's senders and receivers),
+// create an adjacency matrix of size world_size*world_size, populating the coordinate
+// index with 1 whenever a receiver is found ...
+//
+//    1  2  3  4
+// 1 [0][1][0][0]  ->  1 sends to 2
+// 2 [0][0][1][0]  ->  2 sends to 3
+// 3 [0][0][0][0]  ->  3 sends to nobody
+// 4 [1][0][0][0]  ->  4 sends to 1
+
 std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> &comm, int world_size) {
+    
+    // the passed vector comm should contain world_size group objects,
+    // tracking the senders and receivers for each island
     
     std::vector<std::vector<int>> matrix;
     matrix.resize(world_size);
 
-    for(int i=0; i<world_size; i++) {
+    for(int i=0; i<world_size; i++) { // matrix row, sized with world_size indices
 
         matrix[i].resize(world_size);
         
-        for(int j=0; j<world_size; j++) {
+        for(int j=0; j<world_size; j++) { // matrix column [0..world size]
+            
+            // here we only mark the receiving nodes for each island row with a 1
+            // a boolean value of true within a a row's index will tell us what we need to know
+            // to track the communication channel on both sides
             
             if(std::find(comm[i].receivers.begin(), comm[i].receivers.end(), j) != comm[i].receivers.end()) {
+                // if island i's receivers array contains island j, mark that as a sender\receiver channel ...
                 matrix[i][j] = 1;
             } else {
+                // otherwise, no sender\receiver channel exists, so 0 ...
                 matrix[i][j] = 0;
             }
             
@@ -201,6 +219,9 @@ std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> &comm, i
 bool prob_true(double p){
     return rand()/(RAND_MAX+1.0) < p;
 }
+
+// create a randomly populated adjacency matrix of size world_size*world_size,
+// communication neighbors with probability determined by the sparsity parameter ...
 
 std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
     
@@ -226,6 +247,8 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
     return matrix;
     
 }
+
+// calculate the cumulative probability distribution for the topology population ...
 
 std::vector<double> topo_cpd(std::vector<topology> &topologies) {
     
@@ -257,6 +280,8 @@ std::vector<double> topo_cpd(std::vector<topology> &topologies) {
     
 }
 
+// parent selection from the topology population, based on the cumulative probability distribution ...
+
 topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &topologies) {
     
     LOG(7, 0, 0, "selecting topo parent: ");
@@ -277,6 +302,8 @@ topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &top
     
 }
 
+// create a new generation of topologies using parent selection ...
+
 std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size) {
     
     std::vector<double> cpd = topo_cpd(topologies);
@@ -296,27 +323,31 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         
         topology child;
         
-        child.fitness = (t1.fitness + t2.fitness) / 2;
+        child.fitness = (t1.fitness + t2.fitness) / 2; // an estimated fitness, average of the parents
+        
+        // calculate an adjacency matrix for each parent's associated topology for use in
+        // generating child topology ...
+        
         std::vector<std::vector<int>> m1 = create_adjaceny_matrix(t1.comm, world_size);
         std::vector<std::vector<int>> m2 = create_adjaceny_matrix(t2.comm, world_size);
         
         std::vector<std::vector<int>> child_matrix;
         child_matrix.resize(world_size);
         
-        for(int i=0; i<m1.size(); i++) {
+        for(int i=0; i<m1.size(); i++) {  // child matrix row
             
             child_matrix[i].resize(world_size);
             
-            for(int j=0; j<m2.size(); j++) {
+            for(int j=0; j<m2.size(); j++) { // child matrix column
                 
-                if(i != j) {
+                if(i != j) {  // we don't want an island sending migrants to itself
                     
-                    if(rand()%2 == 1) {
+                    if(rand()%2 == 1) { // coin flip, heads take the row index value from parent 1
                         LOG(10, 0, 0, "assigning child m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
                         child_matrix[i][j] = m1[i][j];
-                    } else {
+                    } else { // tails, take it from parent 2
                         LOG(10, 0, 0, "assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
-                        child_matrix[i][j] = m1[i][j];
+                        child_matrix[i][j] = m2[i][j];
                     }
                     
                 } else {
@@ -331,27 +362,39 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
             
         }
         
-        if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+        // mutation, interate through the matrix and flip the bit with probability m,
+        // also considering any sparsity constraints ...
+        
+        for(int i=0; i<child_matrix.size(); i++) {
 
-            for(int i=0; i<child_matrix.size(); i++) {
+            for(int j=0; j<child_matrix[i].size(); j++) {
 
-                for(int j=0; j<child_matrix[i].size(); j++) {
-
-                    if(rand()/(RAND_MAX+1.0) < config::sparsity) {
-
-                        child_matrix[i][j] == 0 ? child_matrix[i][j] = 1 : child_matrix[i][j] = 0;
-
+                if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+                
+                    if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
+                        
+                        child_matrix[i][j] = 1;
+                        
                     }
-
+                    
+                    if(child_matrix[i][j] == 1 && rand()/(RAND_MAX+1.0) > config::sparsity) {
+                        
+                        child_matrix[i][j] = 0;
+                        
+                    }
+                    
                 }
 
             }
 
         }
         
+        // convert the adjaceny matrix to a sender and receiver arrays for use with MPI send\recv ...
+        
         child.comm = create_group(child_matrix);
 
         LOG(8, 0, 0, "child %d created from matrix with %lu senders and %lu receivers\r\n", n, child.comm[n].senders.size(), child.comm[n].receivers.size());
+
         children.push_back(child);
 
     }
@@ -360,115 +403,9 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
     
 }
 
-void add_neighbors(int node, int size, int world_size, std::vector<group> &topology) {
-    
-    LOG(6, 0, 0, "entered add_neighbors with size %d for node %d...\r\n", size, node);
-    
-    if(size > 0) {
-        
-        std::vector<group>::iterator it;
-        
-        topology[node].node = node;
-        
-        bool rfound = false;
-        
-        for(it=topology.begin(); it!=topology.end(); ++it) {
-            // search for this node in the set of senders for the currently iterated node ...
-            std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), node);
-            // if this node is found as a sender, and it does not already exist, add it to the receivers list ...
-            if(s != it->senders.end() && std::find(topology[node].receivers.begin(), topology[node].receivers.end(), it->node) == topology[node].receivers.end()) {
-                LOG(6, 0, 0, "assigning found receiver %d -> %d\r\n", node, it->node);
-                topology[node].receivers.push_back(it->node);
-                rfound = true;
-            }
-        }
-        
-        bool sfound = false;
-        
-        for(it=topology.begin(); it!=topology.end(); ++it) {
-            std::vector<int>::iterator s = std::find(it->receivers.begin(), it->receivers.end(), node);
-            if(s != it->receivers.end() && std::find(topology[node].senders.begin(), topology[node].senders.end(), it->node) == topology[node].senders.end()) {
-                LOG(6, 0, 0, "assigning found sender %d -> %d\r\n", it->node, node);
-                topology[node].senders.push_back(it->node);
-                sfound = true;
-            }
-        }
-        
-        
-        if(!rfound) {
-    
-            if(topology[node].senders.size() == world_size-1) { return; }
-            
-            int rnd_source = node;
-            
-            while(rnd_source == node || std::find(topology[node].senders.begin(), topology[node].senders.end(), rnd_source) != topology[node].senders.end()) {
-                rnd_source = rand()%topology.size();
-            }
-            
-            LOG(6, 0, 0, "assigning random sender %d -> %d\r\n", rnd_source, node);
-            topology[node].senders.push_back(rnd_source);
-            
-            add_neighbors(rnd_source, size-1, world_size, topology);
-                
-        }
-        
-        if(!sfound) {
-            
-            if(topology[node].receivers.size() == world_size-1) { return; }
-            
-            int rnd_target = node;
-            
-            while(rnd_target == node || std::find(topology[node].receivers.begin(), topology[node].receivers.end(), rnd_target) != topology[node].receivers.end()) {
-                rnd_target = rand()%topology.size();
-            }
-            
-            LOG(6, 0, 0, "assigning random receiver %d -> %d\r\n", node, rnd_target);
-            topology[node].receivers.push_back(rnd_target);
-            
-            add_neighbors(rnd_target, size-1, world_size, topology);
-        
-        }
-        
-    } else {
-        
-        std::vector<group>::iterator it;
-        
-        for(it=topology.begin(); it!=topology.end(); ++it) {
-            std::vector<int>::iterator s = std::find(it->senders.begin(), it->senders.end(), node);
-            if(s != it->senders.end() && std::find(topology[node].receivers.begin(), topology[node].receivers.end(), it->node) == topology[node].receivers.end()) {
-                LOG(6, 0, 0, "assigning found receiver %d -> %d\r\n", node, it->node);
-                topology[node].receivers.push_back(it->node);
-            }
-        }
-        
-        for(it=topology.begin(); it!=topology.end(); ++it) {
-            std::vector<int>::iterator s = std::find(it->receivers.begin(), it->receivers.end(), node);
-            if(s != it->receivers.end() && std::find(topology[node].senders.begin(), topology[node].senders.end(), it->node) == topology[node].senders.end()) {
-                LOG(6, 0, 0, "assigning found sender %d -> %d\r\n", it->node, node);
-                topology[node].senders.push_back(it->node);
-            }
-        }
-        
-        LOG(6, 0, 0, "returning from add_neighbors ...\r\n");
-        
-        return;
-        
-    }
-    
-}
+// used to create the initial topology population ...
 
 std::vector<group> create_dyn_topology(std::vector<int> ids) {
-    
-    std::vector<group> topology;
-    topology.resize(ids.size());
-    
-    add_neighbors(0, (int)ids.size(), (int)ids.size(), topology);
-    
-    return topology;
-    
-}
-
-std::vector<group> create_dyn_topology2(std::vector<int> ids) {
     
     std::vector<group> topology;
     
