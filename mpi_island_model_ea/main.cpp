@@ -219,7 +219,7 @@ int main(int argc, const char * argv[]) {
                     send_size = (int)topologies[tindex].comm[i].senders.size();
                     rec_size = (int)topologies[tindex].comm[i].receivers.size();
                     
-                    LOG(4, 0, 0, "sending topology %d (senders = %d, receivers = %d) to %d ...\r\n", tindex, send_size, rec_size, i);
+                    LOG(10, 0, 0, "sending topology %d (senders = %d, receivers = %d) to %d ...\r\n", tindex, send_size, rec_size, i);
                     
                     LOG(10, 0, 0, "sending topology %d, %d senders to rank %d ...\r\n", tindex, send_size, i);
                     MPI_Send(&send_size, 1, MPI_INT, i, 1, tcomm);
@@ -360,8 +360,8 @@ int main(int argc, const char * argv[]) {
 
                     topologies.erase(topologies.begin()+config::topo_mu, topologies.end());
 
-                    LOG(4, world_rank, 0, "removed %d topologies, new size = %lu\r\n", config::topo_lambda, topologies.size());
-                    LOG(4, world_rank, 0, "topology 0 fitness = %2.10f\r\n", topologies[0].fitness);
+                    LOG(10, world_rank, 0, "removed %d topologies, new size = %lu\r\n", config::topo_lambda, topologies.size());
+                    LOG(10, world_rank, 0, "topology 0 fitness = %2.10f\r\n", topologies[0].fitness);
 
                 }
                 
