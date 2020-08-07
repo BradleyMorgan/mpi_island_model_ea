@@ -228,21 +228,30 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
     std::vector<std::vector<int>> matrix;
     matrix.resize(world_size);
 
-    for(int i=0; i<world_size; i++) {
+    int comm_count = 0;
+    
+    while(comm_count == 0) {
+    
+        for(int i=0; i<world_size; i++) {
 
-        matrix[i].resize(world_size);
-        
-        for(int j=0; j<world_size; j++) {
+            matrix[i].resize(world_size);
             
-            if(prob_true(config::sparsity) && i != j) {
-                matrix[i][j] = 1;
-            } else {
-                matrix[i][j] = 0;
+            for(int j=0; j<world_size; j++) {
+                
+                if(prob_true(config::sparsity) && i != j) {
+                    matrix[i][j] = 1;
+                    comm_count++;
+                } else {
+                    matrix[i][j] = 0;
+                }
+
+                
             }
             
         }
         
     }
+    
     
     return matrix;
     
@@ -334,31 +343,39 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         std::vector<std::vector<int>> child_matrix;
         child_matrix.resize(world_size);
         
-        for(int i=0; i<m1.size(); i++) {  // child matrix row
-            
-            child_matrix[i].resize(world_size);
-            
-            for(int j=0; j<m2.size(); j++) { // child matrix column
+        int comm_count = 0;
+        
+        while(comm_count == 0) {
+    
+            for(int i=0; i<m1.size(); i++) {  // child matrix row
                 
-                if(i != j) {  // we don't want an island sending migrants to itself
+                child_matrix[i].resize(world_size);
+                
+                for(int j=0; j<m2.size(); j++) { // child matrix column
                     
-                    if(rand()%2 == 1) { // coin flip, heads take the row index value from parent 1
-                        LOG(10, 0, 0, "assigning child m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
-                        child_matrix[i][j] = m1[i][j];
-                    } else { // tails, take it from parent 2
-                        LOG(10, 0, 0, "assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
-                        child_matrix[i][j] = m2[i][j];
+                    if(i != j) {  // we don't want an island sending migrants to itself
+                        
+                        if(rand()%2 == 1) { // coin flip, heads take the row index value from parent 1
+                            LOG(10, 0, 0, "assigning child m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
+                            child_matrix[i][j] = m1[i][j];
+                        } else { // tails, take it from parent 2
+                            LOG(10, 0, 0, "assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
+                            child_matrix[i][j] = m2[i][j];
+                        }
+                        
+                        if(child_matrix[i][j] == 1) { comm_count++; }
+                        
+                    } else {
+                        
+                        child_matrix[i][j] = 0;
+                        
                     }
-                    
-                } else {
-                    
-                    child_matrix[i][j] = 0;
                     
                 }
                 
+                LOG(10, 0, 0, "------\r\n");
+                
             }
-            
-            LOG(10, 0, 0, "------\r\n");
             
         }
         
@@ -374,12 +391,14 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                     if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
                         
                         child_matrix[i][j] = 1;
+                        comm_count++;
                         
                     }
                     
-                    if(child_matrix[i][j] == 1 && rand()/(RAND_MAX+1.0) > config::sparsity) {
+                    if(child_matrix[i][j] == 1 && rand()/(RAND_MAX+1.0) > config::sparsity && comm_count > 1) {
                         
                         child_matrix[i][j] = 0;
+                        comm_count--;
                         
                     }
                     
