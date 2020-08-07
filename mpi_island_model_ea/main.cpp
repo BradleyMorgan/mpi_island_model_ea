@@ -293,7 +293,7 @@ int main(int argc, const char * argv[]) {
             
             eval_stats.total_gather_time += gather_time;
             
-            if(world_rank == 0 && eval % 120 == 0) {
+            if(world_rank == 0 && eval % 100 == 0) {
             
                 LOG(8, 0, 0, "population size %lu, member = %2.10f\r\n", population.size(), population[population.size()-1].fitness);
                 
@@ -368,8 +368,6 @@ int main(int argc, const char * argv[]) {
             }
                 
         }
-        
-        MPI_Barrier(tcomm);
         
         if(world_rank == 0) {
             
