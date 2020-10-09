@@ -13,3 +13,4 @@ dim:10
 mutation_rate:0.05
 loglevel:4
 sparsity:0.10
+migration_cap:2

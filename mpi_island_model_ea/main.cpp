@@ -179,7 +179,7 @@ int main(int argc, const char * argv[]) {
         LOG(10, world_rank, 0, "population scattered...\r\n");
         
         eval_stats.total_scatter_time += scatter_time;
-        
+            
         // begin evolution ...
         
         for(int eval=1; eval<=config::evals; eval++) {
