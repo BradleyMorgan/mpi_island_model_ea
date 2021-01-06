@@ -240,7 +240,7 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
             for(int j=0; j<world_size; j++) {
                 
                 if(rec_count[j] > config::migration_cap) {
-                    LOG(4, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                    LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
                     continue;
                 }
                 
