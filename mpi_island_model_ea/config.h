@@ -31,6 +31,7 @@ namespace config {
     int topo_lambda = 0;
     int topo_mu = 0;
     int seed = 0;
+    int migration_cap = 0;
 
     double mutation_rate = 0.0;
     double sparsity = 0.0;
@@ -76,6 +77,7 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::topo_mu = stoi(config::items["topo_mu"]);
     config::mutation_rate = stod(config::items["mutation_rate"]);
     config::sparsity = stod(config::items["sparsity"]);
+    config::migration_cap = stoi(config::items["migration_cap"]);
     
     if(world_rank == 0) {
     
@@ -133,7 +135,7 @@ void config::load(const char *input, int world_size, int world_rank) {
         sprintf(config::topo_fname, "%s/%s_topo_%d_%ld.txt", config::stats_subpath, config::items["topo_file"].c_str(), world_size, time(0));
         config::topo_out = fopen(config::topo_fname, "w");
         
-        fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration,average_topo_fitness, local_best_topo_fitness, global_best_topo_fitnes, average_local_best_topo_fitness, average_global_best_topo_fitness, , best_round_fitness, best_rounds\r\n");
+        fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration,average_topo_fitness, local_best_topo_fitness, global_best_topo_fitnes, average_local_best_topo_fitness, average_global_best_topo_fitness, best_round_fitness, best_rounds\r\n");
         
         fprintf(config::run_stats_out, "run,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_migration_time,total_gather_time,run_duration,init_duration,world_size,subpopulation_size, global_best_topo_fitness, average_local_best_topo_fitness, average_global_best_topo_fitness\r\n");
         

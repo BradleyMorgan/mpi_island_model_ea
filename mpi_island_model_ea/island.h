@@ -228,7 +228,8 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
     std::vector<std::vector<int>> matrix;
     matrix.resize(world_size);
 
-    int comm_count = 0;
+    int comm_count = 0; // failsafe for avoiding an empty matrix if the sparsity probability is low
+    int rec_count[world_size];
     
     while(comm_count == 0) {
     
@@ -236,11 +237,17 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
 
             matrix[i].resize(world_size);
             
+            if(rec_count[i] > config::migration_cap) {
+                LOG(1, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                continue;
+            }
+            
             for(int j=0; j<world_size; j++) {
                 
                 if(prob_true(config::sparsity) && i != j) {
                     matrix[i][j] = 1;
                     comm_count++;
+                    rec_count[i]++;
                 } else {
                     matrix[i][j] = 0;
                 }

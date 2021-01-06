@@ -184,7 +184,6 @@ int main(int argc, const char * argv[]) {
         
         for(int eval=1; eval<=config::evals; eval++) {
             
-            
             // all topologies must have been evaluated and assigned a fitness before we can perform topology evolution cycle operations,
             // so track that interval with var t, and also use it as an index increment for the topology population so that topology[t]
             // will be employed by the islands for the migration pattern within the corresponding evaluation ...
