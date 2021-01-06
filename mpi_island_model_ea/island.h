@@ -237,17 +237,17 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
 
             matrix[i].resize(world_size);
             
-            if(rec_count[i] > config::migration_cap) {
-                LOG(1, 0, 0, "migration cap limit reached for process %d\r\n", i);
-                continue;
-            }
-            
             for(int j=0; j<world_size; j++) {
+                
+                if(rec_count[j] > config::migration_cap) {
+                    LOG(4, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                    continue;
+                }
                 
                 if(prob_true(config::sparsity) && i != j) {
                     matrix[i][j] = 1;
                     comm_count++;
-                    rec_count[i]++;
+                    rec_count[j]++;
                 } else {
                     matrix[i][j] = 0;
                 }
