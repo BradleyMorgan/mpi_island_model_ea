@@ -405,6 +405,11 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
 
             for(int j=0; j<child_matrix[i].size(); j++) {
 
+                if(rec_count[j] > config::migration_cap) {
+                    LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                    continue;
+                }
+                
                 if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
                 
                     if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
