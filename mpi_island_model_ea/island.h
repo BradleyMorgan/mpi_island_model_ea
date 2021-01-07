@@ -351,8 +351,9 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         child_matrix.resize(world_size);
         
         int comm_count = 0;
+        int rec_count[world_size];
         
-        while(comm_count == 0) {
+        while(comm_count == 0) { // failsafe to prevent empty matrix
     
             for(int i=0; i<m1.size(); i++) {  // child matrix row
                 
@@ -360,14 +361,25 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                 
                 for(int j=0; j<m2.size(); j++) { // child matrix column
                     
+                    if(rec_count[j] > config::migration_cap) {
+                        LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                        continue;
+                    }
+                    
                     if(i != j) {  // we don't want an island sending migrants to itself
                         
                         if(rand()%2 == 1) { // coin flip, heads take the row index value from parent 1
                             LOG(10, 0, 0, "assigning child m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
                             child_matrix[i][j] = m1[i][j];
+                            if(m1[i][j] == 1) {
+                                rec_count[j]++;
+                            }
                         } else { // tails, take it from parent 2
                             LOG(10, 0, 0, "assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
                             child_matrix[i][j] = m2[i][j];
+                            if(m2[i][j] == 1) {
+                                rec_count[j]++;
+                            }
                         }
                         
                         if(child_matrix[i][j] == 1) { comm_count++; }
@@ -398,6 +410,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                     if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
                         
                         child_matrix[i][j] = 1;
+                        rec_count[j]++;
                         comm_count++;
                         
                     }
