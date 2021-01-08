@@ -231,6 +231,10 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
     int comm_count = 0; // failsafe for avoiding an empty matrix if the sparsity probability is low
     int rec_count[world_size];
     
+    for(int i=0; i<world_size; i++) {
+        rec_count[i] = 0;
+    }
+    
     while(comm_count == 0) {
     
         for(int i=0; i<world_size; i++) {
@@ -239,7 +243,7 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
             
             for(int j=0; j<world_size; j++) {
                 
-                if(rec_count[j] > config::migration_cap) {
+                if(rec_count[j] >= config::migration_cap) {
                     LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
                     continue;
                 }
@@ -353,6 +357,10 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         int comm_count = 0;
         int rec_count[world_size];
         
+        for(int i=0; i<world_size; i++) {
+            rec_count[i] = 0;
+        }
+        
         while(comm_count == 0) { // failsafe to prevent empty matrix
     
             for(int i=0; i<m1.size(); i++) {  // child matrix row
@@ -361,7 +369,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                 
                 for(int j=0; j<m2.size(); j++) { // child matrix column
                     
-                    if(rec_count[j] > config::migration_cap) {
+                    if(rec_count[j] >= config::migration_cap) {
                         LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
                         continue;
                     }
@@ -405,7 +413,7 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
 
             for(int j=0; j<child_matrix[i].size(); j++) {
 
-                if(rec_count[j] > config::migration_cap) {
+                if(rec_count[j] >= config::migration_cap) {
                     LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
                     continue;
                 }
