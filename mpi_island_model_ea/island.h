@@ -230,9 +230,11 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
 
     int comm_count = 0; // failsafe for avoiding an empty matrix if the sparsity probability is low
     int rec_count[world_size];
+    int snd_count[world_size];
     
     for(int i=0; i<world_size; i++) {
         rec_count[i] = 0;
+        snd_count[i] = 0;
     }
     
     while(comm_count == 0) {
@@ -244,7 +246,12 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
             for(int j=0; j<world_size; j++) {
                 
                 if(rec_count[j] >= config::migration_cap) {
-                    LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                    LOG(6, 0, 0, "receive cap limit reached for process %d\r\n", i);
+                    continue;
+                }
+                
+                if(snd_count[i] >= config::send_cap) {
+                    LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
                     continue;
                 }
                 
@@ -252,6 +259,7 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
                     matrix[i][j] = 1;
                     comm_count++;
                     rec_count[j]++;
+                    snd_count[i]++;
                 } else {
                     matrix[i][j] = 0;
                 }
@@ -356,9 +364,11 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         
         int comm_count = 0;
         int rec_count[world_size];
+        int snd_count[world_size];
         
         for(int i=0; i<world_size; i++) {
             rec_count[i] = 0;
+            snd_count[i] = 0;
         }
         
         while(comm_count == 0) { // failsafe to prevent empty matrix
@@ -374,6 +384,11 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                         continue;
                     }
                     
+                    if(snd_count[i] >= config::send_cap) {
+                        LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
+                        continue;
+                    }
+                    
                     if(i != j) {  // we don't want an island sending migrants to itself
                         
                         if(rand()%2 == 1) { // coin flip, heads take the row index value from parent 1
@@ -381,12 +396,14 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                             child_matrix[i][j] = m1[i][j];
                             if(m1[i][j] == 1) {
                                 rec_count[j]++;
+                                snd_count[i]++;
                             }
                         } else { // tails, take it from parent 2
                             LOG(10, 0, 0, "assigning child m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
                             child_matrix[i][j] = m2[i][j];
                             if(m2[i][j] == 1) {
                                 rec_count[j]++;
+                                snd_count[i]++;
                             }
                         }
                         
@@ -418,12 +435,18 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
                     continue;
                 }
                 
+                if(snd_count[i] >= config::send_cap) {
+                    LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
+                    continue;
+                }
+                
                 if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
                 
                     if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
                         
                         child_matrix[i][j] = 1;
                         rec_count[j]++;
+                        snd_count[i]++;
                         comm_count++;
                         
                     }

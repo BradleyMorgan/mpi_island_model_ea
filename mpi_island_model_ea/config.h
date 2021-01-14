@@ -32,6 +32,7 @@ namespace config {
     int topo_mu = 0;
     int seed = 0;
     int migration_cap = 0;
+    int send_cap = 0;
 
     double mutation_rate = 0.0;
     double sparsity = 0.0;
@@ -78,6 +79,7 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::mutation_rate = stod(config::items["mutation_rate"]);
     config::sparsity = stod(config::items["sparsity"]);
     config::migration_cap = stoi(config::items["migration_cap"]);
+    config::send_cap = stoi(config::items["migration_cap"]);
     
     if(world_rank == 0) {
     
