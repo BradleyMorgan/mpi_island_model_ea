@@ -217,14 +217,14 @@ int main(int argc, const char * argv[]) {
         
     }
     
-    for(int i=0; i<DIM; i++) {
-        std::fprintf(config::solution_out, "%2.10f,", solution.input[i]);
-    }
+    //for(int i=0; i<DIM; i++) {
+    //    std::fprintf(config::solution_out, "%2.10f,", solution.input[i]);
+    //}
 
     fclose(config::stats_out);
     fclose(config::run_stats_out);
     fclose(config::log_out);
-    fclose(config::solution_out);
+    //fclose(config::solution_out);
     
     MPI_Finalize();
     

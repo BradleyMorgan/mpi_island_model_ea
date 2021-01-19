@@ -2,7 +2,7 @@ config_name:rastrigin
 log_file:rastrigin
 stats_file:rastrigin
 seed:0
-runs:30
+runs:3
 evals:10000
 lambda:256
 mu:5120

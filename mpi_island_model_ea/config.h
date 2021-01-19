@@ -119,8 +119,8 @@ void config::load(const char *input, int world_size, int world_rank) {
         sprintf(config::run_stats_fname, "%s/%s_run_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
         config::run_stats_out = fopen(config::run_stats_fname, "w");
         
-        sprintf(config::solution_fname, "%s/%s_solution_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
-        config::solution_out = fopen(config::solution_fname, "w");
+        //sprintf(config::solution_fname, "%s/%s_solution_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
+        //config::solution_out = fopen(config::solution_fname, "w");
         
         fprintf(config::stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration\r\n");
         
