@@ -196,7 +196,7 @@ int main(int argc, const char * argv[]) {
             //int tindex = c >= config::topo_mu ? c : t;
             int tindex = (eval-1)%(config::topo_mu+config::topo_lambda);
             
-            //if(c == 0) { rindex = 0; }
+            if(eval == 1) { rindex = 0; }
             
             if((eval)%10 == 0) {
                 if(rindex >= (config::topo_mu+config::topo_lambda)) {
