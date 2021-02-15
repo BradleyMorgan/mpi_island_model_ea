@@ -130,7 +130,7 @@ int main(int argc, const char * argv[]) {
         
         LOG(4, 0, 0, "resizing rastrigin population...\r\n");
         
-        population.resize(config::mu);
+        //population.resize(config::mu);
         
         LOG(4, 0, 0, "initializing topology population...\r\n");
         
