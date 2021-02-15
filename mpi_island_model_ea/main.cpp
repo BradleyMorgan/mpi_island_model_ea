@@ -110,7 +110,7 @@ int main(int argc, const char * argv[]) {
     
         // start of experimental run
         
-        LOG(4, world_rank, 0, "**** RUN %d ****\r\n", run);
+        LOG(2, world_rank, 0, "**** RUN %d ****\r\n", run);
         
         double run_start = MPI_Wtime();
 
@@ -202,9 +202,6 @@ int main(int argc, const char * argv[]) {
                     rindex = 0;
                 } else {
                     rindex++;
-                }
-                if(world_rank ==  0) {
-                    printf("RINDEX %d", rindex);
                 }
             }
             
