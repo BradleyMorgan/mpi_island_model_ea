@@ -296,7 +296,7 @@ int main(int argc, const char * argv[]) {
             
             if(world_rank == 0) {
                 topologies[rindex].rounds++;
-                printf("topology %d ROUND %d tindex = %d at eval %d\r\n", rindex, topologies[rindex].rounds, tindex, eval);
+                LOG(6, 0, 0, "topology %d ROUND %d tindex = %d at eval %d\r\n", rindex, topologies[rindex].rounds, tindex, eval);
             }
             
             if(topologies[rindex].fitness >= 0.0) {
