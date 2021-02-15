@@ -416,6 +416,8 @@ int main(int argc, const char * argv[]) {
         fflush(config::run_stats_out);
         fflush(config::stats_out);
         
+        MPI_Barrier(tcomm);
+        
     }
 
     if(world_rank == 0) {
