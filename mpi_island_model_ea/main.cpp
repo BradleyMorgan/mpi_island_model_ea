@@ -192,6 +192,7 @@ int main(int argc, const char * argv[]) {
             
             int t = (eval-1)%(config::topo_mu);
             int c = (eval-1)%(config::topo_mu+config::topo_lambda);
+            int m = (eval-1)%((config::topo_mu+config::topo_lambda)*10);
             //int tindex = c >= config::topo_mu ? c : t;
             int tindex = (eval-1)%(config::topo_mu+config::topo_lambda);
             
@@ -211,7 +212,7 @@ int main(int argc, const char * argv[]) {
                 
                 // if we have reached the appropriate interval, create a new topology generation ...
                 
-                if(eval != 1 && t == 0) {
+                if(eval != 1 && m == 0) {
                     
                     LOG(10, world_rank, 0, "adding children...\r\n");
                     std::vector<topology> children = topo_gen(topologies, world_size);
@@ -221,7 +222,7 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(eval%10 == 0 || eval == 1) {
+                if(eval%((config::topo_mu+config::topo_lambda)*10) == 0 == 0 || eval == 1) {
     
                     for(int i=0; i<world_size; i++) {
                         
@@ -248,7 +249,7 @@ int main(int argc, const char * argv[]) {
                 
             }
             
-            if(eval%10 == 0 || eval == 1) {
+            if(eval%((config::topo_mu+config::topo_lambda)*10) == 0 == 0 || eval == 1) {
                        
                 MPI_Recv(&send_size, 1, MPI_INT, 0, 1, tcomm, MPI_STATUS_IGNORE);
                 isle.senders.clear();
@@ -370,7 +371,8 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(eval != 1 && c == 0) {
+                if(eval%((config::topo_mu+config::topo_lambda)*10) == 0) {
+                //if(eval != 1 && c == 0) {
 
                     LOG(4, world_rank, 0, "truncating topologies size %lu at %d...\r\n", topologies.size(), eval);
 
