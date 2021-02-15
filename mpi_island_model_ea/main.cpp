@@ -120,13 +120,19 @@ int main(int argc, const char * argv[]) {
         
         // each MPI process will maintain its own population, so we define an island for each ...
         
+        LOG(4, 0, 0, "initializing rastrigin population...\r\n");
+        
         std::vector<individual> population;
         population.clear();
         population.resize(config::mu);
         
+        LOG(4, 0, 0, "initializing topology population...\r\n");
+        
         std::vector<topology> topologies;
         topologies.clear();
         topologies.resize(config::topo_mu+config::topo_lambda);
+        
+        LOG(4, 0, 0, "initializing run variables...\r\n");
         
         island isle;
         isle.id = world_rank;
