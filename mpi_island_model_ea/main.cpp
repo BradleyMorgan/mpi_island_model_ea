@@ -192,13 +192,13 @@ int main(int argc, const char * argv[]) {
             
             int t = (eval-1)%(config::topo_mu);
             int c = (eval-1)%(config::topo_mu+config::topo_lambda);
-            int m = (eval-1)%((config::topo_mu+config::topo_lambda)*10);
+            int m = (eval-1)%((config::topo_mu+config::topo_lambda)*config::topo_evals);
             //int tindex = c >= config::topo_mu ? c : t;
             int tindex = (eval-1)%(config::topo_mu+config::topo_lambda);
             
             if(eval == 1) { rindex = 0; }
             
-            if((eval)%10 == 0) {
+            if((eval)%config::topo_evals == 0) {
                 if(rindex >= (config::topo_mu+config::topo_lambda)) {
                     rindex = 0;
                 } else {
@@ -222,7 +222,7 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(eval%((config::topo_mu+config::topo_lambda)*10) == 0 == 0 || eval == 1) {
+                if(eval%((config::topo_mu+config::topo_lambda)*config::topo_evals) == 0 == 0 || eval == 1) {
     
                     for(int i=0; i<world_size; i++) {
                         
@@ -249,7 +249,7 @@ int main(int argc, const char * argv[]) {
                 
             }
             
-            if(eval%((config::topo_mu+config::topo_lambda)*10) == 0 == 0 || eval == 1) {
+            if(eval%((config::topo_mu+config::topo_lambda)*config::topo_evals) == 0 == 0 || eval == 1) {
                        
                 MPI_Recv(&send_size, 1, MPI_INT, 0, 1, tcomm, MPI_STATUS_IGNORE);
                 isle.senders.clear();
@@ -371,7 +371,7 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(eval%((config::topo_mu+config::topo_lambda)*10) == 0) {
+                if(eval%((config::topo_mu+config::topo_lambda)*config::topo_evals) == 0) {
                 //if(eval != 1 && c == 0) {
 
                     LOG(4, world_rank, 0, "truncating topologies size %lu at %d...\r\n", topologies.size(), eval);
@@ -408,6 +408,8 @@ int main(int argc, const char * argv[]) {
             std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d,%2.10f,%2.10f,%2.10f\r\n", run, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, eval_stats.total_scatter_time, eval_stats.total_gather_time, eval_stats.total_migrate_time, run_end - run_start, run_stats.init_duration, world_size, subpopulation_size, eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness);
             
             LOG(2, 0, 0, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d,%2.10f,%2.10f,%2.10f\r\n", run, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, eval_stats.total_scatter_time, eval_stats.total_migrate_time, eval_stats.total_gather_time, run_end - run_start, run_stats.init_duration, world_size, subpopulation_size, eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness);
+            
+            rindex = 0;
             
         }
         
