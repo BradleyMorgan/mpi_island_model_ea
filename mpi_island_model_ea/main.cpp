@@ -116,6 +116,8 @@ int main(int argc, const char * argv[]) {
 
         estats eval_stats;
         
+        LOG(4, 0, 0, "initializing run variables...\r\n");
+        
         // each MPI process will maintain its own population, so we define an island for each ...
         
         std::vector<individual> population;
@@ -135,6 +137,8 @@ int main(int argc, const char * argv[]) {
         isle.cpd.clear();
         
         std::array<double, DIM> offsets = generate_offsets(-2.5, 2.5, .5);
+        
+        LOG(4, 0, 0, "creating initial populations...\r\n");
         
         // only the root process will create the full initial population ...
         
@@ -166,23 +170,27 @@ int main(int argc, const char * argv[]) {
             
         }
 
+        LOG(4, 0, 0, "duplication communicator...\r\n");
+        
         MPI_Comm tcomm;
         MPI_Comm_dup(MPI_COMM_WORLD, &tcomm);
         
         // separate the single full population from the root process to subpopulations across all processes ...
         
-        LOG(10, world_rank, 0, "scattering population ...\r\n");
+        LOG(4, 0, 0, "scattering population ...\r\n");
         double scatter_start = MPI_Wtime();
         MPI_Scatter(&population[0], subpopulation_size, individual_type, &isle.population[0], subpopulation_size, individual_type, 0, tcomm);
         double scatter_end = MPI_Wtime();
         double scatter_time = scatter_end - scatter_start;
-        LOG(10, world_rank, 0, "population scattered...\r\n");
+        LOG(4, 0, 0, "population scattered...\r\n");
         
         eval_stats.total_scatter_time += scatter_time;
             
         // begin evolution ...
         
         int rindex = 0;
+        
+        LOG(4, 0, 0, "starting evals...\r\n");
         
         for(int eval=1; eval<=config::evals; eval++) {
             
