@@ -130,7 +130,7 @@ int main(int argc, const char * argv[]) {
         
         LOG(4, 0, 0, "resizing rastrigin population...\r\n");
         
-        //population.resize(config::mu);
+        population.resize(config::mu);
         
         LOG(4, 0, 0, "initializing topology population...\r\n");
         
@@ -219,7 +219,7 @@ int main(int argc, const char * argv[]) {
             if(eval == 1) { rindex = 0; }
             
             if((eval)%config::topo_evals == 0) {
-                if(rindex >= (config::topo_mu+config::topo_lambda)) {
+                if(rindex >= (config::topo_mu+config::topo_lambda)-1) {
                     rindex = 0;
                 } else {
                     rindex++;
@@ -435,8 +435,6 @@ int main(int argc, const char * argv[]) {
         
         fflush(config::run_stats_out);
         fflush(config::stats_out);
-        
-        MPI_Barrier(tcomm);
         
     }
 
