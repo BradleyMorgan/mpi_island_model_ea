@@ -81,7 +81,7 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::sparsity = stod(config::items["sparsity"]);
     config::migration_cap = stoi(config::items["migration_cap"]);
     config::send_cap = stoi(config::items["migration_cap"]);
-    config::topo_evals = stoi(config::items["migration_cap"]);
+    config::topo_evals = stoi(config::items["topo_evals"]);
     
     if(world_rank == 0) {
     

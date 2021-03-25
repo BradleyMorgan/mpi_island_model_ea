@@ -213,28 +213,30 @@ int main(int argc, const char * argv[]) {
             int t = (eval-1)%(config::topo_mu);
             int c = (eval-1)%(config::topo_mu+config::topo_lambda);
             int m = (eval-1)%((config::topo_mu+config::topo_lambda)*config::topo_evals);
-            //int tindex = c >= config::topo_mu ? c : t;
             int tindex = (eval-1)%(config::topo_mu+config::topo_lambda);
             
-            if(eval == 1) { rindex = 0; }
-            
-            if((eval)%config::topo_evals == 0) {
-                if(rindex >= (config::topo_mu+config::topo_lambda)-1) {
-                    rindex = 0;
-                } else {
-                    rindex++;
-                }
-            }
-            
             if(world_rank == 0) {
-        
-                LOG(10, world_rank, 0, "C = (%d)mod(%d) = %d | T = (%d)mod(%d) = %d\r\n", eval, (config::topo_mu+config::topo_lambda), c, eval-1, config::topo_mu, t);
                 
-                // if we have reached the appropriate interval, create a new topology generation ...
+                if(rindex > 0 && eval%(rindex*config::topo_evals) == 0) {
+                    rindex = 0;
+                }
+                
+                if(rindex > (config::topo_evals - 1)) {
+                    rindex = 0;
+                    while(topologies[rindex].rounds >= config::topo_evals) {
+                        rindex++;
+                    }
+                }
+                
+                if(rindex > (config::topo_evals - 1)) {
+                    rindex = 0;
+                }
+                
+                LOG(10, world_rank, 0, "C = (%d)mod(%d) = %d | T = (%d)mod(%d) = %d\r\n", eval, (config::topo_mu+config::topo_lambda), c, eval-1, config::topo_mu, t);
                 
                 if(eval != 1 && m == 0) {
                     
-                    LOG(10, world_rank, 0, "adding children...\r\n");
+                    LOG(4, world_rank, 0, "adding children...\r\n");
                     std::vector<topology> children = topo_gen(topologies, world_size);
                     topologies.insert(topologies.end(), children.begin(), children.end());
                     
@@ -242,26 +244,30 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(eval%((config::topo_mu+config::topo_lambda)*config::topo_evals) == 0 == 0 || eval == 1) {
+                if(topologies[rindex].rounds >= config::topo_evals || eval == 1) {
     
+                    rindex++;
+                    
+                    // if we have reached the appropriate interval, create a new topology generation ...
+                    
                     for(int i=0; i<world_size; i++) {
                         
                         // set the senders and receivers for each island, so that we use topology[t] for this evaluation ...
                         
-                        LOG(10, world_rank, 0, "TOPOLOGY INDEX %d | C = %d | T = (%d)mod(%d) = %d\r\n", tindex, c, eval-1, config::topo_mu, t);
+                        LOG(10, world_rank, 0, "TOPOLOGY INDEX %d | C = %d | T = (%d)mod(%d) = %d\r\n", rindex, c, eval-1, config::topo_mu, t);
                         
-                        send_size = (int)topologies[tindex].comm[i].senders.size();
-                        rec_size = (int)topologies[tindex].comm[i].receivers.size();
+                        send_size = (int)topologies[rindex].comm[i].senders.size();
+                        rec_size = (int)topologies[rindex].comm[i].receivers.size();
                         
-                        LOG(6, 0, 0, "sending topology %d (senders = %d, receivers = %d) to %d ...\r\n", tindex, send_size, rec_size, i);
+                        LOG(4, 0, 0, "sending topology %d (senders = %d, receivers = %d) to %d ...\r\n", rindex, send_size, rec_size, i);
                         
-                        LOG(10, 0, 0, "sending topology %d, %d senders to rank %d ...\r\n", tindex, send_size, i);
+                        LOG(4, 0, 0, "sending topology %d, %d senders to rank %d ...\r\n", rindex, send_size, i);
                         MPI_Send(&send_size, 1, MPI_INT, i, 1, tcomm);
-                        MPI_Send(&topologies[tindex].comm[i].senders[0], send_size, MPI_INT, i, 2, tcomm);
+                        MPI_Send(&topologies[rindex].comm[i].senders[0], send_size, MPI_INT, i, 2, tcomm);
                         
-                        LOG(10, 0, 0, "sending topology %d, %d receivers to rank %d ...\r\n", tindex, rec_size, i);
+                        LOG(4, 0, 0, "sending topology %d, %d receivers to rank %d ...\r\n", rindex, rec_size, i);
                         MPI_Send(&rec_size, 1, MPI_INT, i, 3, tcomm);
-                        MPI_Send(&topologies[tindex].comm[i].receivers[0], rec_size, MPI_INT, i, 4, tcomm);
+                        MPI_Send(&topologies[rindex].comm[i].receivers[0], rec_size, MPI_INT, i, 4, tcomm);
                         
                     }
                     
@@ -269,16 +275,21 @@ int main(int argc, const char * argv[]) {
                 
             }
             
-            if(eval%((config::topo_mu+config::topo_lambda)*config::topo_evals) == 0 == 0 || eval == 1) {
-                       
+            MPI_Bcast(&rindex, 1, MPI_INT, 0, tcomm);
+            MPI_Bcast(&topologies[rindex].rounds, 1, MPI_INT, 0, tcomm);
+            
+            if(topologies[rindex].rounds >= config::topo_evals || eval == 1) {
+                
+                LOG(4, 0, 0, "rank %d receiving topology %d\r\n", world_rank, rindex);
+                
                 MPI_Recv(&send_size, 1, MPI_INT, 0, 1, tcomm, MPI_STATUS_IGNORE);
                 isle.senders.clear();
                 isle.senders.resize(send_size);
                 
                 MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, 2, tcomm, MPI_STATUS_IGNORE);
-                LOG(10, 0, 0, "rank %d received %lu senders: ", world_rank, isle.senders.size());
+                LOG(4, 0, 0, "rank %d received %lu senders: ", world_rank, isle.senders.size());
                 for(int i=0; i<isle.senders.size(); i++) { LOG(10, 0, 0, "%d ", isle.senders[i]); }
-                LOG(10, 0, 0, "\r\n");
+                LOG(4, 0, 0, "\r\n");
                 
                 MPI_Recv(&rec_size, 1, MPI_INT, 0, 3, tcomm, MPI_STATUS_IGNORE);
                 isle.receivers.clear();
@@ -290,8 +301,6 @@ int main(int argc, const char * argv[]) {
                 LOG(10, 0, 0, "\r\n");
             
             }
-            
-            //MPI_Barrier(tcomm);
             
             eval_stats.eval_start = std::clock();
         
@@ -317,8 +326,9 @@ int main(int argc, const char * argv[]) {
             
             if(world_rank == 0) {
                 topologies[rindex].rounds++;
-                LOG(4, 0, 0, "topology %d ROUND %d tindex = %d at eval %d\r\n", rindex, topologies[rindex].rounds, tindex, eval);
             }
+                
+            LOG(4, 0, 0, "rank %d rindex = %d rounds = %d eval = %d\r\n", world_rank, rindex, topologies[rindex].rounds, eval);
             
             if(topologies[rindex].fitness >= 0.0) {
                 topologies[rindex].fitness = topologies[rindex].fitness * -1;
@@ -338,7 +348,7 @@ int main(int argc, const char * argv[]) {
             
             eval_stats.total_gather_time += gather_time;
             
-            if(world_rank == 0 && eval % 100 == 0) {
+            if(eval%100 == 0) {
             
                 LOG(8, 0, 0, "population size %lu, member = %2.10f\r\n", population.size(), population[population.size()-1].fitness);
                 
@@ -352,6 +362,10 @@ int main(int argc, const char * argv[]) {
                 
                 std::sort(topologies.begin(),topologies.end(), compare_topo_fitness);
                 std::reverse(topologies.begin(), topologies.end());
+            
+            }
+            
+            if(world_rank == 0 && eval % 100 == 0) {
                 
                 log_fn_eval_stats(population, topologies, run, eval, eval_stats, run_stats);
                 
@@ -391,8 +405,8 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                if(eval%((config::topo_mu+config::topo_lambda)*config::topo_evals) == 0) {
-                //if(eval != 1 && c == 0) {
+                //if(m == 0) {
+                if(eval != 1 && c == 0) {
 
                     LOG(4, world_rank, 0, "truncating topologies size %lu at %d...\r\n", topologies.size(), eval);
 
