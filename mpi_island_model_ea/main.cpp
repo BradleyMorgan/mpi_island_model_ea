@@ -451,7 +451,7 @@ int main(int argc, const char * argv[]) {
         fflush(config::stats_out);
         
     }
-
+  
     if(world_rank == 0) {
         
         for(int i=0; i<DIM; i++) {

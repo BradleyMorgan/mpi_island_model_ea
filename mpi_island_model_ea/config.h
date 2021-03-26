@@ -133,8 +133,8 @@ void config::load(const char *input, int world_size, int world_rank) {
         sprintf(config::run_stats_fname, "%s/%s_run_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
         config::run_stats_out = fopen(config::run_stats_fname, "w");
         
-        sprintf(config::solution_fname, "%s/%s_solution_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
-        config::solution_out = fopen(config::solution_fname, "w");
+        //sprintf(config::solution_fname, "%s/%s_solution_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
+        //config::solution_out = fopen(config::solution_fname, "w");
         
         sprintf(config::topo_fname, "%s/%s_topo_%d_%ld.txt", config::stats_subpath, config::items["topo_file"].c_str(), world_size, time(0));
         config::topo_out = fopen(config::topo_fname, "w");
