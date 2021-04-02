@@ -19,9 +19,17 @@
 #include "utility.h"
 #include "stats.h"
 
-// populate an initial population with random inputs ...
+#pragma mark FUNCTION: initial_population()
+
+// returns a vector of a randomly generated offset rastrigin solution population    |
+// accepts an array of floating point numbers of n-dimensions @offsets[param:0]     |
+// used to calculate the solution fitness.                                          |
 
 std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
+    
+    // the "individual" datatype represents a single offset rastrigin solution as
+    // an array of size DIM = @dim[config.txt:12] holding the solution's randomly
+    // generated gene values.
     
     std::vector<individual> population;
     
@@ -30,7 +38,7 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
         individual p;
         
         for (int j = 0; j < DIM; j++) {
-            p.input[j] = drand(-5.12, 5.12);
+            p.input[j] = drand(-5.12, 5.12); // rastrigin says: x[i] ∈ [-5.12,5.12]
         }
         
         p.fitness = offset_rastrigin(p.input, offsets);
@@ -39,15 +47,22 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
         
     }
     
+    // we have our initial primary population with the calculated fitnesses
+    
     return population;
     
 }
 
-// populate an initial population of topologies ...
+#pragma mark FUNCTION: initial_topo_population()
+
+// returns a collection of randomly generated adjaceny matrices, representing       |
+// an island (communication) topology.  accepts a reference to a list of island     |
+// (process) identifiers @ids[param:0] to use as indices.                           |
 
 std::vector<topology> initial_topo_population(std::vector<int> &ids) {
     
     LOG(8, 0, 0, "initializing topology population for %lu islands\r\n", ids.size());
+    
     std::vector<topology> population;
     
     for(int i=0; i<config::topo_mu+config::topo_lambda; i++) {
@@ -55,7 +70,9 @@ std::vector<topology> initial_topo_population(std::vector<int> &ids) {
         topology t;
         
         LOG(10, 0, 0, "adding topology %d\r\n", i);
+
         t.comm = create_dyn_topology(ids);
+        
         population.push_back(t);
         
     }
@@ -65,6 +82,15 @@ std::vector<topology> initial_topo_population(std::vector<int> &ids) {
     return population;
     
 }
+
+#pragma mark FUNCTION: main()
+
+// core initialization, overarching EA logic.
+
+// initialize globals -> experimental run [n] -> initialize populations ->
+// iterate topology[t] evaluation * @config.txt[min_evals] -> apply topology[t] to rastrigin[r] ->
+// iterate rastrigin[r] evaluation * @config.txt[min_evals] -> next r
+//
 
 int main(int argc, const char * argv[]) {
 
@@ -204,8 +230,25 @@ int main(int argc, const char * argv[]) {
         
         LOG(4, 0, 0, "starting evals...\r\n");
         
-        for(int eval=1; eval<=config::evals; eval++) {
+        // TODO: finish new loop logic stub
+        
+        for(int topo_idx = 0; topo_idx <= config::topo_mu; topo_idx++) {
             
+            // distribute topologies[topo_idx]
+            
+            for(int rast_idx = 0; rast_idx <= config::mu; rast_idx++) {
+                
+                //
+                
+            }
+            
+        }
+        
+        // TODO: Remove the OLD multi-objective logic
+        // needs significant changes, borrow from this for the new logic stub (above)
+        
+        for(int eval=1; eval<=config::evals; eval++) {  // eval start
+                    
             // all topologies must have been evaluated and assigned a fitness before we can perform topology evolution cycle operations,
             // so track that interval with var t, and also use it as an index increment for the topology population so that topology[t]
             // will be employed by the islands for the migration pattern within the corresponding evaluation ...
@@ -215,11 +258,21 @@ int main(int argc, const char * argv[]) {
             int m = (eval-1)%((config::topo_mu+config::topo_lambda)*config::topo_evals);
             int tindex = (eval-1)%(config::topo_mu+config::topo_lambda);
             
-            if(world_rank == 0) {
+            // determine the topology individual to evaluate from the current eval number and distribute it if needed ...
+            
+            #pragma mark LOGIC START: topology distribution
+            
+            // rank 0 will determine the topology to be distributed, if needed and initiate send operations  ...
+            
+            if(world_rank == 0) {  // start topology send logic
+                
+                // rotate back to the first individual if we have reached the min required evals ...
                 
                 if(rindex > 0 && eval%(rindex*config::topo_evals) == 0) {
                     rindex = 0;
                 }
+                
+                // find a topology that has not been evaluated min evals ...
                 
                 if(rindex > (config::topo_evals - 1)) {
                     rindex = 0;
@@ -228,11 +281,15 @@ int main(int argc, const char * argv[]) {
                     }
                 }
                 
+                // if for some reason we didn't find any topologies needed to evaluate, start over ...
+                
                 if(rindex > (config::topo_evals - 1)) {
                     rindex = 0;
                 }
                 
                 LOG(10, world_rank, 0, "C = (%d)mod(%d) = %d | T = (%d)mod(%d) = %d\r\n", eval, (config::topo_mu+config::topo_lambda), c, eval-1, config::topo_mu, t);
+                
+                // create a new topology generation ...
                 
                 if(eval != 1 && m == 0) {
                     
@@ -244,15 +301,15 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
+                // if we have evaluated this topology min times, increment the topology index and distribute it ...
+                
                 if(topologies[rindex].rounds >= config::topo_evals || eval == 1) {
     
                     rindex++;
                     
-                    // if we have reached the appropriate interval, create a new topology generation ...
-                    
                     for(int i=0; i<world_size; i++) {
                         
-                        // set the senders and receivers for each island, so that we use topology[t] for this evaluation ...
+                        // set the senders and receivers for each island, so that we use topology[rindex] for the next rastrigin evaluations ...
                         
                         LOG(10, world_rank, 0, "TOPOLOGY INDEX %d | C = %d | T = (%d)mod(%d) = %d\r\n", rindex, c, eval-1, config::topo_mu, t);
                         
@@ -273,12 +330,16 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-            }
+            }  // end topology send logic
+            
+            // rank 0, distribute the topology metadata ...
             
             MPI_Bcast(&rindex, 1, MPI_INT, 0, tcomm);
             MPI_Bcast(&topologies[rindex].rounds, 1, MPI_INT, 0, tcomm);
             
-            if(topologies[rindex].rounds >= config::topo_evals || eval == 1) {
+            if(topologies[rindex].rounds >= config::topo_evals || eval == 1) {  // begin topology receive logic
+            
+                // previous topology was evaluated min times, so the islands will receive a new one ...
                 
                 LOG(4, 0, 0, "rank %d receiving topology %d\r\n", world_rank, rindex);
                 
@@ -300,25 +361,41 @@ int main(int argc, const char * argv[]) {
                 for(int i=0; i<isle.receivers.size(); i++) { LOG(10, 0, 0, "%d ", isle.receivers[i]); }
                 LOG(10, 0, 0, "\r\n");
             
-            }
+            }  // end topology receive logic
+            
+            
+            #pragma mark LOGIC START: primary (rastrigin) population evolution
+            
             
             eval_stats.eval_start = std::clock();
         
             isle.calc_cpd();
             
+            // parent selection and recombination ...
+            
             std::vector<individual> children = crossover(isle, offsets);
+            
+            // selection ...
             
             select_survivors(isle, children, config::mu/world_size);
 
+            
+            #pragma mark CORE START: island migrations
+            
+
             double migrate_start = MPI_Wtime();
+            
             isle.send_migrant(tcomm);
             isle.receive_migrant(tcomm);
+            
             double migrate_end = MPI_Wtime();
             double migrate_time = migrate_end - migrate_start;
             
             LOG(8, 0, 0, "migrate start = %3.10f, migrate end = %3.10f, migrate time = %3.10f\r\n", migrate_start, migrate_end, migrate_time);
             
             eval_stats.total_migrate_time += migrate_time;
+            
+            // aggregate the migration time from each island to get the total topology fitness ...
             
             MPI_Reduce(&migrate_time, &topologies[rindex].fitness, 1, MPI_DOUBLE, MPI_SUM, 0, tcomm);
 
@@ -330,6 +407,9 @@ int main(int argc, const char * argv[]) {
                 
             LOG(4, 0, 0, "rank %d rindex = %d rounds = %d eval = %d\r\n", world_rank, rindex, topologies[rindex].rounds, eval);
             
+            // workaround if for some reason we received an anomalous topology fitness value
+            // this shouldn't happen so log it for review ...
+            
             if(topologies[rindex].fitness >= 0.0) {
                 topologies[rindex].fitness = topologies[rindex].fitness * -1;
                 topologies[rindex].round_fitness += topologies[rindex].fitness;
@@ -339,11 +419,21 @@ int main(int argc, const char * argv[]) {
             
             LOG(10, world_rank, 0, "rank %d migrate time = %2.10f sending to topology %d of %lu size %lu fitness %2.10f rounds %d\r\n", world_rank, migrate_time, tindex, topologies.size(), topologies[rindex].comm.size(), topologies[rindex].fitness, topologies[rindex].rounds);
             
+            
+            #pragma mark CORE END: island migrations
+            
+            
+            // aggregate primary (rastrigin) population results from islands ...
+            
             LOG(10, 0, 0, "gathering population, subpopulation %d size %d ...\r\n", world_rank, subpopulation_size);
+            
             double gather_start = MPI_Wtime();
+            
             MPI_Gather(&isle.population[0], subpopulation_size, individual_type, &population[0], subpopulation_size, individual_type, 0, tcomm);
+            
             double gather_end = MPI_Wtime();
             double gather_time = gather_end - gather_start;
+            
             LOG(10, world_rank, 0, "population gathered ...\r\n");
             
             eval_stats.total_gather_time += gather_time;
@@ -365,12 +455,15 @@ int main(int argc, const char * argv[]) {
             
             }
             
+            // calculate and log the stats from the current population states ...
+            
             if(world_rank == 0 && eval % 100 == 0) {
                 
                 log_fn_eval_stats(population, topologies, run, eval, eval_stats, run_stats);
                 
             }
             
+            //
             if (world_rank == 0) {
                 
                 LOG(10, 0, 0, "run %d eval %d topology %d fitness = %2.10f (round %2.10f)\r\n", run, eval, tindex, topologies[tindex].fitness, topologies[tindex].round_fitness);
@@ -433,7 +526,7 @@ int main(int argc, const char * argv[]) {
                 
             }
                 
-        }
+        } // eval end
         
         if(world_rank == 0) {
             
@@ -450,7 +543,7 @@ int main(int argc, const char * argv[]) {
         fflush(config::run_stats_out);
         fflush(config::stats_out);
         
-    }
+    } // run end
   
     if(world_rank == 0) {
         

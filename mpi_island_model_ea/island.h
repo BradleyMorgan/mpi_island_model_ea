@@ -12,6 +12,10 @@
 #include "config.h"
 #include "utility.h"
 
+#pragma mark DATATYPE: individual{}
+
+// representation of rastrigin solution
+
 struct individual {
     
     std::array<double, DIM> input;
@@ -20,6 +24,13 @@ struct individual {
     double selection_distribution;
     
 };
+
+#pragma mark DATATYPE: island{}
+
+// representation of an island model EA entity that performs evaluations on
+// a subpopulation of the primary (rastrigin) objective function solutions.
+// islands perform migrations of individuals using designated communication
+// channels as implemented in @island{receive_migrant}, @island{send_migrant}
 
 struct island {
     
@@ -106,11 +117,35 @@ struct island {
     
 };
 
-// struct to hold a node's (or island's) senders and receivers
+#pragma mark FUNCTION prob_true()
+
+// utility function to find arbitrary event probability
+
+bool prob_true(double p){
+    return rand()/(RAND_MAX+1.0) < p;
+}
+
+
+#pragma mark DATATYPE: group{}
+
+// TODO: refactor, name is not descriptive
+
+// the group datatype is used primarily to track the required MPI_Send() and MPI_Recv()
+// operations and the required parameter values needed to perform the island (process)
+// execution context, e.g. from the perspective of island @group{id}.
+
+//        n1   n2   n3   n4
+//   n1  [ 0 ][ 1 ][ 0 ][ 0 ] @group[n1]{receivers}[0] = @group[n1]; @group[n2]{senders}[0] = @group[n1];
+//   n2  [ 0 ][ 0 ][ 1 ][ 0 ] @group[n2]{receivers}[0] = @group[n3]; @group[n3]{senders}[0] = @group[n2];
+//   n3  [ 0 ][ 0 ][ 0 ][ 0 ] @group[n3]{noop} ...
+//   n4  [ 1 ][ 0 ][ 0 ][ 0 ] @group[n4]{receivers}[0] = @group[n1]; @group[n1]{senders}[0] = @group[n4];
+
 
 struct group {
     
     int node;
+    
+    // track fitness in terms of island communcation operations (time)
     
     double fitness = 0.0;
     
@@ -119,27 +154,38 @@ struct group {
     
 };
 
-// struct to hold the full island topology using a vector of the individual group objects
+#pragma mark DATATYPE: topology{}
+
+// represents the full island topology calculated from adjacency
+// matrices and mapped to into the @group{} datatype.
 
 struct topology {
   
     int rounds = 0;
     
-    double fitness = 0.0;
-    double round_fitness = 0.0;
-    double selection_distribution;
+    double fitness = 0.0; // track in terms of aggregate communication time
+    double round_fitness = 0.0; // number of evaluations performed
+    double selection_distribution; // fitness measurement for selection method
+    
+    // an array of @group{} describing the full context MPI_Send() and MPI_Recv()
+    // operations forms the mpi-suitable topology representation
     
     std::vector<group> comm;
     
 };
 
-// from a provided adjacency matrix, create sender and receiver arrays for
-// each island for easier use with MPI send and receive ...
+#pragma mark FUNCTION: create_group()
+
+// from a provided adjacency matrix, create sender and receiver arrays for              |
+// each island for easier use with MPI send and receive ...                             |
 
 std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     
     LOG(10, 0, 0, "creating group...\r\n");
     
+    // indices in this array of @group{} map directly to a specific island (process)
+    //
+    //
     std::vector<group> comm;
     
     comm.resize(matrix.size());
@@ -147,10 +193,16 @@ std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
     // iterate through the adjacency matrix and assign any marked channels
     // to corresponding island sender or receiver array ...
     
-    for(int i=0; i<matrix.size(); i++) {  // matrix row
+    // matrix row, y-axis, island send to marked columns
+    
+    for(int i=0; i<matrix.size(); i++) {
         
-        for(int j=0; j<matrix[i].size(); j++) { // matrix column
+        // matrix row, y-axis, if 1 island i send to column -> i [0][1][0][0]
         
+        for(int j=0; j<matrix[i].size(); j++) {
+        
+            // matrix column, x-axis, if 1 island receives from current row -> i
+            
             LOG(10, 0, 0, "%d ", matrix[i][j]);
             
             if(matrix[i][j] == 1) { // i sends to j ...
@@ -168,9 +220,13 @@ std::vector<group> create_group(std::vector<std::vector<int>> &matrix) {
         
     }
     
+    // the result is an mpi-suitable representation of a full communication topology
+    
     return comm;
     
 }
+
+#pragma mark FUNCTION: create_adjaceny_matrix()
 
 // with a provided vector of topology groups (which holds an island's senders and receivers),
 // create an adjacency matrix of size world_size*world_size, populating the coordinate
@@ -216,9 +272,7 @@ std::vector<std::vector<int>> create_adjaceny_matrix(std::vector<group> &comm, i
     
 }
 
-bool prob_true(double p){
-    return rand()/(RAND_MAX+1.0) < p;
-}
+#pragma mark FUNCTION: create_dyn_adjaceny_matrix()
 
 // create a randomly populated adjacency matrix of size world_size*world_size,
 // communication neighbors with probability determined by the sparsity parameter ...
@@ -227,23 +281,28 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
     
     std::vector<std::vector<int>> matrix;
     matrix.resize(world_size);
-
-    int comm_count = 0; // failsafe for avoiding an empty matrix if the sparsity probability is low
+    
+    int comm_count = 0;
+   
     int rec_count[world_size];
     int snd_count[world_size];
+    
+    // intialize empty matrix ...
     
     for(int i=0; i<world_size; i++) {
         rec_count[i] = 0;
         snd_count[i] = 0;
     }
     
-    while(comm_count == 0) {
+    while(comm_count == 0) {  // avoid empty matrix if sparsity probability is low
     
-        for(int i=0; i<world_size; i++) {
+        for(int i=0; i<world_size; i++) { // row
 
             matrix[i].resize(world_size);
             
-            for(int j=0; j<world_size; j++) {
+            for(int j=0; j<world_size; j++) { // column
+                
+                // check @config.txt[dim] max send\recv ...
                 
                 if(rec_count[j] >= config::migration_cap) {
                     LOG(6, 0, 0, "receive cap limit reached for process %d\r\n", i);
@@ -255,6 +314,8 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
                     continue;
                 }
                 
+                // check @config.txt[sparsity] probability ...
+                
                 if(prob_true(config::sparsity) && i != j) {
                     matrix[i][j] = 1;
                     comm_count++;
@@ -263,7 +324,6 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
                 } else {
                     matrix[i][j] = 0;
                 }
-
                 
             }
             
@@ -271,10 +331,13 @@ std::vector<std::vector<int>> create_dyn_adjaceny_matrix(int world_size) {
         
     }
     
+    // constrained, randomly generated 0s and 1s in a @config.txt[dim] sized logical grid ...
     
     return matrix;
     
 }
+
+#pragma mark FUNCTION: topo_cpd()
 
 // calculate the cumulative probability distribution for the topology population ...
 
@@ -308,6 +371,8 @@ std::vector<double> topo_cpd(std::vector<topology> &topologies) {
     
 }
 
+#pragma mark FUNCTION: select_topo_parent()
+
 // parent selection from the topology population, based on the cumulative probability distribution ...
 
 topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &topologies) {
@@ -330,14 +395,19 @@ topology select_topo_parent(std::vector<double> &cpd, std::vector<topology> &top
     
 }
 
-// create a new generation of topologies using parent selection ...
+#pragma mark FUNCTION: topo_gen()
+
+// create a new generation of topologies. accepts a reference to an array of
+// topology representations and a corresponding matrix size.
+// performs selection -> recombination -> mutation and returns an array of
+// evolved topology representations.
 
 std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size) {
     
+    // initialize parent selection ...
+    
     std::vector<double> cpd = topo_cpd(topologies);
-    
-    std::reverse(topologies.begin(), topologies.end());
-    
+    std::reverse(topologies.begin(), topologies.end()); // TODO: check why reversing
     std::vector<topology> children;
 
     for(int n = 0; n < config::topo_lambda; n++) {
@@ -359,6 +429,8 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
         std::vector<std::vector<int>> m1 = create_adjaceny_matrix(t1.comm, world_size);
         std::vector<std::vector<int>> m2 = create_adjaceny_matrix(t2.comm, world_size);
         
+        // recombine the parent adjacency matrices, initialize ...
+        
         std::vector<std::vector<int>> child_matrix;
         child_matrix.resize(world_size);
         
@@ -370,6 +442,9 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
             rec_count[i] = 0;
             snd_count[i] = 0;
         }
+        
+        // iterate row->column for each x,y element in the child matrix, and for each
+        // gene and randomly choose a parent from which to assign the value ...
         
         while(comm_count == 0) { // failsafe to prevent empty matrix
     
@@ -477,6 +552,8 @@ std::vector<topology> topo_gen(std::vector<topology> &topologies, int world_size
     return children;
     
 }
+
+#pragma mark FUNCTION: create_dyn_topology()
 
 // used to create the initial topology population ...
 

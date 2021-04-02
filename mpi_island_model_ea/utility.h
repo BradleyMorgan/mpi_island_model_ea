@@ -37,14 +37,40 @@ double rastrigin(std::array<double, DIM> x) {
     return sum * -1;
 }
 
+# pragma mark FUNCTION: offset_rastrigin
+
+// accepts an array of floating point numbers @x[param:1] to be used as the dimensional     |
+// input values for the offset rastrigin fitness calculation, and returns                   |
+// the calculated fitness using a corresponding array of offset values @offsets[param:2].   |
+// the function applies the rastrigin calculation, iterating @dim[config.txt:12] for        |
+// each dimension.                                                                          |
+
 double offset_rastrigin(std::array<double, DIM> x, std::array<double, DIM> &offsets) {
+
+    // rastrigin function: f(x) = A*n + [Σ(1,n,𝜆𝑖↦(x[i]^2-Acos(2πx[i])]
+    // rastrigin function constants:
+    // A=10
+    // x[i] ∈ [-5.12,5.12]
     
     double sum = 10 * DIM;
     
     for (unsigned int i = 0; i < DIM; i++) {
+    
+        // add the corresponding offset to the gene value, which should make this
+        // a little more difficult to solve ...
+        
         double offset_gene = x[i] + offsets[i];
+        
+        // apply the rastrigin function to the gene and add the value to the
+        // fitness ...
+        
         sum += (std::pow(offset_gene,2) - (10 * std::cos(2 * M_PI * offset_gene)));
+    
     }
+    
+    // rastrigin is a minimization problem, so fitness values closer to zero are
+    // considered better. we negate the fitness so that we can perform more
+    // logical sorting and comparison using better_fitness > not_as_good_fitness
     
     return sum * -1;
     
