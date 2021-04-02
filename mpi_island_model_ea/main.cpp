@@ -21,9 +21,9 @@
 
 #pragma mark FUNCTION: initial_population()
 
-// returns a vector of a randomly generated offset rastrigin solution population    |
-// accepts an array of floating point numbers of n-dimensions @offsets[param:0]     |
-// used to calculate the solution fitness.                                          |
+// returns a vector of a randomly generated offset rastrigin solution population                        |
+// accepts an array of floating point numbers of n-dimensions @offsets[param:0]                         |
+// used to calculate the solution fitness.                                                              |
 
 std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
     
@@ -55,9 +55,9 @@ std::vector<individual> initial_population(std::array<double, DIM> &offsets) {
 
 #pragma mark FUNCTION: initial_topo_population()
 
-// returns a collection of randomly generated adjaceny matrices, representing       |
-// an island (communication) topology.  accepts a reference to a list of island     |
-// (process) identifiers @ids[param:0] to use as indices.                           |
+// returns a collection of randomly generated adjaceny matrices, representing                           |
+// an island (communication) topology.  accepts a reference to a list of island                         |
+// (process) identifiers @ids[param:0] to use as indices.                                               |
 
 std::vector<topology> initial_topo_population(std::vector<int> &ids) {
     
@@ -87,10 +87,9 @@ std::vector<topology> initial_topo_population(std::vector<int> &ids) {
 
 // core initialization, overarching EA logic.
 
-// initialize globals -> experimental run [n] -> initialize populations ->
-// iterate topology[t] evaluation * @config.txt[min_evals] -> apply topology[t] to rastrigin[r] ->
-// iterate rastrigin[r] evaluation * @config.txt[min_evals] -> next r
-//
+// initialize globals -> experimental run [n] -> initialize populations ->                              |
+// iterate topology[t] evaluation * @config.txt[min_evals] -> apply topology[t] to rastrigin[r] ->      |
+// iterate rastrigin[r] evaluation * @config.txt[min_evals] -> next r                                   |
 
 int main(int argc, const char * argv[]) {
 
@@ -463,12 +462,13 @@ int main(int argc, const char * argv[]) {
                 
             }
             
-            //
             if (world_rank == 0) {
+                
+                // log the best topology's adjacency matrix in csv format ...
                 
                 LOG(10, 0, 0, "run %d eval %d topology %d fitness = %2.10f (round %2.10f)\r\n", run, eval, tindex, topologies[tindex].fitness, topologies[tindex].round_fitness);
 
-                eval_stats.topo_migrate_time = 0.0;
+                eval_stats.topo_migrate_time = 0.0;  // ?? what
                 
                 if(topologies[tindex].fitness >= eval_stats.best_topology.fitness) {
                     
@@ -498,7 +498,8 @@ int main(int argc, const char * argv[]) {
                     
                 }
                 
-                //if(m == 0) {
+                // perform survival selection for topology population ...
+                
                 if(eval != 1 && c == 0) {
 
                     LOG(4, world_rank, 0, "truncating topologies size %lu at %d...\r\n", topologies.size(), eval);
@@ -528,6 +529,8 @@ int main(int argc, const char * argv[]) {
                 
         } // eval end
         
+        // log aggregated run stats ...
+        
         if(world_rank == 0) {
             
             double run_end = MPI_Wtime();
@@ -543,7 +546,7 @@ int main(int argc, const char * argv[]) {
         fflush(config::run_stats_out);
         fflush(config::stats_out);
         
-    } // run end
+    }  // run end
   
     if(world_rank == 0) {
         
