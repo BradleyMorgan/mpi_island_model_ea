@@ -11,7 +11,15 @@
 
 #include <random>
 #include <cpuid.h>
-#include "config.h"
+
+#pragma mark FUNCTION prob_true()
+
+// utility function to find arbitrary event probability
+
+bool prob_true(double p){
+    return rand()/(RAND_MAX+1.0) < p;
+}
+
 
 // return a random double between min and max ...
 
@@ -73,23 +81,6 @@ double offset_rastrigin(std::array<double, DIM> x, std::array<double, DIM> &offs
     // logical sorting and comparison using better_fitness > not_as_good_fitness
     
     return sum * -1;
-    
-}
-
-std::array<double, DIM> generate_offsets(double min, double max, double step) {
-    
-    std::array<double, DIM> offsets;
-    std::vector<double> increments;
-    
-    for (double increment = min; increment <= max; increment += step) {
-        increments.push_back(increment);
-    }
-    
-    for(int i=0; i<DIM; i++) {
-        offsets[i] = increments[rand()%increments.size()];
-    }
-    
-    return offsets;
     
 }
 

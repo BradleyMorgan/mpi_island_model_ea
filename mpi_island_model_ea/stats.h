@@ -13,7 +13,7 @@
 
 struct rstats {
     
-    individual solution;
+    solution solution;
     
     double init_duration;
     
@@ -45,32 +45,46 @@ struct estats {
     std::vector<double> average_local_best_topo_fitnesses;
     std::vector<double> average_global_best_topo_fitnesses;
     
-    individual solution;
+    solution solution;
     
 };
 
-void log_fn_eval_stats(std::vector<individual> &population, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats) {
+void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
+    
+    // only consider evaluated topologies for stats
+    
+    std::vector<topology> filtered;
+    
+    std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered), [](const topology &item) { return item.fitness != 0.0; });
+    std::sort(filtered.begin(), filtered.end(), compare_topo_fitness);
+    std::reverse(filtered.begin(), filtered.end());
+    
+    LOG(3, 0, 0, "STATS (run %d, eval %d): solutions size %lu, mem[0] fit = %f \r\n", run, eval, population.size(), population[0].fitness);
     
     eval_stats.local_best_fitness = population[0].fitness;
     eval_stats.average_local_best_fitnesses.push_back(population[0].fitness);
     
-    eval_stats.local_best_topo_fitness = topologies[0].fitness;
-    eval_stats.average_local_best_topo_fitnesses.push_back(topologies[0].fitness);
+    eval_stats.local_best_topo_fitness = filtered[0].fitness;
+    eval_stats.average_local_best_topo_fitnesses.push_back(filtered[0].fitness);
+    
+    LOG(3, 0, 0, "STATS (run %d, eval %d): local best = %f, locat best fitnesses tracked = %lu\r\n", run, eval, eval_stats.local_best_fitness, eval_stats.average_local_best_fitnesses.size());
     
     if(population[0].fitness > eval_stats.global_best_fitness) {
+        LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best solution %f > %f\r\n", run, eval, population[0].fitness, eval_stats.global_best_fitness);
         eval_stats.solution = population[0];
         eval_stats.average_global_best_fitnesses.push_back(population[0].fitness);
         eval_stats.global_best_fitness = population[0].fitness;
     }
     
-    if(topologies[0].fitness > 0) {
-        LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology\r\n", topologies[0].fitness);        
+    if(filtered[0].fitness > 0) {
+        LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology\r\n", topologies[0].fitness);
     }
     
-    if(topologies[0].fitness > eval_stats.global_best_topo_fitness || eval_stats.global_best_topo_fitness == 0.0) {
-        eval_stats.best_topology = topologies[0];
-        eval_stats.average_global_best_topo_fitnesses.push_back(topologies[0].fitness);
-        eval_stats.global_best_topo_fitness = topologies[0].fitness;
+    if(filtered[0].fitness > eval_stats.global_best_topo_fitness || eval_stats.global_best_topo_fitness == 0.0) {
+        LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best topology %f > %f\r\n", run, eval, topologies[0].fitness, eval_stats.global_best_topo_fitness);
+        eval_stats.best_topology = filtered[0];
+        eval_stats.average_global_best_topo_fitnesses.push_back(filtered[0].fitness);
+        eval_stats.global_best_topo_fitness = filtered[0].fitness;
     }
     
     double total_fitness = 0.0;
@@ -80,28 +94,37 @@ void log_fn_eval_stats(std::vector<individual> &population, std::vector<topology
         total_fitness += population[i].fitness;
     }
     
-    for(int i=0; i<topologies.size(); i++) {
-        total_topo_fitness += topologies[i].fitness;
+    for(int i=0; i<filtered.size(); i++) {
+        total_topo_fitness += filtered[i].fitness;
     }
     
-    LOG(6, 0, 0, "total fit: %2.10f\r\n", total_fitness);
+    LOG(3, 0, 0, "STATS (run %d, eval %d): solution population size %lu total fitness = %2.10f\r\n", run, eval, population.size(), total_fitness);
     
-    eval_stats.average_local_best_fitness = std::accumulate(eval_stats.average_local_best_fitnesses.begin(), eval_stats.average_local_best_fitnesses.end(), 0.0) / eval_stats.average_local_best_fitnesses.size();
+    if(eval_stats.average_local_best_fitnesses.size() > 1) {
+        eval_stats.average_local_best_fitness = std::accumulate(eval_stats.average_local_best_fitnesses.begin(), eval_stats.average_local_best_fitnesses.end(), 0.0) / eval_stats.average_local_best_fitnesses.size();
+    } else {
+        eval_stats.average_local_best_fitness = population[0].fitness;
+    }
+    
     eval_stats.average_global_best_fitness = std::accumulate(eval_stats.average_global_best_fitnesses.begin(), eval_stats.average_global_best_fitnesses.end(), 0.0) / eval_stats.average_global_best_fitnesses.size();
-    eval_stats.average_local_best_topo_fitness = std::accumulate(eval_stats.average_local_best_topo_fitnesses.begin(), eval_stats.average_local_best_topo_fitnesses.end(), 0.0) / eval_stats.average_local_best_topo_fitnesses.size();
+   
+    eval_stats.average_local_best_topo_fitness = std::accumulate(eval_stats.average_local_best_topo_fitnesses.begin(), eval_stats.average_local_best_topo_fitnesses.end(), 0.0) /
+        eval_stats.average_local_best_topo_fitnesses.size();
     eval_stats.average_global_best_topo_fitness = std::accumulate(eval_stats.average_global_best_topo_fitnesses.begin(), eval_stats.average_global_best_topo_fitnesses.end(), 0.0) / eval_stats.average_global_best_topo_fitnesses.size();
     
     double average_fitness = total_fitness / population.size();
     double average_gather_time = eval_stats.total_gather_time / eval;
     double average_scatter_time = eval_stats.total_scatter_time / eval;
     double average_migrate_time = eval_stats.total_migrate_time / eval;
-    double average_topo_fitness = total_topo_fitness / topologies.size();
+    double average_topo_fitness = filtered.size() > 0 ? (total_topo_fitness / filtered.size()) : 0.0;
     
     double eval_duration = ( std::clock() - eval_stats.eval_start ) / (double) CLOCKS_PER_SEC;
     
-    std::fprintf(config::stats_out, "%d,%d,%4.10f,%4.10f,%4.10f,%4.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d\r\n", run, eval, average_fitness, eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, eval_stats.init_duration, eval_duration, average_topo_fitness, eval_stats.local_best_topo_fitness, eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness, topologies[0].round_fitness, topologies[0].rounds);
+    std::fprintf(config::stats_out, "%d,%d,%4.10f,%4.10f,%4.10f,%4.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%2.10f,%d\r\n", run, eval, average_fitness, eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, eval_stats.init_duration, eval_duration, average_topo_fitness, eval_stats.local_best_topo_fitness, eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness, t.id, t.round_fitness, t.rounds);
     
-    LOG(2, 0, 0, "%d,%d,%.10f,%.10f,%.10f,%.10f,%.10f,%2.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d\r\n", run, eval, average_fitness, eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration, average_topo_fitness, eval_stats.local_best_topo_fitness, eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness, topologies[0].round_fitness, topologies[0].rounds);
+    LOG(3, 0, 0, "%-2s,%-4s,%-13s,%-13s,%-13s,%-13s,%-13s,%-12s,%-12s,%-12s,%-12s,%-12s,%-13s,%-13s,%-13s,%-13s,%-13s,%-13s,%-13s\r\n", "r", "e", "avg_fitness", "lb_fitness", "gb_fitness", "alb_fitness", "agb_fitness", "avg_scatter", "avg_gather", "avg_migrate", "init_time", "eval_time", "avgt_fit", "lbt_fit", "gbt_fit", "albt_fit", "agbt_fit", "round_fit", "rounds");
+    
+    LOG(2, 0, 0, "%2d,%4d,%.10f,%.10f,%.10f,%.10f,%.10f,%2.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%.10f,%d\r\n", run, eval, average_fitness, eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration, average_topo_fitness, eval_stats.local_best_topo_fitness, eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness, t.id, t.round_fitness, t.rounds);
     
 }
 

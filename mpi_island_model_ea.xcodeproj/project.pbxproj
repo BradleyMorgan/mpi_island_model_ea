@@ -26,6 +26,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9A0B0388262486240041E266 /* topology.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = topology.h; sourceTree = "<group>"; };
+		9A0B038A262497CC0041E266 /* solution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = solution.h; sourceTree = "<group>"; };
 		9A6508932406B3C100C7A63D /* mpi_island_model_ea */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mpi_island_model_ea; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A6508962406B3C100C7A63D /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		9A65089E2406B40D00C7A63D /* libmpi.40.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmpi.40.dylib; path = ../../../../../usr/local/lib/libmpi.40.dylib; sourceTree = "<group>"; };
@@ -35,6 +37,7 @@
 		9A6508A32407593900C7A63D /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9A6508A42407595800C7A63D /* utility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utility.h; sourceTree = "<group>"; };
 		9A8A0AC324113D5300DBB5DB /* config.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.txt; sourceTree = "<group>"; };
+		9AB97848261CA06B0099EB0B /* ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea.h; sourceTree = "<group>"; };
 		9AEEAED02432987B001DF574 /* stats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stats.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -78,6 +81,9 @@
 				9A6508A32407593900C7A63D /* config.h */,
 				9A8A0AC324113D5300DBB5DB /* config.txt */,
 				9AEEAED02432987B001DF574 /* stats.h */,
+				9AB97848261CA06B0099EB0B /* ea.h */,
+				9A0B0388262486240041E266 /* topology.h */,
+				9A0B038A262497CC0041E266 /* solution.h */,
 			);
 			path = mpi_island_model_ea;
 			sourceTree = "<group>";
