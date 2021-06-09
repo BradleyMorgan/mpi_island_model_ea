@@ -7,11 +7,11 @@ runs:30
 evals:10000
 lambda:20
 mu:600
-topo_lambda:20
+topo_lambda:10
 topo_mu:60
 dim:1000
 mutation_rate:0.03
-loglevel:2
+loglevel:5
 sparsity:0.30
 migration_cap:20
 send_cap:20

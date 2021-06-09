@@ -64,6 +64,15 @@ template<typename O> struct objective {
     
 };
 
+
+struct comp_fitness {
+  template <typename otype>
+  bool operator() (const otype &a, const otype &b) const {
+    return a.fitness < b.fitness;
+  }
+};
+
+
 template<typename C> void objective<C>::calculate::total_fitness(objective &o) {
     
     o.total_fitness = 0.0;
@@ -89,22 +98,34 @@ template<typename C> void objective<C>::calculate::cpd(objective &o) {
     double cumulative_probability = 0.0;
     
     o.cpd.clear();
-        
-    island::calculate::total_fitness(o);
     
-    LOG(6, 0, 0, "island %d cpd calculation total fitness = %f", o.total_fitness)
+    LOG(6, 0, 0, "calculating total fitness ...\r\n");
+    
+    objective::calculate::total_fitness(o);
+    
+    LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
+    
+    std::sort(o.population.begin(), o.population.end(), comp_fitness());
     std::reverse(o.population.begin(), o.population.end());
     
+    LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", o.id, o.total_fitness)
+
     for(int i=0; i<o.population.size(); i++) {
 
         o.population[i].selection_distribution = (double)o.population[i].fitness / o.total_fitness;
 
+        LOG(8, 0, 0, "calculated solution %d fitness %f selection distribution = %f\r\n", i, o.population[i].fitness, o.population[i].selection_distribution);
+        
         cumulative_probability += o.population[i].selection_distribution;
+        
+        LOG(8, 0, 0, "solution %d cumulative prob = %f\r\n", i, cumulative_probability);
+        
         o.cpd.push_back(cumulative_probability);
         
     }
     
 }
+
 
 #pragma mark DATATYPE: @ea_meta{}
 
@@ -171,15 +192,21 @@ struct ea {
     };
     
     template<typename func, typename otype>
-    void parent_selection(func function, objective<otype> &o) {
-        function(this->meta.isle, o);
+    otype selection(func function, objective<otype> &o, std::vector<otype> &population) {
+        return function(*this, o, population);
+    };
+    
+    template<typename func, typename otype>
+    otype crossover(func function, objective<otype> &o, std::vector<otype> &population) {
+        return function(*this, o, population);
     };
     
 };
 
-solution pselect(island &isle, objective<solution> &o) {
+template<typename otype>
+otype parent(ea &multi, objective<otype> &o, std::vector<otype> &population) {
     
-    solution p;
+    otype p;
 
     // implementation uses the single armed roulette wheel approach to select
     // an individual from the population
@@ -192,9 +219,11 @@ solution pselect(island &isle, objective<solution> &o) {
     
     // spin the wheel
     
-    while (isle.cpd[i] < r ) { i++; }
+    objective<otype>::calculate::cpd(o);
     
-    p = isle.population[i];
+    while (o.cpd[i] < r ) { i++; }
+    
+    p = o.population[i];
     
     return p;
         
@@ -203,32 +232,32 @@ solution pselect(island &isle, objective<solution> &o) {
 // pick a parent from the population using the provided method ...
 
 solution select_parent(island &isle) {
-    
+
     solution p;
 
     // implementation uses the single armed roulette wheel approach to select
     // an individual from the population
-    
+
     int i = 1;
-    
+
     // random double uniformly distributed between 0 and 1
-    
+
     LOG(8, 0, 0, "random double uniformly distributed between 0 and 1\r\n");
-    
+
     double r = ((double)rand()/(double)RAND_MAX);
-    
+
     // spin the wheel
-    
+
     LOG(10, 0, 0, "spin the wheel ...\r\n");
-    
+
     while (isle.cpd[i] < r ) { LOG(8, 0, 0, "island %d, cpd[%d] = %f, r = %f\r\n", isle.id, i, isle.cpd[i], r); i++; }
-    
+
     LOG(8, 0, 0, "island %d selected individual %d ...\r\n", isle.id, i);
-    
+
     p = isle.population[i];
-    
+
     return p;
-        
+
 }
 
 
@@ -264,12 +293,12 @@ std::vector<solution> crossover(island &isle, std::array<double, DIM> &offsets) 
     
     for(int i = 0; i < config::lambda; i++) {
         
-        LOG(5, 0, 0, "island %d creating child %d ...\r\n", isle.id, i);
+        LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n", isle.id, i);
         
         solution p1 = select_parent(isle);
-        LOG(6, 0, 0, "island %d selected p1 cpd = %f, fitness = %f ...\r\n", isle.id, p1.selection_distribution, p1.fitness);
+        LOG(6, 0, 0, "island %d selected p1<solution> cpd = %f, fitness = %f ...\r\n", isle.id, p1.selection_distribution, p1.fitness);
         solution p2 = select_parent(isle);
-        LOG(6, 0, 0, "island %d selected p2 cpd = %f, fitness = %f...\r\n", isle.id, p2.selection_distribution, p2.fitness);
+        LOG(6, 0, 0, "island %d selected p2<solution> cpd = %f, fitness = %f...\r\n", isle.id, p2.selection_distribution, p2.fitness);
         
         solution child;
         
@@ -277,17 +306,17 @@ std::vector<solution> crossover(island &isle, std::array<double, DIM> &offsets) 
             if(rand()%2 == 1) {
                 int test = rand()%DIM;
                 child.input[j] = p1.input[test];
-                LOG(4, 0, 0, "assigning gene %d = %f from parent 1 to child %d (%d) ...\r\n", j, child.input[j], i, test);
+                LOG(6, 0, 0, "assigning gene %d = %f from p1<solution> to child %d (%d) ...\r\n", j, child.input[j], i, test);
             } else {
                 int test = rand()%DIM;
                 child.input[j] = p2.input[test];
-                LOG(4, 0, 0, "assigning gene %d = %f from parent 2 to child %d (%d) ...\r\n", j, child.input[j], i, test);
+                LOG(6, 0, 0, "assigning gene %d = %f from p2<solution> to child %d (%d) ...\r\n", j, child.input[j], i, test);
             }
         }
         
         if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
             
-            LOG(6, 0, 0, "island %d mutating child %d ...\r\n", isle.id, i);
+            LOG(6, 0, 0, "island %d mutating child<solution> %d ...\r\n", isle.id, i);
             
             mutate(child);
             
@@ -296,9 +325,9 @@ std::vector<solution> crossover(island &isle, std::array<double, DIM> &offsets) 
         child.fitness = offset_rastrigin(child.input, offsets);
         
         if(child.fitness > (p1.fitness / 4)) {
-           LOG(4, 0, 0, "LOW island %d %f<->%f child %d fitness %f\r\n", isle.id, p1.fitness, p2.fitness, i, child.fitness);
+           LOG(4, 0, 0, "LOW island %d %f<->%f child<solution> %d fitness %f\r\n", isle.id, p1.fitness, p2.fitness, i, child.fitness);
         } else {
-            LOG(4, 0, 0, "child %d fitness %f\r\n", i, child.fitness);
+            LOG(4, 0, 0, "child<solution> %d fitness %f\r\n", i, child.fitness);
         }
         
         children.push_back(child);
@@ -593,6 +622,247 @@ void solution_evaluate(ea &multi, objective<solution> &o, const int &index) {
     
 }
 
+#pragma mark FUNCTION: topology_crossover()
+
+std::vector<topology> topology_crossover(ea &multi) {
+    
+    std::vector<topology> children;
+    children.resize(config::topo_lambda);
+    
+    //if(multi.meta.isle.id != 0) { return children; }
+    
+    objective<topology>::calculate::cpd(multi.topologies);
+    
+    for(int n = 0; n < config::topo_lambda; n++) { // loop lambda
+
+            topology child;
+        
+            child.id = config::topo_mu+n;
+            child.world_size = multi.meta.islands;
+            child.fitness = 0.0;
+            child.channel_count = 0;
+            child.round_fitness = 0.0;
+            child.selection_distribution = 0.0;
+        
+            child.channels.resize(multi.meta.islands);
+            child.channels.clear();
+            //child.channels[n].senders.clear();
+            //child.channels[n].receivers.clear();
+        
+            LOG(3, multi.meta.isle.id, 0, "creating topo kids\r\n");
+
+            topology t1 = multi.selection(parent<topology>, multi.topologies, multi.topologies.population);
+            topology t2 = multi.selection(parent<topology>, multi.topologies, multi.topologies.population);
+            
+            child.fitness = (t1.fitness + t2.fitness) / 2; // an estimated fitness, average of the parents
+            
+            // calculate an adjacency matrix for each parent's associated topology for use in
+            // generating child topology ...
+            
+            LOG(3, multi.meta.isle.id, 0, "parents<topology> t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
+            
+            std::vector<std::vector<int>> m1 = topology::create::matrix(t1);
+            std::vector<std::vector<int>> m2 = topology::create::matrix(t2);
+            
+            // recombine the parent adjacency matrices, initialize ...
+            
+            LOG(3, multi.meta.isle.id, 0, "recombining topology %d <-> %d ...\r\n", t1.id, t2.id);
+            
+            std::vector<std::vector<int>> child_matrix;
+            child_matrix.resize(multi.meta.islands);
+            
+            int comm_count = 0;
+            int rec_count[multi.meta.islands];
+            int snd_count[multi.meta.islands];
+            
+            for(int i=0; i<multi.meta.islands; i++) {
+                rec_count[i] = 0;
+                snd_count[i] = 0;
+            }
+            
+            LOG(3, multi.meta.isle.id, 0, "child<topology> %d initialized \r\n", child.id);
+            
+            // iterate row->column for each x,y element in the child matrix, and for each
+            // gene and randomly choose a parent from which to assign the value ...
+            
+            LOG(3, multi.meta.isle.id, 0, "performing child<topology> %d matrix crossover ...\r\n", child.id);
+        
+            while(comm_count == 0) { // failsafe to prevent empty matrix
+        
+                for(int i=0; i<m1.size(); i++) {  // child matrix row
+                    
+                    child_matrix[i].resize(multi.meta.islands);
+                    
+                    for(int j=0; j<m2.size(); j++) { // child matrix column
+                        
+                        if(rec_count[j] >= config::migration_cap) {
+                            LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                            continue;
+                        }
+                        
+                        if(snd_count[i] >= config::send_cap) {
+                            LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
+                            continue;
+                        }
+                        
+                        if(i != j) {  // we don't want an island sending migrants to itself
+                            
+                            if(rand()%2 == 1) { // coin flip, heads take the row index value from parent 1
+                                LOG(10, 0, 0, "assigning child<topology> m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
+                                child_matrix[i][j] = m1[i][j];
+                                if(m1[i][j] == 1) {
+                                    rec_count[j]++;
+                                    snd_count[i]++;
+                                }
+                            } else { // tails, take it from parent 2
+                                LOG(10, 0, 0, "assigning child<topology> m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
+                                child_matrix[i][j] = m2[i][j];
+                                if(m2[i][j] == 1) {
+                                    rec_count[j]++;
+                                    snd_count[i]++;
+                                }
+                            }
+                            
+                            if(child_matrix[i][j] == 1) { comm_count++; }
+                            
+                        } else {
+                            
+                            child_matrix[i][j] = 0;
+                            
+                        }
+                        
+                    } // child matrix column
+                    
+                    LOG(10, 0, 0, "------\r\n");
+                    
+                }  // child matrix row
+                
+            }  // end failsafe
+        
+            
+            // mutation, interate through the matrix and flip the bit with probability m,
+            // also considering any sparsity constraints ...
+            
+        
+        
+            for(int i=0; i<child_matrix.size(); i++) { // matrix row
+
+                for(int j=0; j<child_matrix[i].size(); j++) {  // matrix col
+
+                    if(rec_count[j] >= config::migration_cap) {
+                        LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
+                        continue;
+                    }
+                    
+                    if(snd_count[i] >= config::send_cap) {
+                        LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
+                        continue;
+                    }
+                    
+                    if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+                        
+                        LOG(3, multi.meta.isle.id, 0, "mutating child<topology> %d ...\r\n", child.id);
+                    
+                        if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
+                            
+                            child_matrix[i][j] = 1;
+                            rec_count[j]++;
+                            snd_count[i]++;
+                            comm_count++;
+                            
+                        }
+                        
+                        if(child_matrix[i][j] == 1 && rand()/(RAND_MAX+1.0) > config::sparsity && comm_count > 1) {
+                            
+                            child_matrix[i][j] = 0;
+                            comm_count--;
+                            
+                        }
+                        
+                    }
+
+                } // matrix col
+
+            } // matrix row
+            
+            // convert the adjaceny matrix to a sender and receiver arrays for use with MPI send\recv ...
+        
+            topology::create::channels(child, child_matrix);
+
+            LOG(3, multi.meta.isle.id, 0, "child<topology> %d born!\r\n", child.id);
+            
+            children.push_back(child);
+            
+            //LOG(3, isle.id, 0, "evaluated child %d fitness = %f\r\n", isle.id, multi.topologies.children[n].fitness);
+        
+            LOG(3, 0, 0, "child<topology> %d created by rank %d from matrix with %lu senders and %lu receivers\r\n", child.id, multi.meta.isle.id, child.channels[n].senders.size(), child.channels[n].receivers.size());
+
+    } // loop lambda
+    
+    return children;
+    
+}
+
+#pragma mark FUNCTION: topology_evolve()
+
+void topology_evolve(ea &multi) {
+    
+    if(multi.meta.isle.id == 0) {
+        
+        std::vector<topology> children = topology_crossover(multi);
+        
+        MPI_Barrier(multi.meta.isle.tcomm);
+        
+        LOG(6, 0, 0, "island %d topology survival, population before: %lu, fitness before: %f, best fit: %f\r\n", multi.meta.isle.id, multi.topologies.population.size(), multi.topologies.total_fitness, multi.topologies.population[0].fitness);
+        
+        // truncation: add new children to the population, and then kill the weakest
+        
+        multi.topologies.population.resize(multi.topologies.mu + config::topo_lambda);
+        
+        multi.topologies.population.insert(multi.topologies.population.end(), children.begin(), children.end());
+            
+    }
+    
+    //MPI_Barrier(multi.meta.isle.tcomm);
+
+    LOG(6, 0, 0, "island %d <topology> survival, population after: %lu, fitness after: %f, best fit: %f\r\n", multi.meta.isle.id, multi.topologies.population.size(), multi.topologies.total_fitness, multi.topologies.population[0].fitness);
+
+    for(int i=multi.topologies.mu; i<multi.topologies.mu+config::topo_lambda-1; i++) {
+
+        LOG(4, multi.meta.isle.id, 0, "rank %d (root) applying child<topology>[%d] for eval\r\n", multi.meta.isle.id, i);
+        
+        multi.topologies.population[i].apply(multi.meta.isle, multi.topologies.population[i]);
+        
+        for(multi.topologies.eval_id = 1; multi.topologies.eval_id <= multi.topologies.evals; multi.topologies.eval_id++) {
+
+            LOG(5, 0, 0, "begin eval %d on child topology %d\r\n", multi.topologies.eval_id, multi.topologies.population[i].id);
+
+            multi.solutions.eval_id++;
+
+            multi.evaluate(solution_evaluate, multi.solutions, i);
+            
+            MPI_Barrier(multi.meta.isle.tcomm);
+
+        }
+
+    }
+
+    //MPI_Barrier(multi.meta.isle.tcomm);
+    
+    //if(multi.meta.isle.id == 0) {
+    
+        std::sort(multi.topologies.population.begin(), multi.topologies.population.end(), comp_fitness());
+        std::reverse(multi.topologies.population.begin(), multi.topologies.population.end());
+
+        multi.topologies.population.erase(multi.topologies.population.begin()+(multi.topologies.mu-1), multi.topologies.population.end());
+
+        objective<topology>::calculate::total_fitness(multi.topologies);
+        
+    //}
+   
+    
+}
+
 #pragma mark FUNCTION: topology_eval()
 
 // apply a provided topology to the communication pattern to be
@@ -664,29 +934,6 @@ ea ea_init() {
     
     multi.meta.island_size = config::mu / multi.meta.islands;
     
-    
-    //  attempted a derived mpi datatype for topology, but never got it to work
-    
-    //    int comm_lengths[4] = { 1, 1, 1, 1 };
-    //    MPI_Aint comm_displacements[4] = { 0, sizeof(int), sizeof(int)+sizeof(double),
-    //    (int)((sizeof(int)*2)+(sizeof(double)))*multi.meta.islands };
-    //    MPI_Datatype comm_types[4] = { MPI_INT, MPI_DOUBLE, MPI_INT, MPI_INT };
-    //    MPI_Type_create_struct(4, comm_lengths, comm_displacements, comm_types, &multi.meta.comm_type);
-    //    MPI_Type_commit(&multi.meta.comm_type);
-    //
-    //    int topo_lengths[6] = { 1, 1, 1, 1, 1, multi.meta.islands};
-    //    MPI_Aint topo_displacements[6] = { 0, sizeof(int), sizeof(int)*2, sizeof(double)+(sizeof(int)*2),
-    //    (int)((sizeof(double)*2)+(sizeof(int)*2))*multi.meta.islands, (sizeof(double)*3)+(sizeof(int)*2) };
-    //    MPI_Datatype topo_types[6] = { MPI_INT, MPI_INT, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, multi.meta.comm_type};
-    //    MPI_Type_create_struct(6, topo_lengths, topo_displacements, topo_types, &multi.meta.topology_type);
-    //    MPI_Type_commit(&multi.meta.topology_type);
-    
-    //  communication duplication testing for implicit rearrangment, placeholder ...
-    //  duplicate the default MPI_COMM_WORLD communicator so that it can be manipulated ...
-    
-    //  LOG(4, 0, 0, "duplicating MPI_COMM_WORLD ...\r\n");
-    //  MPI_Comm_dup(MPI_COMM_WORLD, &multi.meta.tcomm);
-
     multi.meta.tcomm = MPI_COMM_WORLD;
     
     multi.meta.isle.init();
@@ -703,7 +950,12 @@ ea ea_init() {
     multi.topologies.world_size = multi.meta.islands;
     multi.topologies.eval_id = 0;
     
+    double total_init_duration = 0.0;
+
     multi.run.stats.init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
+    
+    MPI_Gather(&multi.run.stats.init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
+
     
     return multi;
     

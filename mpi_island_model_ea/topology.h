@@ -293,7 +293,7 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
 //
 //// parent selection from the topology population, based on the cumulative probability distribution ...
 //
-//topology topologies::select::parent(topologies &p) {
+//topology select_topo_parent(std::vector<topology> &p) {
 //
 //    LOG(7, 0, 0, "selecting topo parent: ");
 //
@@ -305,7 +305,7 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
 //
 //    while (p.cpd[i] < r ) { i++; }
 //
-//    t = p.population[i];
+//    t = p[i];
 //
 //    LOG(7, 0, 0, "%d\r\n", i);
 //

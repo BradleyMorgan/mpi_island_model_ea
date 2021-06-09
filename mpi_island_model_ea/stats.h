@@ -13,7 +13,7 @@
 
 struct rstats {
     
-    solution solution;
+    solution sol;
     
     double init_duration;
     
@@ -45,7 +45,26 @@ struct estats {
     std::vector<double> average_local_best_topo_fitnesses;
     std::vector<double> average_global_best_topo_fitnesses;
     
-    solution solution;
+    solution sol;
+    
+    void init() {
+        
+        this->init_duration = 0.0;
+        this->eval_start = 0.0;
+        this->eval_duration = 0.0;
+        this->total_scatter_time = 0.0;
+        this->total_gather_time = 0.0;
+        this->total_migrate_time = 0.0;
+        this->topo_migrate_time = 0.0;
+        this-> local_best_fitness = 0.0;
+        this->average_local_best_fitness = 0.0;
+        this->local_best_topo_fitness = 0.0;
+        this->average_local_best_topo_fitness = 0.0;
+        
+        this->average_local_best_fitnesses.clear();
+        this->average_local_best_topo_fitnesses.clear();
+        
+    }
     
 };
 
@@ -71,7 +90,7 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
     
     if(population[0].fitness > eval_stats.global_best_fitness) {
         LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best solution %f > %f\r\n", run, eval, population[0].fitness, eval_stats.global_best_fitness);
-        eval_stats.solution = population[0];
+        eval_stats.sol = population[0];
         eval_stats.average_global_best_fitnesses.push_back(population[0].fitness);
         eval_stats.global_best_fitness = population[0].fitness;
     }
