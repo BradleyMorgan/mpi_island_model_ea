@@ -54,18 +54,17 @@ int main(int argc, const char * argv[]) {
         LOG(4, multi.meta.isle.id, 0, "initializing objective (topology) population ...\r\n");
 
         multi.populate(topologies_populate, multi.topologies);
-
-        LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population:");
+        
+        LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population: %lu\r\n", multi.topologies.population.size());
         LOG(4, multi.meta.isle.id, 0, "total channels = %d\r\n",  multi.topologies.population[0].channel_count);
 
         for(int i=0; i<multi.topologies.mu; i++) {
-            
+
             multi.evaluate(topology_evaluate, multi.topologies, i);
-            
+
         }
         
-        MPI_Barrier(multi.meta.isle.tcomm);
-
+       
         topology_evolve(multi);
         
 //        for(int i=multi.solutions.eval_id; i<multi.solutions.evals; i++) {

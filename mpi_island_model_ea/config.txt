@@ -11,7 +11,7 @@ topo_lambda:10
 topo_mu:60
 dim:1000
 mutation_rate:0.03
-loglevel:5
+loglevel:2
 sparsity:0.30
 migration_cap:20
 send_cap:20

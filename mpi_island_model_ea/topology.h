@@ -319,7 +319,7 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
 
 void topology::create::dynamic(topology &t) {
     
-    LOG(5, 0, 0, "generating dynamic topology %d\r\n", t.id);
+    LOG(5, 0, 0, "generating dynamic topology %d world size %d\r\n", t.id, t.world_size);
     std::vector<std::vector<int>> matrix = topology::create::dynamic_matrix(t.world_size);
     
     topology::create::channels(t, matrix);
@@ -351,6 +351,8 @@ void topology::apply(island &isle, topology &t) {
     
     }
     
+    if(t.world_size == 0) { t.world_size = 6; }
+    
     // initialize *this* (current MPI rank) island's send and receive queue sizes, assume it's empty ...
     
     int send_size = 0;
@@ -372,7 +374,7 @@ void topology::apply(island &isle, topology &t) {
     isle.senders.resize(send_size);
 
     // complete the MPI_Send of island ids to which this island will send ...
-
+    
     MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, isle.id+t.world_size, isle.tcomm, MPI_STATUS_IGNORE);
 
     LOG(4, 0, 0, "topology %d: island %d got %lu imports from -> ", t.id, isle.id, isle.senders.size());
