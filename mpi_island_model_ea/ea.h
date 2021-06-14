@@ -562,6 +562,8 @@ void solutions_evolve(topology &t, ea &multi) {
         //std::sort(multi.topologies.population.begin(), multi.topologies.population.end(), compare_topo_fitness);
         //std::reverse(multi.topologies.population.begin(), multi.topologies.population.end());
     
+        //log_fn_eval_stats(multi.solutions.population, multi.topologies.population, multi.run.id, multi.solutions.eval_id, multi.eval.stats, multi.run.stats, t);
+        
     }
     
     if(multi.meta.isle.id == 0 && multi.solutions.eval_id%multi.topologies.evals == 0) {
@@ -630,18 +632,13 @@ ea_run run_init(int id, ea &multi) {
 void solution_evaluate(ea &multi, objective<solution> &o, const int &index) {
     
     LOG(8, 0, 0, "evaluating topology %d\r\n", multi.topologies.population[index].id);
-
-    for(o.eval_id = o.eval_id; o.eval_id <= o.evals; o.eval_id++) {
-        
-        solutions_evolve(multi.topologies.population[index], multi);
     
-        multi.topologies.eval_id++;
-        
-        if(o.eval_id%multi.topologies.evals == 0) {
-            return;
-        }
-        
-    }
+    o.eval_id++;
+    
+    if(multi.solutions.eval_id > multi.solutions.evals) { return; }
+    
+    solutions_evolve(multi.topologies.population[index], multi);
+    
     
 }
 
@@ -829,6 +826,8 @@ std::vector<topology> topology_crossover(ea &multi) {
 
 void topology_evolve(ea &multi) {
     
+    if(multi.solutions.eval_id > multi.solutions.evals) { return; }
+    
     std::vector<topology> children;
     
     if(multi.meta.isle.id == 0) {
@@ -855,15 +854,15 @@ void topology_evolve(ea &multi) {
         
         multi.topologies.population[i].apply(multi.meta.isle, multi.topologies.population[i]);
         
-        //for(multi.topologies.eval_id = 1; multi.topologies.eval_id <= multi.topologies.evals; multi.topologies.eval_id++) {
+        for(multi.topologies.eval_id = 1; multi.topologies.eval_id <= multi.topologies.evals; multi.topologies.eval_id++) {
 
             LOG(5, 0, 0, "begin eval %d on child topology %d\r\n", multi.topologies.eval_id, multi.topologies.population[i].id);
 
-            multi.solutions.eval_id++;
+            //multi.solutions.eval_id++;
 
             multi.evaluate(solution_evaluate, multi.solutions, i);
             
-        //}
+        }
 
     }
 
@@ -904,13 +903,12 @@ void topology_evaluate(ea &multi, objective<topology> &o, int index) {
     
     LOG(8, 0, 0, "evaluating topology %d\r\n", o.population[index].id);
     
-    for(o.eval_id = 1; o.eval_id <= o.evals; o.eval_id++) {
+    for(o.eval_id = 1; o.eval_id%(o.evals+1) != 0; o.eval_id++) {
 
         LOG(5, 0, 0, "begin eval %d solution objective on topology %d\r\n", o.eval_id, o.population[index].id);
-
-        multi.solutions.eval_id++;
         
         multi.evaluate(solution_evaluate, multi.solutions, index);
+        
         
     }
 

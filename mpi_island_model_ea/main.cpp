@@ -45,6 +45,8 @@ int main(int argc, const char * argv[]) {
         multi.meta.isle.population.clear();
         
         multi.eval.stats.init();
+        multi.solutions.eval_id = 0;
+        multi.topologies.eval_id = 0;
         
         multi.populate(solution_populate, multi.solutions);
         multi.distribute(solution_scatter, multi.solutions);
@@ -58,21 +60,22 @@ int main(int argc, const char * argv[]) {
         LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population: %lu\r\n", multi.topologies.population.size());
         LOG(4, multi.meta.isle.id, 0, "total channels = %d\r\n",  multi.topologies.population[0].channel_count);
 
+        // evaluate initial topology population by applying each topology and using it for n solution evals ...
+        
         for(int i=0; i<multi.topologies.mu; i++) {
 
             multi.evaluate(topology_evaluate, multi.topologies, i);
 
         }
         
-       
-        topology_evolve(multi);
+        // perform the remaining solution evolution cycles indirectly through topology evolution ...
         
-//        for(int i=multi.solutions.eval_id; i<multi.solutions.evals; i++) {
-//
-//            multi.evaluate(solution_evaluate, multi.solutions, i);
-//
-//        }
-    
+        while(multi.solutions.eval_id <= config::evals) {
+        
+            topology_evolve(multi);
+            
+        }
+        
     }
 
     MPI_Finalize();
