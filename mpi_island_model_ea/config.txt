@@ -16,3 +16,5 @@ sparsity:0.30
 migration_cap:20
 send_cap:20
 topo_evals:5
+ea_mode:2
+migration_interval:1

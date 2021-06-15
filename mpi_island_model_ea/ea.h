@@ -383,6 +383,36 @@ void topologies_populate(ea &multi, objective<topology> &o) {
     
 }
 
+void benchmark_topology(ea &multi) {
+    
+   //multi.topologies.population.clear();
+    
+    topology t;
+
+    t.id = 0;
+    t.rounds = 0;
+    t.world_size = multi.meta.islands;
+    t.fitness = 0.0;
+    t.channel_count = 0;
+    t.round_fitness = 0.0;
+    t.selection_distribution = 0.0;
+    t.channels = {};
+    t.channels.resize(multi.meta.islands);
+    t.channels[multi.meta.isle.id].senders = {};
+    t.channels[multi.meta.isle.id].receivers = {};
+    
+    int next = multi.meta.isle.id+1 < multi.meta.islands ? multi.meta.isle.id+1 : 0;
+    int prev = multi.meta.isle.id-1 < 0 ? (int)multi.meta.islands-1 : multi.meta.isle.id-1;
+
+    t.channels[multi.meta.isle.id].senders.push_back(prev);
+    t.channels[multi.meta.isle.id].receivers.push_back(next);
+
+    multi.topologies.population.push_back(t);
+
+    multi.meta.isle.receivers.push_back(next);
+    multi.meta.isle.senders.push_back(prev);
+
+}
 
 #pragma mark FUNCTION: solution_populate()
 
@@ -562,7 +592,9 @@ void solutions_evolve(topology &t, ea &multi) {
         //std::sort(multi.topologies.population.begin(), multi.topologies.population.end(), compare_topo_fitness);
         //std::reverse(multi.topologies.population.begin(), multi.topologies.population.end());
     
-        //log_fn_eval_stats(multi.solutions.population, multi.topologies.population, multi.run.id, multi.solutions.eval_id, multi.eval.stats, multi.run.stats, t);
+        if(multi.meta.isle.id == 0) {
+            log_fn_eval_stats(multi.solutions.population, multi.topologies.population, multi.run.id, multi.solutions.eval_id, multi.eval.stats, multi.run.stats, t);
+        }
         
     }
     
@@ -574,7 +606,7 @@ void solutions_evolve(topology &t, ea &multi) {
         //    }
         //}
         
-        log_fn_eval_stats(multi.solutions.population, multi.topologies.population, multi.run.id, multi.solutions.eval_id, multi.eval.stats, multi.run.stats, t);
+        //log_fn_eval_stats(multi.solutions.population, multi.topologies.population, multi.run.id, multi.solutions.eval_id, multi.eval.stats, multi.run.stats, t);
         
         //return;
         
@@ -635,7 +667,7 @@ void solution_evaluate(ea &multi, objective<solution> &o, const int &index) {
     
     o.eval_id++;
     
-    if(multi.solutions.eval_id > multi.solutions.evals) { return; }
+    //if(multi.solutions.eval_id > multi.solutions.evals) { return; }
     
     solutions_evolve(multi.topologies.population[index], multi);
     

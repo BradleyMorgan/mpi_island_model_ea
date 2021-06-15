@@ -34,6 +34,8 @@ namespace config {
     int migration_cap = 0;
     int send_cap = 0;
     int topo_evals = 0;
+    int ea_mode = 0;
+    int migration_interval = 1;
 
     double mutation_rate = 0.0;
     double sparsity = 0.0;
@@ -82,6 +84,8 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::migration_cap = stoi(config::items["migration_cap"]);
     config::send_cap = stoi(config::items["migration_cap"]);
     config::topo_evals = stoi(config::items["topo_evals"]);
+    config::ea_mode = stoi(config::items["ea_mode"]);
+    config::migration_interval = stoi(config::items["migration_interval"]);
     
     if(world_rank == 0) {
     

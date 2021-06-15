@@ -38,7 +38,7 @@ int main(int argc, const char * argv[]) {
     multi.offsets = generate_offsets(-2.5, 2.5, .5);
     
     for(multi.run.id = 1; multi.run.id <= config::runs; multi.run.id++) {
-
+        
         LOG(4, multi.meta.isle.id, 0, "initializing objective (solution) population ...\r\n");
 
         multi.solutions.population.clear();
@@ -54,25 +54,39 @@ int main(int argc, const char * argv[]) {
         LOG(4, multi.meta.isle.id, 0, "initialized objective (solution) population: total fitness = %f\r\n", multi.solutions.total_fitness);
         
         LOG(4, multi.meta.isle.id, 0, "initializing objective (topology) population ...\r\n");
+        
+        if(config::ea_mode > 0) {
+    
+            multi.populate(topologies_populate, multi.topologies);
+            
+            LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population: %lu\r\n", multi.topologies.population.size());
+            LOG(4, multi.meta.isle.id, 0, "total channels = %d\r\n",  multi.topologies.population[0].channel_count);
 
-        multi.populate(topologies_populate, multi.topologies);
-        
-        LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population: %lu\r\n", multi.topologies.population.size());
-        LOG(4, multi.meta.isle.id, 0, "total channels = %d\r\n",  multi.topologies.population[0].channel_count);
+            // evaluate initial topology population by applying each topology and using it for n solution evals ...
+            
+            for(int i=0; i<multi.topologies.mu; i++) {
 
-        // evaluate initial topology population by applying each topology and using it for n solution evals ...
-        
-        for(int i=0; i<multi.topologies.mu; i++) {
+                multi.evaluate(topology_evaluate, multi.topologies, i);
 
-            multi.evaluate(topology_evaluate, multi.topologies, i);
+            }
+            
+            // perform the remaining solution evolution cycles indirectly through topology evolution ...
+            
+            while(multi.solutions.eval_id <= config::evals) {
+            
+                topology_evolve(multi);
+                
+            }
+            
+        } else {
+            
+            benchmark_topology(multi);
+            
+            for(int i=1; i <= config::evals; i++) {
 
-        }
-        
-        // perform the remaining solution evolution cycles indirectly through topology evolution ...
-        
-        while(multi.solutions.eval_id <= config::evals) {
-        
-            topology_evolve(multi);
+                multi.evaluate(solution_evaluate, multi.solutions, 0);
+
+            }
             
         }
         
