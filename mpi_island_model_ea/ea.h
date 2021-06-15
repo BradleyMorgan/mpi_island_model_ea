@@ -422,6 +422,8 @@ void benchmark_topology(ea &multi) {
 
 void solution_populate(ea &multi, objective<solution> &o) {
     
+    LOG(6, 0, 0, "rank %d entered solution_populate\r\n", multi.meta.isle.id);
+    
     if(multi.meta.isle.id != 0) { return; }
     
     // the "solution" datatype represents a single offset rastrigin solution as
@@ -438,13 +440,21 @@ void solution_populate(ea &multi, objective<solution> &o) {
         
         solution p;
         
+        LOG(6, 0, 0, "rank %d assigning solution values\r\n", multi.meta.isle.id);
+        
         for (int j = 0; j < DIM; j++) {
             p.input[j] = drand(-5.12, 5.12); // rastrigin says: x[i] ∈ [-5.12,5.12]
         }
         
+        LOG(6, 0, 0, "rank %d assigning solution fitness\r\n", multi.meta.isle.id);
+        
         p.fitness = offset_rastrigin(p.input, multi.offsets);
         
+        LOG(6, 0, 0, "rank %d assigned solution fitness = %f\r\n", multi.meta.isle.id, p.fitness);
+        
         //o.population.push_back(p);
+        
+        LOG(6, 0, 0, "rank %d adding solution %d to population\r\n", multi.meta.isle.id, i);
         
         o.population[i] = p;
         
@@ -461,6 +471,8 @@ void solution_populate(ea &multi, objective<solution> &o) {
     
     multi.eval.stats.global_best_fitness = o.population[0].fitness;
     
+    LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
+    
     // we have our initial primary population with the calculated fitnesses
     
 }
@@ -471,14 +483,14 @@ void solution_populate(ea &multi, objective<solution> &o) {
 
 void solution_scatter(ea &multi, objective<solution> &o) {
     
+    LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", multi.meta.isle.id);
+    
     multi.meta.isle.population.clear();
     multi.meta.isle.population.resize(multi.meta.island_size);
     
     LOG(4, multi.meta.isle.id, 0, "scattering population root size = %lu mem 0 = %f...\r\n", multi.meta.isle.population.size(), o.population[0].fitness);
     
     double scatter_start = MPI_Wtime();
-    
-    // MPI_Scatter(&source, count, type, &target, count, type, source_island, comm)
     
     MPI_Scatter(&o.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
     
@@ -492,6 +504,8 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     LOG(4, 0, 0, "island %d population size %lu, average fitness: %f\r\n", multi.meta.isle.id, multi.meta.isle.population.size(), multi.meta.isle.average_fitness);
     
     multi.eval.stats.total_scatter_time += scatter_time;
+    
+    LOG(6, 0, 0, "rank %d leaving solution_scatter\r\n", multi.meta.isle.id);
     
 }
 

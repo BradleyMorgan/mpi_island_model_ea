@@ -50,6 +50,8 @@ int main(int argc, const char * argv[]) {
         multi.solutions.eval_id = 0;
         multi.topologies.eval_id = 0;
         
+        MPI_Barrier(multi.meta.tcomm);
+        
         multi.populate(solution_populate, multi.solutions);
         multi.distribute(solution_scatter, multi.solutions);
         
