@@ -351,7 +351,9 @@ void topology::apply(island &isle, topology &t) {
     
     }
     
-    if(t.world_size == 0) { t.world_size = 6; }
+    if(t.world_size == 0) {
+        MPI_Comm_size(MPI_COMM_WORLD, &t.world_size);
+    }
     
     // initialize *this* (current MPI rank) island's send and receive queue sizes, assume it's empty ...
     

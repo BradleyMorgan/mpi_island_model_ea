@@ -984,34 +984,34 @@ ea ea_init() {
     
     // track derived mpi datatypes used to transfer custom structs
     
-    channel chan;
-    
-    MPI_Datatype channel_types[4] = { MPI_INT, MPI_DOUBLE, MPI_INT, MPI_INT };
-    int channel_blocks[4] = { 2, (int)chan.senders.size(), (int)chan.receivers.size(), 1 };
-    
-    MPI_Aint channel_offsets[4];
-    
-    MPI_Get_address(&chan.id,&channel_offsets[0]);
-    MPI_Get_address(&chan.fitness,&channel_offsets[1]);
-    MPI_Get_address(&chan.senders[0],&channel_offsets[2]);
-    MPI_Get_address(&chan.receivers[0],&channel_offsets[3]);
-    
-    MPI_Type_create_struct(5, channel_blocks, channel_offsets, channel_types, &multi.meta.MPI_CHANNEL);
-    MPI_Type_commit(&multi.meta.MPI_CHANNEL);
-    
-    topology t;
-
-    MPI_Datatype topology_types[3] = { MPI_INT, MPI_DOUBLE, multi.meta.MPI_CHANNEL };
-    int topology_blocks[3] = { 4, 3, (int)t.channels.size() };
-
-    MPI_Aint topology_offsets[3];
-
-    MPI_Get_address(&t.id,&topology_offsets[0]);
-    MPI_Get_address(&t.fitness,&topology_offsets[1]);
-    MPI_Get_address(&t.channels[0],&topology_offsets[2]);
-
-    MPI_Type_create_struct(3, topology_blocks, topology_offsets, topology_types, &multi.meta.MPI_TOPOLOGY);
-    MPI_Type_commit(&multi.meta.MPI_TOPOLOGY);
+//    channel chan;
+//
+//    MPI_Datatype channel_types[4] = { MPI_INT, MPI_DOUBLE, MPI_INT, MPI_INT };
+//    int channel_blocks[4] = { 2, (int)chan.senders.size(), (int)chan.receivers.size(), 1 };
+//
+//    MPI_Aint channel_offsets[4];
+//
+//    MPI_Get_address(&chan.id,&channel_offsets[0]);
+//    MPI_Get_address(&chan.fitness,&channel_offsets[1]);
+//    MPI_Get_address(&chan.senders[0],&channel_offsets[2]);
+//    MPI_Get_address(&chan.receivers[0],&channel_offsets[3]);
+//
+//    MPI_Type_create_struct(5, channel_blocks, channel_offsets, channel_types, &multi.meta.MPI_CHANNEL);
+//    MPI_Type_commit(&multi.meta.MPI_CHANNEL);
+//
+//    topology t;
+//
+//    MPI_Datatype topology_types[3] = { MPI_INT, MPI_DOUBLE, multi.meta.MPI_CHANNEL };
+//    int topology_blocks[3] = { 4, 3, (int)t.channels.size() };
+//
+//    MPI_Aint topology_offsets[3];
+//
+//    MPI_Get_address(&t.id,&topology_offsets[0]);
+//    MPI_Get_address(&t.fitness,&topology_offsets[1]);
+//    MPI_Get_address(&t.channels[0],&topology_offsets[2]);
+//
+//    MPI_Type_create_struct(3, topology_blocks, topology_offsets, topology_types, &multi.meta.MPI_TOPOLOGY);
+//    MPI_Type_commit(&multi.meta.MPI_TOPOLOGY);
 
     // ----- end derived mpi datatypes
     
