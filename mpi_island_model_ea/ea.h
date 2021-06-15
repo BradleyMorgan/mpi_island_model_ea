@@ -428,9 +428,13 @@ void solution_populate(ea &multi, objective<solution> &o) {
     // an array of size DIM = @dim[config.txt:12] holding the solution's randomly
     // generated gene values.
     
-    LOG(6, 0, 0, "initializing mu=%d solutions ...\r\n", config::mu);
+    LOG(6, 0, 0, "island %d (root) initializing mu=%d solutions ...\r\n", multi.meta.isle.id, config::mu);
+    
+    o.population.resize(config::mu);
     
     for(int i=0; i<config::mu; i++) {
+        
+        LOG(6, 0, 0, "creating solution %d ...\r\n", i);
         
         solution p;
         
@@ -440,7 +444,9 @@ void solution_populate(ea &multi, objective<solution> &o) {
         
         p.fitness = offset_rastrigin(p.input, multi.offsets);
         
-        o.population.push_back(p);
+        //o.population.push_back(p);
+        
+        o.population[i] = p;
         
         o.total_fitness += p.fitness;
         

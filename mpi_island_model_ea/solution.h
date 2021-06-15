@@ -51,6 +51,8 @@ void offset::generate(double min, double max, double step) {
 
 std::array<double, DIM> generate_offsets(double min, double max, double step) {
     
+    LOG(6, 0, 0, "generating offsets...\r\n");
+    
     std::array<double, DIM> offsets;
     std::vector<double> increments;
     

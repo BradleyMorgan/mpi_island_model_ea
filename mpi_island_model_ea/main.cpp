@@ -37,6 +37,8 @@ int main(int argc, const char * argv[]) {
 
     multi.offsets = generate_offsets(-2.5, 2.5, .5);
     
+    LOG(6, 0, 0, "beginning experimental runs ...\r\n");
+    
     for(multi.run.id = 1; multi.run.id <= config::runs; multi.run.id++) {
         
         LOG(4, multi.meta.isle.id, 0, "initializing objective (solution) population ...\r\n");
