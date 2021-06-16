@@ -64,6 +64,7 @@ struct topology {
     
     double fitness = 0.0; // track in terms of aggregate communication time
     double round_fitness = 0.0; // number of evaluations performed
+    double total_migration_time = 0.0;
     double selection_distribution; // fitness measurement for selection method
     
     // an array of @comm_group{} describing the full context MPI_Send() and MPI_Recv()
