@@ -210,6 +210,20 @@ struct ea {
         this->solutions.eval_id = 0;
         this->topologies.eval_id = 0;
         
+        this->run.start = MPI_Wtime();
+        
+    }
+    
+    void run_end() {
+        
+        if(this->meta.isle.id != 0) { return; }
+        
+        double run_end = MPI_Wtime();
+        
+        std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d,%2.10f,%2.10f,%2.10f\r\n", run.id, this->eval.stats.global_best_fitness, this->eval.stats.average_local_best_fitness, this->eval.stats.average_global_best_fitness, this->eval.stats.total_scatter_time, this->eval.stats.total_gather_time, this->eval.stats.total_migrate_time, run_end - this->run.start, this->run.stats.init_duration, this->meta.islands, this->meta.island_size, this->eval.stats.global_best_topo_fitness, this->eval.stats.average_local_best_topo_fitness, this->eval.stats.average_global_best_topo_fitness);
+        
+        fflush(config::run_stats_out);
+        
     }
     
 };
@@ -408,17 +422,22 @@ void benchmark_topology(ea &multi) {
     t.selection_distribution = 0.0;
     t.channels = {};
     t.channels.resize(multi.meta.islands);
-    t.channels[multi.meta.isle.id].senders = {};
-    t.channels[multi.meta.isle.id].receivers = {};
     
-    int next = multi.meta.isle.id+1 < multi.meta.islands ? multi.meta.isle.id+1 : 0;
-    int prev = multi.meta.isle.id-1 < 0 ? (int)multi.meta.islands-1 : multi.meta.isle.id-1;
+    for(int i=0; i<multi.meta.islands; i++) {
+        
+        t.channels[i].senders = {};
+        t.channels[i].receivers = {};
+        
+        int next = i+1 < multi.meta.islands ? i+1 : 0;
+        int prev = i-1 < 0 ? (int)multi.meta.islands-1 : i-1;
 
-    t.channels[multi.meta.isle.id].senders.push_back(prev);
-    t.channels[multi.meta.isle.id].receivers.push_back(next);
-
-    multi.meta.isle.receivers.push_back(next);
-    multi.meta.isle.senders.push_back(prev);
+        t.channels[i].senders.push_back(prev);
+        t.channels[i].receivers.push_back(next);
+     
+        //multi.meta.isle.receivers[0] = next;
+        //multi.meta.isle.senders[0] = prev;
+        
+    }
     
     t.channel_count = t.world_size * 2;
     

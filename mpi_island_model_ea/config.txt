@@ -12,7 +12,7 @@ topo_mu:60
 dim:1000
 mutation_rate:0.03
 loglevel:2
-sparsity:0.30
+sparsity:0.75
 migration_cap:20
 send_cap:20
 topo_evals:5

@@ -30,6 +30,8 @@ struct rstats {
 
 struct estats {
     
+    int topo_best_count = 0;
+    
     double init_duration = 0.0;
     double eval_start = 0.0;
     double eval_duration = 0.0;
@@ -78,6 +80,49 @@ struct estats {
     
 };
 
+void log_topology_matrix(int world_size, topology &t, int count) {
+    
+    sprintf(config::topo_fname, "%s/topo_%d_%d_%ld.py", config::topos_subpath, count, world_size, time(0));
+    config::topo_out = fopen(config::topo_fname, "w");
+    
+    fprintf(config::topo_out,"matrix = [");
+    
+    for(int i=0; i<world_size; i++) {
+    
+        fprintf(config::topo_out,"[");
+      
+        for(int j=0; j<world_size; j++) {
+            
+            if(std::find(t.channels[i].receivers.begin(), t.channels[i].receivers.end(), j) != t.channels[i].receivers.end()) {
+                LOG(8, 0, 0, "1,");
+                fprintf(config::topo_out,"1");
+                
+            } else {
+                LOG(8, 0, 0, "0, ");
+                fprintf(config::topo_out,"0");
+                
+            }
+            
+            if(j <= world_size-2) {
+                fprintf(config::topo_out,",");
+            } else {
+                fprintf(config::topo_out,"]");
+            }
+            
+        }
+      
+        if(i <= world_size-2) {
+            fprintf(config::topo_out,",\r\n          ");
+        } else {
+            fprintf(config::topo_out,"]\r\n");
+        }
+        
+    }
+    
+    fflush(config::topo_out);
+    
+}
+
 void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
     
     // only consider evaluated topologies for stats
@@ -111,9 +156,11 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
     
     if(filtered[0].fitness > eval_stats.global_best_topo_fitness || eval_stats.global_best_topo_fitness == 0.0) {
         LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best topology %f > %f\r\n", run, eval, topologies[0].fitness, eval_stats.global_best_topo_fitness);
+        eval_stats.topo_best_count++;
         eval_stats.best_topology = filtered[0];
         eval_stats.average_global_best_topo_fitnesses.push_back(filtered[0].fitness);
         eval_stats.global_best_topo_fitness = filtered[0].fitness;
+        log_topology_matrix(6, filtered[0], eval_stats.topo_best_count);
     }
     
     double total_fitness = 0.0;
@@ -159,7 +206,7 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
     std::fprintf(config::stats_out, "%3.10f,"             "%3.10f,"            "%3.10f,"             "%3.10f,"               "%3.10f,",
                                     average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration);
     
-    std::fprintf(config::stats_out, "%3.10f,"             "%d,"            "%d,"               "%d,"                       "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%3.10f,"                           "%3.10f" ,
+    std::fprintf(config::stats_out, "%3.10f,"             "%d,"            "%d,"               "%d,"                       "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%3.10f,"                           "%3.10f," ,
                                     average_topo_fitness, filtered[0].id,  filtered[0].rounds, filtered[0].channel_count,  filtered[0].round_fitness,  filtered[0].fitness, eval_stats.local_best_topo_fitness,  eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness);
     
     std::fprintf(config::stats_out, "%3.10f,"                                    "%d,"       "%d,"       "%d,"              "%3.10f\r\n",

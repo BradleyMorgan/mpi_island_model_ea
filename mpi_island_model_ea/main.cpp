@@ -69,11 +69,15 @@ int main(int argc, const char * argv[]) {
             
             benchmark_topology(multi);
             
+            multi.topologies.population[0].apply(multi.meta.isle, multi.topologies.population[0]);
+            
             for(int i=1; i <= config::evals; i++) {
                 multi.evaluate(solution_evaluate, multi.solutions, multi.topologies.population[0]);
             }
             
         }
+        
+        multi.run_end();
         
     }
 
