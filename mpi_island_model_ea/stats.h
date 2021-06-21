@@ -119,7 +119,8 @@ void log_topology_matrix(int world_size, topology &t, int count) {
         
     }
     
-    fflush(config::topo_out);
+    //fflush(config::topo_out);
+    fclose(config::topo_out);
     
 }
 
