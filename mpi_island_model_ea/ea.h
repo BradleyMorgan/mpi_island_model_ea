@@ -824,21 +824,31 @@ std::vector<topology> topology_crossover(ea &multi) {
                             continue;
                         }
 
-                        if(i != j) {  // we don't want an island sending migrants to itself
+                        // we don't want an island sending migrants to itself
+                        // also consider sparsity parameter ...
+                        
+                        if(i != j) {
 
                             if(rand()%2 == 1) { // coin flip, heads take the row index value from parent 1
                                 LOG(10, 0, 0, "assigning child<topology> m1[%d][%d] -> %d\r\n", i, j, m1[i][j]);
-                                child_matrix[i][j] = m1[i][j];
-                                if(m1[i][j] == 1) {
+                                
+                                if(m1[i][j] == 1 && rand()/(RAND_MAX+1.0) > config::sparsity) {
+                                    child_matrix[i][j] = m1[i][j];
                                     rec_count[j]++;
                                     snd_count[i]++;
+                                } else {
+                                    child_matrix[i][j] = m1[i][j];
                                 }
+                                
                             } else { // tails, take it from parent 2
                                 LOG(10, 0, 0, "assigning child<topology> m2[%d][%d] -> %d\r\n", i, j, m2[i][j]);
-                                child_matrix[i][j] = m2[i][j];
-                                if(m2[i][j] == 1) {
+
+                                if(m2[i][j] == 1 && rand()/(RAND_MAX+1.0) > config::sparsity) {
+                                    child_matrix[i][j] = m2[i][j];
                                     rec_count[j]++;
                                     snd_count[i]++;
+                                } else {
+                                    child_matrix[i][j] = m2[i][j];
                                 }
                             }
 
