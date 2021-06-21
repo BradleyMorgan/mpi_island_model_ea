@@ -92,9 +92,17 @@ void config::load(const char *input, int world_size, int world_rank) {
     
         // create unique pathing for the supplied configuration so we can keep better track of results ...
         
-        sprintf(config::logs_subpath, "logs/%s_%ld", config::items["config_name"].c_str(), time(0));
+        char mode[5];
+        
+        if(config::ea_mode == 0) {
+            sprintf(mode, "%s", "bench");
+        } else {
+            sprintf(mode, "%s", "evo");
+        }
+        
+        sprintf(config::logs_subpath, "logs/%s_%s_%ld", config::items["config_name"].c_str(), mode, time(0));
         mkdir(config::logs_subpath, 0740);
-        sprintf(config::stats_subpath, "stats/%s_%ld", config::items["config_name"].c_str(), time(0));
+        sprintf(config::stats_subpath, "stats/%s_%s_%ld", config::items["config_name"].c_str(), mode, time(0));
         mkdir(config::stats_subpath, 0740);
     
         // create and initialize the log file with the parsed configuration values ...

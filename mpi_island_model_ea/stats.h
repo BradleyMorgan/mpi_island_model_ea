@@ -160,7 +160,7 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
         eval_stats.best_topology = filtered[0];
         eval_stats.average_global_best_topo_fitnesses.push_back(filtered[0].fitness);
         eval_stats.global_best_topo_fitness = filtered[0].fitness;
-        log_topology_matrix(6, filtered[0], eval_stats.topo_best_count);
+        log_topology_matrix(t.world_size, filtered[0], eval_stats.topo_best_count);
     }
     
     double total_fitness = 0.0;
