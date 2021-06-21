@@ -886,7 +886,7 @@ std::vector<topology> topology_crossover(ea &multi) {
                         continue;
                     }
 
-                    if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+                    if(rand()/(RAND_MAX+1.0) < config::topo_mutation_rate) {
 
                         LOG(3, multi.meta.isle.id, 0, "mutating child<topology> %d ...\r\n", child.id);
 

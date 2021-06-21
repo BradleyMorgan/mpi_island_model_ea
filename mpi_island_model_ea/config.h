@@ -36,8 +36,9 @@ namespace config {
     int topo_evals = 0;
     int ea_mode = 0;
     int migration_interval = 1;
-
+    
     double mutation_rate = 0.0;
+    double topo_mutation_rate = 0.0;
     double sparsity = 0.0;
 
     char log_fname[100];
@@ -87,6 +88,7 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::topo_evals = stoi(config::items["topo_evals"]);
     config::ea_mode = stoi(config::items["ea_mode"]);
     config::migration_interval = stoi(config::items["migration_interval"]);
+    config::migration_interval = stod(config::items["topo_mutation_rate"]);
     
     if(world_rank == 0) {
     
