@@ -219,6 +219,10 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
             
             for(int j=0; j<world_size; j++) { // column
                 
+//                if(world_size / comm_count > config::sparsity) {
+//                    return;
+//                }
+                
                 // we don't want an island sending migrants to itself
                 
                 if(i == j) { matrix[i][j] = 0; continue; }

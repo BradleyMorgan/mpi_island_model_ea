@@ -206,7 +206,7 @@ struct ea {
         this->solutions.population.clear();
         this->meta.isle.population.clear();
         
-        this->eval.stats.init();
+        //this->eval.stats.init();
         this->solutions.eval_id = 0;
         this->topologies.eval_id = 0;
         
@@ -502,7 +502,9 @@ void solution_populate(ea &multi, objective<solution> &o) {
     std::sort(o.population.begin(), o.population.end(), compare_fitness);
     std::reverse(o.population.begin(), o.population.end());
     
-    multi.eval.stats.global_best_fitness = o.population[0].fitness;
+    if(multi.eval.stats.global_best_fitness == 0.0) {
+        multi.eval.stats.global_best_fitness = o.population[0].fitness;
+    }
     
     LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
     
@@ -1096,6 +1098,9 @@ ea ea_init() {
 //    MPI_Type_commit(&multi.meta.MPI_TOPOLOGY);
 
     // ----- end derived mpi datatypes
+    
+    multi.eval = eval_init(0);
+    multi.eval.stats.init();
     
     multi.meta.island_size = config::mu / multi.meta.islands;
     
