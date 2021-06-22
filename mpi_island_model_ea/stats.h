@@ -148,7 +148,7 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
     LOG(3, 0, 0, "STATS (run %d, eval %d): local best = %f, locat best fitnesses tracked = %lu\r\n", run, eval, eval_stats.local_best_fitness, eval_stats.average_local_best_fitnesses.size());
     
     if(population[0].fitness > eval_stats.global_best_fitness) {
-        LOG(2, 0, 0, "STATS (run %d, eval %d): found new global best solution %f > %f\r\n", run, eval, population[0].fitness, eval_stats.global_best_fitness);
+        LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best solution %f > %f\r\n", run, eval, population[0].fitness, eval_stats.global_best_fitness);
         eval_stats.sol = population[0];
         eval_stats.average_global_best_fitnesses.push_back(population[0].fitness);
         eval_stats.global_best_fitness = population[0].fitness;
