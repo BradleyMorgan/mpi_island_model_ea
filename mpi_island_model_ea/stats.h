@@ -82,7 +82,7 @@ struct estats {
 
 void log_topology_matrix(int world_size, topology &t, int count) {
     
-    sprintf(config::topo_fname, "%s/topo_%d_%d_%ld.py", config::topos_subpath, count, world_size, time(0));
+    sprintf(config::topo_fname, "%s/topo_%03d_%d_%ld.py", config::topos_subpath, count, world_size, time(0));
     config::topo_out = fopen(config::topo_fname, "w");
     
     fprintf(config::topo_out,"matrix = [");
@@ -112,7 +112,7 @@ void log_topology_matrix(int world_size, topology &t, int count) {
         }
       
         if(i <= world_size-2) {
-            fprintf(config::topo_out,",\r\n          ");
+            fprintf(config::topo_out,",\r\n");
         } else {
             fprintf(config::topo_out,"]\r\n");
         }
