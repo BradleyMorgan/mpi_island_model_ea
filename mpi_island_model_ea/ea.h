@@ -543,6 +543,8 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     
     MPI_Scatter(&o.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
     
+    LOG(4, multi.meta.isle.id, 0, "rank %d scatter return ...\r\n", multi.meta.isle.id);
+    
     double scatter_end = MPI_Wtime();
     double scatter_time = scatter_end - scatter_start;
     
