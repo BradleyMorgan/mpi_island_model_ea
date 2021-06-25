@@ -462,15 +462,20 @@ void benchmark_topology(ea &multi) {
 
 void solution_populate(ea &multi) {
     
-    LOG(4, multi.meta.isle.id, 0, "initializing objective (solution) population ...\r\n");
     LOG(6, 0, 0, "rank %d entered solution_populate\r\n", multi.meta.isle.id);
     
-    if(multi.meta.isle.id != 0) { return; }
+    if(multi.meta.isle.id != 0) {
+        LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
+        multi.solutions.population.resize(multi.meta.islands);
+        multi.meta.isle.population.resize(multi.meta.island_size)
+        return;
+    }
     
     // the "solution" datatype represents a single offset rastrigin solution as
     // an array of size DIM = @dim[config.txt:12] holding the solution's randomly
     // generated gene values.
     
+    LOG(4, multi.meta.isle.id, 0, "initializing objective (solution) population ...\r\n");
     LOG(6, 0, 0, "island %d (root) initializing mu=%d solutions ...\r\n", multi.meta.isle.id, config::mu);
     
     multi.solutions.population.resize(config::mu);
@@ -1100,6 +1105,7 @@ ea ea_init() {
     multi.meta.isle.init();
     multi.meta.isle.population.resize(multi.meta.islands);
     
+    multi.solutions.population.resize(config::mu);
     multi.solutions.mu = config::mu;
     multi.solutions.runs = config::runs;
     multi.solutions.evals = config::evals;
