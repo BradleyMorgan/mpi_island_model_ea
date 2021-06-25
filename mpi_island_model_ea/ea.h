@@ -537,9 +537,14 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     multi.meta.isle.population.clear();
     multi.meta.isle.population.resize(multi.meta.island_size);
     
-    LOG(4, multi.meta.isle.id, 0, "scattering population root size = %lu mem 0 = %f...\r\n", multi.meta.isle.population.size(), o.population[0].fitness);
+    if(multi.meta.isle.id == 0) {
+        LOG(4, multi.meta.isle.id, 0, "rank 0 scattering population root size = %lu mem 0 = %f...\r\n", o.population.size(), o.population[0].fitness);
+    } else {
+        LOG(4, 0, 0, "rank %d instantiating scatter with = %lu subpopulation size ...\r\n", multi.meta.isle.id, multi.meta.isle.population.size());
+    }
     
     double scatter_start = MPI_Wtime();
+    
     
     MPI_Scatter(&o.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
     
