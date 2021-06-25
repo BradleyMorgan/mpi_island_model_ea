@@ -467,7 +467,7 @@ void solution_populate(ea &multi) {
     if(multi.meta.isle.id != 0) {
         LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
         multi.solutions.population.resize(multi.meta.islands);
-        multi.meta.isle.population.resize(multi.meta.island_size)
+        multi.meta.isle.population.resize(multi.meta.island_size);
         return;
     }
     
