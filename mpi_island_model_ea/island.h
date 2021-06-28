@@ -110,8 +110,8 @@ void island::calculate::cpd(island &p) {
     
     island::calculate::total_fitness(p);
     
-    std::sort(p.population.begin(), p.population.end(), compare_fitness);
-    std::reverse(p.population.begin(), p.population.end());
+//    std::sort(p.population.begin(), p.population.end(), compare_fitness);
+//    std::reverse(p.population.begin(), p.population.end());
     
     LOG(6, 0, 0, "island %d total fitness = %f\r\n", p.id, p.total_fitness);
     

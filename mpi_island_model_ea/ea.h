@@ -105,8 +105,8 @@ template<typename C> void objective<C>::calculate::cpd(objective &o) {
     
     LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
     
-    std::sort(o.population.begin(), o.population.end(), comp_fitness());
-    std::reverse(o.population.begin(), o.population.end());
+//    std::sort(o.population.begin(), o.population.end(), comp_fitness());
+//    std::reverse(o.population.begin(), o.population.end());
     
     LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", o.id, o.total_fitness)
 
@@ -482,6 +482,8 @@ void solution_populate(ea &multi) {
     
     //multi.solutions.population.resize(config::mu);
     
+    std::vector<solution> tmp;
+    
     for(int i=0; i<config::mu; i++) {
         
         LOG(6, 0, 0, "creating solution %d ...\r\n", i);
@@ -506,8 +508,10 @@ void solution_populate(ea &multi) {
         
         //multi.solutions.population[i] = p;
         
-        multi.solutions.population.push_back(p);
-        multi.solutions.total_fitness += p.fitness;
+        tmp.push_back(p);
+        
+//        multi.solutions.population.push_back(p);
+//        multi.solutions.total_fitness += p.fitness;
         
         LOG(6, 0, 0, "island %d (root) initialized solution %d with fitness %f ...\r\n", multi.meta.isle.id, i, p.fitness);
         
@@ -518,6 +522,8 @@ void solution_populate(ea &multi) {
     
     //std::sort(multi.solutions.population.begin(), multi.solutions.population.end(), compare_fitness);
     //std::reverse(multi.solutions.population.begin(), multi.solutions.population.end());
+    
+    multi.solutions.population = tmp;
     
     if(multi.eval.stats.global_best_fitness == 0.0) {
         multi.eval.stats.global_best_fitness = multi.solutions.population[0].fitness;
