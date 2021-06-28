@@ -466,11 +466,6 @@ void solution_populate(ea &multi) {
     
     LOG(6, 0, 0, "rank %d of %d entered solution_populate\r\n", multi.meta.isle.id, multi.meta.islands);
     
-    //multi.solutions = {};
-    //multi.solutions.population = {};
-    //multi.solutions.population.clear();
-    //multi.solutions.population.resize(0);
-    
     if(multi.meta.isle.id != 0) {
         LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
         // fill the outer islands with solution stubs so that memory is allocated
@@ -486,12 +481,7 @@ void solution_populate(ea &multi) {
     
     LOG(4, multi.meta.isle.id, 0, "initializing objective (solution) population ...\r\n");
     LOG(6, 0, 0, "island %d (root) initializing mu=%d solutions ...\r\n", multi.meta.isle.id, config::mu);
-    
-    //multi.solutions.population.resize(config::mu);
-    //multi.solutions.population.clear();
-    
-    std::vector<solution> tmp;
-    
+
     for(int i=0; i<config::mu; i++) {
         
         LOG(6, 0, 0, "creating solution %d ...\r\n", i);
@@ -1140,13 +1130,14 @@ ea ea_init() {
     
     //multi.topologies.population.resize(config::mu);
     
-    multi.run.stats.init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
+    double local_init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
+    //multi.run.stats.init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
     
     multi.offsets = generate_offsets(-2.5, 2.5, .5);
     
     // collect the time consumed by all islands in this initialization ...
     
-    MPI_Gather(&multi.run.stats.init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
+    MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
     
     return multi;
     

@@ -49,13 +49,9 @@ int main(int argc, const char * argv[]) {
         
         multi.populate(solution_populate);
         
-        MPI_Barrier(multi.meta.tcomm);
-        
         // assign (mu/n) subpopulations to each island
         
         multi.distribute(solution_scatter, multi.solutions);
-        
-        MPI_Barrier(multi.meta.tcomm);
         
         if(config::ea_mode > 0) { // multi-objective, evolve topologies
     
