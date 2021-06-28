@@ -523,7 +523,11 @@ void solution_populate(ea &multi) {
     //std::sort(multi.solutions.population.begin(), multi.solutions.population.end(), compare_fitness);
     //std::reverse(multi.solutions.population.begin(), multi.solutions.population.end());
     
+    LOG(6, 0, 0, "assigning solutions ...\r\n");
+    
     multi.solutions.population = tmp;
+    
+    LOG(6, 0, 0, "assigned solutions, setting intial best fitness ...\r\n");
     
     if(multi.eval.stats.global_best_fitness == 0.0) {
         multi.eval.stats.global_best_fitness = multi.solutions.population[0].fitness;
