@@ -500,11 +500,7 @@ void solution_populate(ea &multi) {
         
         LOG(6, 0, 0, "rank %d assigned solution fitness = %f\r\n", multi.meta.isle.id, p.fitness);
         
-        //o.population.push_back(p);
-        
         LOG(6, 0, 0, "rank %d adding solution %d with fitness %f to population, current size = %lu\r\n", multi.meta.isle.id, i, p.fitness, multi.solutions.population.size());
-        
-        //multi.solutions.population[i] = p;
         
         multi.solutions.population.push_back(p);
         multi.solutions.total_fitness += p.fitness;
@@ -537,7 +533,7 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     
     LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", multi.meta.isle.id);
     
-    //multi.meta.isle.population.clear();
+    multi.meta.isle.population.clear();
     multi.meta.isle.population.resize(multi.meta.island_size);
     
     LOG(6, 0, 0, "rank %d of %d resized local island population to %lu\r\n", multi.meta.isle.id, multi.meta.islands, multi.meta.isle.population.size());
@@ -563,7 +559,8 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     
     LOG(4, 0, 0, "island %d population size %lu, average fitness: %f\r\n", multi.meta.isle.id, multi.meta.isle.population.size(), multi.meta.isle.average_fitness);
     
-    multi.eval.stats.total_scatter_time += scatter_time;
+    MPI_Reduce(&scatter_time, &multi.eval.stats.total_scatter_time, 1, MPI_DOUBLE, MPI_SUM, 0, multi.meta.tcomm);
+    //multi.eval.stats.total_scatter_time += scatter_time;
     
     LOG(6, 0, 0, "rank %d leaving solution_scatter\r\n", multi.meta.isle.id);
     
@@ -629,9 +626,9 @@ void solutions_evolve(ea &multi, topology &t) {
     
     double gather_start = MPI_Wtime();
     
-    //multi.solutions.population.clear();
-    //multi.solutions.population.resize(config::mu);
-    //multi.meta.isle.population.clear();
+    // reset the root population to prepare for the new individuals to be gathered from all islands ...
+    // multi.solutions.population.clear();
+    // multi.solutions.population.resize(config::mu);
     
     // gather island subpopulations back into the aggregate population on rank 0 ...
     
@@ -1128,16 +1125,19 @@ ea ea_init() {
     multi.topologies.world_size = multi.meta.islands;
     multi.topologies.eval_id = 1;
     
-    //multi.topologies.population.resize(config::mu);
+    multi.run.stats.init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
     
-    double local_init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
-    //multi.run.stats.init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
+    if(multi.meta.isle.id == 0) {
+        multi.offsets = generate_offsets(-2.5, 2.5, .5);
+    }
     
-    multi.offsets = generate_offsets(-2.5, 2.5, .5);
+    MPI_Bcast(&multi.offsets, DIM, MPI_DOUBLE, 0, multi.meta.tcomm);
     
     // collect the time consumed by all islands in this initialization ...
+    // TODO: this segfaults on higher core count runs, so may need to debug at some point, but
+    // currently the init duration is somewhat insigificant
     
-    MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
+    // MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
     
     return multi;
     
