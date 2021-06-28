@@ -468,6 +468,7 @@ void solution_populate(ea &multi) {
         LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
         // fill the outer islands with solution stubs so that memory is allocated
         for(int i = 0; i<config::mu; i++) { solution *s = new solution; multi.solutions.population.push_back(*s); }
+        for(int i = 0; i<multi.meta.island_size; i++) { solution *s = new solution; multi.meta.isle.population.push_back(*s); }
         multi.meta.isle.population.resize(multi.meta.island_size);
         return;
     }
