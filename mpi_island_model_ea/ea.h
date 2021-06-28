@@ -504,8 +504,9 @@ void solution_populate(ea &multi) {
         
         LOG(6, 0, 0, "rank %d adding solution %d to population\r\n", multi.meta.isle.id, i);
         
-        multi.solutions.population[i] = p;
+        //multi.solutions.population[i] = p;
         
+        multi.solutions.population.push_back(p);
         multi.solutions.total_fitness += p.fitness;
         
         LOG(6, 0, 0, "island %d (root) initialized solution %d with fitness %f ...\r\n", multi.meta.isle.id, i, p.fitness);
