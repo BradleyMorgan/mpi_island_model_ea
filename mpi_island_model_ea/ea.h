@@ -502,7 +502,7 @@ void solution_populate(ea &multi) {
         
         //o.population.push_back(p);
         
-        LOG(6, 0, 0, "rank %d adding solution %d to population, current size = %lu\r\n", multi.meta.isle.id, i, multi.solutions.population.size());
+        LOG(6, 0, 0, "rank %d adding solution %d with fitness %f to population, current size = %lu\r\n", multi.meta.isle.id, i, p.fitness, multi.solutions.population.size());
         
         //multi.solutions.population[i] = p;
         
@@ -1125,7 +1125,7 @@ ea ea_init() {
     multi.topologies.world_size = multi.meta.islands;
     multi.topologies.eval_id = 1;
     
-    multi.topologies.population.resize(config::mu);
+    //multi.topologies.population.resize(config::mu);
     
     multi.run.stats.init_duration = ( std::clock() - multi.meta.start ) / (double) CLOCKS_PER_SEC;
     
