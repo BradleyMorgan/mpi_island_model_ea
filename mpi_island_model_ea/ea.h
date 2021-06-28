@@ -630,7 +630,7 @@ void solutions_evolve(ea &multi, topology &t) {
     // gather island subpopulations back into the aggregate population on rank 0 ...
     
     multi.solutions.population.clear();
-    multi.solutions.population.resize(multi.meta.island_size);
+    multi.solutions.population.resize(config::mu);
     
     MPI_Gather(&multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.solutions.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
     
@@ -1114,7 +1114,7 @@ ea ea_init() {
     multi.meta.isle.init();
     multi.meta.isle.population.resize(multi.meta.islands);
     
-    multi.solutions.population.resize(config::mu);
+    //multi.solutions.population.resize(config::mu);
     multi.solutions.mu = config::mu;
     multi.solutions.runs = config::runs;
     multi.solutions.evals = config::evals;
