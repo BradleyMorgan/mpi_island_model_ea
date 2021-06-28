@@ -502,7 +502,7 @@ void solution_populate(ea &multi) {
         
         //o.population.push_back(p);
         
-        LOG(6, 0, 0, "rank %d adding solution %d to population\r\n", multi.meta.isle.id, i);
+        LOG(6, 0, 0, "rank %d adding solution %d to population, current size = %lu\r\n", multi.meta.isle.id, i, multi.solutions.population.size());
         
         //multi.solutions.population[i] = p;
         
@@ -630,7 +630,7 @@ void solutions_evolve(ea &multi, topology &t) {
     // gather island subpopulations back into the aggregate population on rank 0 ...
     
     multi.solutions.population.clear();
-    multi.solutions.population.resize(config::mu);
+    //multi.solutions.population.resize(config::mu);
     
     MPI_Gather(&multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.solutions.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
     
