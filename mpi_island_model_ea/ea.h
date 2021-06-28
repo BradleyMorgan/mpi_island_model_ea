@@ -537,8 +537,8 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     
     LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", multi.meta.isle.id);
     
-    multi.meta.isle.population.clear();
-    multi.meta.isle.population.resize(multi.meta.island_size);
+    //multi.meta.isle.population.clear();
+    //multi.meta.isle.population.resize(multi.meta.island_size);
     
     if(multi.meta.isle.id == 0) {
         LOG(4, multi.meta.isle.id, 0, "rank 0 scattering population root size = %lu mem 0 = %f...\r\n", o.population.size(), o.population[0].fitness);
