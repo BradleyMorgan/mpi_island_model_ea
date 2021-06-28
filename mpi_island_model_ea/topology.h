@@ -367,7 +367,7 @@ void topology::apply(island &isle, topology &t) {
     
     // initiate MPI_Recv calls.
     
-    LOG(4, 0, 0, "rank %d receiving topology %d send\\receive metadata world size = %d\r\n", isle.id, t.id, t.world_size);
+    LOG(6, 0, 0, "\r\nrank %d receiving topology %d send\\receive metadata world size = %d\r\n", isle.id, t.id, t.world_size);
     
     // complete the MPI_Send of queue size for island export
     
@@ -384,13 +384,13 @@ void topology::apply(island &isle, topology &t) {
     
     MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, isle.id+t.world_size, isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "topology %d: island %d got %lu imports from -> ", t.id, isle.id, isle.senders.size());
+    LOG(6, 0, 0, "topology %d: island %d got %lu imports from -> ", t.id, isle.id, isle.senders.size());
     
     if(isle.senders.empty()) {
-        LOG(4, 0, 0, "[X]\r\n");
+        LOG(6, 0, 0, "[X]\r\n");
     } else {
-        for(int i=0; i<isle.senders.size(); i++) { LOG(4, 0, 0, "[%d]", isle.senders[i]); }
-        LOG(4, 0, 0, "\r\n");
+        for(int i=0; i<isle.senders.size(); i++) { LOG(6, 0, 0, "[%d]", isle.senders[i]); }
+        LOG(6, 0, 0, "\r\n");
     }
 
     // complete the MPI_Send of queue size for island import
@@ -408,12 +408,12 @@ void topology::apply(island &isle, topology &t) {
 
     MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, isle.id+(t.world_size*3), isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "topology %d: island %d got %lu exports to ->   ", t.id, isle.id, isle.receivers.size());
+    LOG(6, 0, 0, "topology %d: island %d got %lu exports to ->   ", t.id, isle.id, isle.receivers.size());
     if(isle.receivers.empty()) {
-        LOG(4, 0, 0, "[X]\r\n");
+        LOG(6, 0, 0, "[X]\r\n");
     } else {
-        for(int i=0; i<isle.receivers.size(); i++) { LOG(4, 0, 0, "[%d]", isle.receivers[i]); }
-        LOG(4, 0, 0, "\r\n");
+        for(int i=0; i<isle.receivers.size(); i++) { LOG(6, 0, 0, "[%d]", isle.receivers[i]); }
+        LOG(6, 0, 0, "\r\n");
     }
     
 }

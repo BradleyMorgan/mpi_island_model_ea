@@ -361,12 +361,14 @@ std::vector<solution> crossover(island &isle, std::array<double, DIM> &offsets) 
         if(child.fitness > (p1.fitness / 4)) {
            LOG(4, 0, 0, "LOW island %d %f<->%f child<solution> %d fitness %f\r\n", isle.id, p1.fitness, p2.fitness, i, child.fitness);
         } else {
-            LOG(4, 0, 0, "child<solution> %d fitness %f\r\n", i, child.fitness);
+            LOG(8, 0, 0, "child<solution> %d fitness %f\r\n", i, child.fitness);
         }
         
         children.push_back(child);
         
     }
+    
+    LOG(6, 0, 0, "rank %d returning %lu child solutions from crossover\r\n", isle.id, children.size());
     
     return children;
     
@@ -464,12 +466,17 @@ void solution_populate(ea &multi) {
     
     LOG(6, 0, 0, "rank %d of %d entered solution_populate\r\n", multi.meta.isle.id, multi.meta.islands);
     
+    //multi.solutions = {};
+    //multi.solutions.population = {};
+    //multi.solutions.population.clear();
+    //multi.solutions.population.resize(0);
+    
     if(multi.meta.isle.id != 0) {
         LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
         // fill the outer islands with solution stubs so that memory is allocated
-        for(int i = 0; i<config::mu; i++) { solution *s = new solution; multi.solutions.population.push_back(*s); }
-        for(int i = 0; i<multi.meta.island_size; i++) { solution *s = new solution; multi.meta.isle.population.push_back(*s); }
-        multi.meta.isle.population.resize(multi.meta.island_size);
+        //for(int i = 0; i<config::mu; i++) { solution *s = new solution; multi.solutions.population.push_back(*s); }
+        //for(int i = 0; i<multi.meta.island_size; i++) { solution *s = new solution; multi.meta.isle.population.push_back(*s); }
+        //multi.meta.isle.population.resize(multi.meta.island_size);
         return;
     }
     
@@ -481,6 +488,7 @@ void solution_populate(ea &multi) {
     LOG(6, 0, 0, "island %d (root) initializing mu=%d solutions ...\r\n", multi.meta.isle.id, config::mu);
     
     //multi.solutions.population.resize(config::mu);
+    //multi.solutions.population.clear();
     
     std::vector<solution> tmp;
     
@@ -508,26 +516,18 @@ void solution_populate(ea &multi) {
         
         //multi.solutions.population[i] = p;
         
-        tmp.push_back(p);
-        
-//        multi.solutions.population.push_back(p);
-//        multi.solutions.total_fitness += p.fitness;
+        multi.solutions.population.push_back(p);
+        multi.solutions.total_fitness += p.fitness;
         
         LOG(6, 0, 0, "island %d (root) initialized solution %d with fitness %f ...\r\n", multi.meta.isle.id, i, p.fitness);
         
     }
     
     LOG(4, multi.meta.isle.id, 0, "initialized objective (solution) population: total fitness = %f\r\n", multi.solutions.total_fitness);
-    LOG(6, 0, 0, "%d solutions initialized ...\r\n", config::mu);
+    LOG(6, 0, 0, "%lu solutions initialized ...\r\n", multi.solutions.population.size());
     
     //std::sort(multi.solutions.population.begin(), multi.solutions.population.end(), compare_fitness);
     //std::reverse(multi.solutions.population.begin(), multi.solutions.population.end());
-    
-    LOG(6, 0, 0, "assigning solutions ...\r\n");
-    
-    multi.solutions.population = tmp;
-    
-    LOG(6, 0, 0, "assigned solutions, setting intial best fitness ...\r\n");
     
     if(multi.eval.stats.global_best_fitness == 0.0) {
         multi.eval.stats.global_best_fitness = multi.solutions.population[0].fitness;
@@ -547,7 +547,7 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     
     LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", multi.meta.isle.id);
     
-    multi.meta.isle.population.clear();
+    //multi.meta.isle.population.clear();
     multi.meta.isle.population.resize(multi.meta.island_size);
     
     LOG(6, 0, 0, "rank %d of %d resized local island population to %lu\r\n", multi.meta.isle.id, multi.meta.islands, multi.meta.isle.population.size());
@@ -599,7 +599,7 @@ void solutions_evolve(ea &multi, topology &t) {
     
     std::vector<solution> children = crossover(multi.meta.isle, multi.offsets);
 
-    LOG(5, multi.meta.isle.id, 0, "island %d created %lu child solutions, population size = %lu ... selecting %d survivors  ...\r\n", multi.meta.isle.id, children.size(), multi.meta.isle.population.size(), multi.meta.island_size);
+    LOG(4, multi.meta.isle.id, 0, "island %d created %lu child solutions, population size = %lu ... selecting %d survivors  ...\r\n", multi.meta.isle.id, children.size(), multi.meta.isle.population.size(), multi.meta.island_size);
 
     // select the best solutions and remove n children ...
     
@@ -631,7 +631,7 @@ void solutions_evolve(ea &multi, topology &t) {
         
     }
 
-    LOG(6, multi.meta.isle.id, 0, "rank %d (root) topology %d, eval %d, round %d, fitness = %f\r\n", multi.meta.isle.id, t.id, multi.solutions.eval_id, t.rounds, t.fitness);
+    LOG(4, multi.meta.isle.id, 0, "rank %d (root) topology %d, eval %d, round %d, tfitness = %f\r\n", multi.meta.isle.id, t.id, multi.solutions.eval_id, t.rounds, t.fitness);
     
     LOG(6, 0, 0, "rank %d topology = %d rounds = %d eval = %d\r\n", multi.meta.isle.id, t.id, t.rounds, multi.topologies.eval_id);
     
@@ -639,17 +639,18 @@ void solutions_evolve(ea &multi, topology &t) {
     
     double gather_start = MPI_Wtime();
     
-    // gather island subpopulations back into the aggregate population on rank 0 ...
-    
-    multi.solutions.population.clear();
+    //multi.solutions.population.clear();
     //multi.solutions.population.resize(config::mu);
+    //multi.meta.isle.population.clear();
+    
+    // gather island subpopulations back into the aggregate population on rank 0 ...
     
     MPI_Gather(&multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.solutions.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
     
     double gather_end = MPI_Wtime();
     double gather_time = gather_end - gather_start;
                 
-    LOG(6, multi.meta.isle.id, 0, "population gathered, size %lu ...\r\n", multi.solutions.population.size());
+    LOG(4, multi.meta.isle.id, 0, "population gathered by rank %d, aggregate size %lu, subpopulation size = %lu ...\r\n", multi.meta.isle.id, multi.solutions.population.size(), multi.meta.isle.population.size());
                 
     multi.eval.stats.total_gather_time += gather_time;
 
