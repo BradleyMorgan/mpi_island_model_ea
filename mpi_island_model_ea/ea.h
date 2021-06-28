@@ -462,7 +462,7 @@ void benchmark_topology(ea &multi) {
 
 void solution_populate(ea &multi) {
     
-    LOG(6, 0, 0, "rank %d entered solution_populate\r\n", multi.meta.isle.id);
+    LOG(6, 0, 0, "rank %d of %d entered solution_populate\r\n", multi.meta.isle.id, multi.meta.islands);
     
     if(multi.meta.isle.id != 0) {
         LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
@@ -537,8 +537,10 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     
     LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", multi.meta.isle.id);
     
-    //multi.meta.isle.population.clear();
-    //multi.meta.isle.population.resize(multi.meta.island_size);
+    multi.meta.isle.population.clear();
+    multi.meta.isle.population.resize(multi.meta.island_size);
+    
+    LOG(6, 0, 0, "rank %d of %d resized local island population to %lu\r\n", multi.meta.isle.id, multi.meta.islands, multi.meta.isle.population.size());
     
     if(multi.meta.isle.id == 0) {
         LOG(4, multi.meta.isle.id, 0, "rank 0 scattering population root size = %lu mem 0 = %f...\r\n", o.population.size(), o.population[0].fitness);
