@@ -317,7 +317,15 @@ void select_survivors(island &isle, std::vector<solution> &children, int island_
 
 void mutate(solution &mutant) {
 
-    mutant.input[0] = drand(-5.12, 5.12);
+    for(int i=0; i<DIM; i++){
+        
+        if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
+     
+            mutant.input[i] = drand(-5.12, 5.12);
+            
+        }
+        
+    }
     
 }
 
@@ -511,13 +519,14 @@ void solution_populate(ea &multi) {
     
     LOG(4, multi.meta.isle.id, 0, "initialized objective (solution) population: total fitness = %f\r\n", multi.solutions.total_fitness);
     LOG(6, 0, 0, "%lu solutions initialized ...\r\n", multi.solutions.population.size());
-    
-    //std::sort(multi.solutions.population.begin(), multi.solutions.population.end(), compare_fitness);
-    //std::reverse(multi.solutions.population.begin(), multi.solutions.population.end());
-    
+
+    std::sort(multi.solutions.population.begin(), multi.solutions.population.end(), compare_fitness);
+    std::reverse(multi.solutions.population.begin(), multi.solutions.population.end());
+
     if(multi.eval.stats.global_best_fitness == 0.0) {
         multi.eval.stats.global_best_fitness = multi.solutions.population[0].fitness;
     }
+    
     
     LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
     
@@ -627,8 +636,8 @@ void solutions_evolve(ea &multi, topology &t) {
     double gather_start = MPI_Wtime();
     
     // reset the root population to prepare for the new individuals to be gathered from all islands ...
-    // multi.solutions.population.clear();
-    // multi.solutions.population.resize(config::mu);
+    multi.solutions.population.clear();
+    multi.solutions.population.resize(config::mu);
     
     // gather island subpopulations back into the aggregate population on rank 0 ...
     
@@ -1132,6 +1141,14 @@ ea ea_init() {
     }
     
     MPI_Bcast(&multi.offsets, DIM, MPI_DOUBLE, 0, multi.meta.tcomm);
+    
+    //printf("rank %d offsets: ", multi.meta.isle.id);
+    
+    //for(const auto& s: multi.offsets)
+    //    printf("%f", s);
+   
+    
+    //printf("\r\n");
     
     // collect the time consumed by all islands in this initialization ...
     // TODO: this segfaults on higher core count runs, so may need to debug at some point, but
