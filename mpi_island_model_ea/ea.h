@@ -466,7 +466,8 @@ void solution_populate(ea &multi) {
     
     if(multi.meta.isle.id != 0) {
         LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.meta.isle.id);
-        multi.solutions.population.resize(multi.meta.islands);
+        // fill the outer islands with solution stubs so that memory is allocated
+        for(int i = 0; i<config::mu; i++) { solution *s = new solution; multi.solutions.population.push_back(*s); }
         multi.meta.isle.population.resize(multi.meta.island_size);
         return;
     }
@@ -478,7 +479,7 @@ void solution_populate(ea &multi) {
     LOG(4, multi.meta.isle.id, 0, "initializing objective (solution) population ...\r\n");
     LOG(6, 0, 0, "island %d (root) initializing mu=%d solutions ...\r\n", multi.meta.isle.id, config::mu);
     
-    multi.solutions.population.resize(config::mu);
+    //multi.solutions.population.resize(config::mu);
     
     for(int i=0; i<config::mu; i++) {
         
@@ -544,7 +545,6 @@ void solution_scatter(ea &multi, objective<solution> &o) {
     }
     
     double scatter_start = MPI_Wtime();
-    
     
     MPI_Scatter(&o.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
     
