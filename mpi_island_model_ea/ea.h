@@ -1114,7 +1114,7 @@ ea ea_init() {
     multi.meta.isle.init();
     multi.meta.isle.population.resize(multi.meta.islands);
     
-    //multi.solutions.population.resize(config::mu);
+    multi.solutions = {};
     multi.solutions.mu = config::mu;
     multi.solutions.runs = config::runs;
     multi.solutions.evals = config::evals;
