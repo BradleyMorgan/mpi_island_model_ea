@@ -90,26 +90,52 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::migration_interval = stoi(config::items["migration_interval"]);
     config::migration_interval = stod(config::items["topo_mutation_rate"]);
     
-    if(world_rank == 0) {
+    char mode[5];
     
-        // create unique pathing for the supplied configuration so we can keep better track of results ...
+    if(config::ea_mode == 0) {
+        sprintf(mode, "%s", "bench");
+    } else {
+        sprintf(mode, "%s", "evo");
+    }
+    
+    // create unique pathing for the supplied configuration so we can keep better track of results ...
+    
+    if(world_rank == 0) {
         
-        char mode[5];
+        // collect current time data
         
-        if(config::ea_mode == 0) {
-            sprintf(mode, "%s", "bench");
-        } else {
-            sprintf(mode, "%s", "evo");
-        }
+        time_t rawtime;
+        struct tm * timeinfo;
+
+        time (&rawtime);
+        timeinfo = localtime (&rawtime);
         
-        sprintf(config::logs_subpath, "logs/%s_%s_%ld", config::items["config_name"].c_str(), mode, time(0));
+        char dstr[6];
+        
+        strftime(dstr, 80, "%m%d%y", timeinfo);
+        
+        // create log path heirarchy to organize output by run date, communicator size, and ea mode
+        
+        char sub1[12];
+        char sub2[4];
+        char sub3[58];
+        
+        sprintf(sub1, "logs/%s", dstr);
+        mkdir(sub1,0740);
+        sprintf(sub2, "%s/%d", sub1, world_size);
+        mkdir(sub2,0740);
+        sprintf(sub3, "%s/%s", sub2, mode);
+        mkdir(sub3,0740);
+        
+        sprintf(config::logs_subpath, "%s/%s_%s_%ld", sub3, config::items["config_name"].c_str(), mode, time(0));
         mkdir(config::logs_subpath, 0740);
-        sprintf(config::stats_subpath, "stats/%s_%s_%ld", config::items["config_name"].c_str(), mode, time(0));
+        
+        sprintf(config::stats_subpath, "%s/stats", logs_subpath);
         mkdir(config::stats_subpath, 0740);
     
-        // create and initialize the log file with the parsed configuration values ...
+        // open a log file with the parsed configuration values ...
         
-        sprintf(config::log_fname, "%s/%s_%d_%ld.txt", config::logs_subpath, config::items["log_file"].c_str(), world_size, time(0));
+        sprintf(config::log_fname, "%s/%s_%d_%s.txt", config::logs_subpath, config::items["log_file"].c_str(), world_size, mode);
         config::log_out = fopen(config::log_fname, "w");
         
     }
@@ -142,10 +168,10 @@ void config::load(const char *input, int world_size, int world_rank) {
     
     if(world_rank == 0) {
     
-        sprintf(config::stats_fname, "%s/%s_%d_%ld.csv", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
+        sprintf(config::stats_fname, "%s/%s_%d_%s.csv", config::stats_subpath, config::items["stats_file"].c_str(), world_size, mode);
         config::stats_out = fopen(config::stats_fname, "w");
         
-        sprintf(config::run_stats_fname, "%s/%s_run_%d_%ld.csv", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
+        sprintf(config::run_stats_fname, "%s/%s_run_%d_%s.csv", config::stats_subpath, config::items["stats_file"].c_str(), world_size, mode);
         config::run_stats_out = fopen(config::run_stats_fname, "w");
         
         //sprintf(config::solution_fname, "%s/%s_solution_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));

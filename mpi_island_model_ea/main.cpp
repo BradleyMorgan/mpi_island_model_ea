@@ -14,6 +14,7 @@
 #include <vector>
 #include <fstream>
 #include <ctime>
+#include <time.h>
 #include <algorithm>
 #include "config.h"
 #include "ea.h"
@@ -95,6 +96,19 @@ int main(int argc, const char * argv[]) {
         
     }
 
+    if(multi.meta.isle.id == 0) {
+    
+        char canary[30];
+
+        sprintf(canary, "%s/end.txt", config::logs_subpath);
+        FILE *eaend = fopen(canary, "w");
+        
+        fprintf(eaend, "ended at %lu", time(0));
+        
+        fclose(eaend);
+        
+    }
+        
     MPI_Finalize();
          
  }
