@@ -3,12 +3,12 @@ log_file:rastrigin
 stats_file:rastrigin
 topo_file:rastrigin
 seed:0
-runs:3
-evals:1000
-lambda:256
+runs:30
+evals:10000
+lambda:512
 mu:5120
-topo_lambda:16
-topo_mu:128
+topo_lambda:32
+topo_mu:256
 dim:10
 mutation_rate:0.03
 loglevel:2

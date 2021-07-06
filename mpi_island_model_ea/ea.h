@@ -391,7 +391,9 @@ std::vector<solution> crossover(ea &multi) {
     
     std::vector<solution> children;
     
-    for(int i = 0; i < config::lambda; i++) {
+    int island_lambda = config::lambda / multi.meta.islands;
+    
+    for(int i = 0; i < island_lambda; i++) {
         
         LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n", multi.meta.isle.id, i);
         
@@ -645,7 +647,7 @@ void solutions_evolve(ea &multi, topology &t) {
 
     LOG(8, multi.meta.isle.id, 0, "calculating island %d cpd, topology %d, eval %d\r\n", multi.meta.isle.id, t.id, multi.solutions.eval_id);
     
-    objective<solution>::calculate::cpd(multi.solutions, multi.meta.isle);
+    //objective<solution>::calculate::cpd(multi.solutions, multi.meta.isle);
     //island::calculate::cpd(multi.meta.isle);
     
     LOG(6, multi.meta.isle.id, 0, "performing crossover island %d, topology %d, eval %d\r\n", multi.meta.isle.id, t.id, multi.solutions.eval_id);

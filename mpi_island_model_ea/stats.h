@@ -124,66 +124,68 @@ void log_topology_matrix(int world_size, topology &t, int count) {
     
 }
 
-void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
+void log_fn_eval_stats(std::vector<solution> &solutions, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
     
     // only consider evaluated topologies for stats
     
-    std::vector<topology> filtered;
+    std::vector<solution> filtered_sol;
+    std::vector<topology> filtered_top;
     
-    std::sort(population.begin(), population.end(), compare_fitness);
-    std::reverse(population.begin(), population.end());
+    std::copy_if( solutions.begin(), solutions.end(), std::back_inserter(filtered_sol), [](const solution &item) { return item.fitness != 0.0; });
+    std::sort(filtered_sol.begin(), filtered_sol.end(), compare_fitness);
+    std::reverse(filtered_sol.begin(), filtered_sol.end());
     
-    std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered), [](const topology &item) { return item.fitness != 0.0 && item.rounds >= config::topo_evals; });
-    std::sort(filtered.begin(), filtered.end(), compare_topo_fitness);
-    std::reverse(filtered.begin(), filtered.end());
+    std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered_top), [](const topology &item) { return item.fitness != 0.0 && item.rounds >= config::topo_evals; });
+    std::sort(filtered_top.begin(), filtered_top.end(), compare_topo_fitness);
+    std::reverse(filtered_top.begin(), filtered_top.end());
     
-    LOG(3, 0, 0, "STATS (run %d, eval %d): solutions size %lu, mem[0] fit = %f \r\n", run, eval, population.size(), population[0].fitness);
+    LOG(3, 0, 0, "STATS (run %d, eval %d): solutions size %lu, mem[0] fit = %f \r\n", run, eval, solutions.size(), solutions[0].fitness);
     
-    eval_stats.local_best_fitness = population[0].fitness;
-    eval_stats.average_local_best_fitnesses.push_back(population[0].fitness);
+    eval_stats.local_best_fitness = filtered_sol[0].fitness;
+    eval_stats.average_local_best_fitnesses.push_back(filtered_sol[0].fitness);
     
-    eval_stats.local_best_topo_fitness = filtered[0].fitness;
-    eval_stats.average_local_best_topo_fitnesses.push_back(filtered[0].fitness);
+    eval_stats.local_best_topo_fitness = filtered_top[0].fitness;
+    eval_stats.average_local_best_topo_fitnesses.push_back(filtered_top[0].fitness);
     
     LOG(3, 0, 0, "STATS (run %d, eval %d): local best = %f, locat best fitnesses tracked = %lu\r\n", run, eval, eval_stats.local_best_fitness, eval_stats.average_local_best_fitnesses.size());
     
-    if(population[0].fitness > eval_stats.global_best_fitness) {
-        LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best solution %f > %f\r\n", run, eval, population[0].fitness, eval_stats.global_best_fitness);
-        eval_stats.sol = population[0];
-        eval_stats.average_global_best_fitnesses.push_back(population[0].fitness);
-        eval_stats.global_best_fitness = population[0].fitness;
+    if(filtered_sol[0].fitness > eval_stats.global_best_fitness) {
+        LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best solution %f > %f\r\n", run, eval, filtered_sol[0].fitness, eval_stats.global_best_fitness);
+        eval_stats.sol = filtered_sol[0];
+        eval_stats.average_global_best_fitnesses.push_back(filtered_sol[0].fitness);
+        eval_stats.global_best_fitness = filtered_sol[0].fitness;
     }
     
-    if(filtered[0].fitness > 0) {
+    if(filtered_top[0].fitness > 0) {
         LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology\r\n", topologies[0].fitness);
     }
     
-    if(filtered[0].fitness > eval_stats.global_best_topo_fitness || eval_stats.global_best_topo_fitness == 0.0) {
+    if(filtered_top[0].fitness > eval_stats.global_best_topo_fitness || eval_stats.global_best_topo_fitness == 0.0) {
         LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best topology %f > %f\r\n", run, eval, topologies[0].fitness, eval_stats.global_best_topo_fitness);
         eval_stats.topo_best_count++;
-        eval_stats.best_topology = filtered[0];
-        eval_stats.average_global_best_topo_fitnesses.push_back(filtered[0].fitness);
-        eval_stats.global_best_topo_fitness = filtered[0].fitness;
-        log_topology_matrix(t.world_size, filtered[0], eval_stats.topo_best_count);
+        eval_stats.best_topology = filtered_top[0];
+        eval_stats.average_global_best_topo_fitnesses.push_back(filtered_top[0].fitness);
+        eval_stats.global_best_topo_fitness = filtered_top[0].fitness;
+        log_topology_matrix(t.world_size, filtered_top[0], eval_stats.topo_best_count);
     }
     
     double total_fitness = 0.0;
     double total_topo_fitness = 0.0;
     
-    for(int i=0; i<population.size(); i++) {
-        total_fitness += population[i].fitness;
+    for(int i=0; i<filtered_sol.size(); i++) {
+        total_fitness += filtered_sol[i].fitness;
     }
     
-    for(int i=0; i<filtered.size(); i++) {
-        total_topo_fitness += filtered[i].fitness;
+    for(int i=0; i<filtered_top.size(); i++) {
+        total_topo_fitness += filtered_top[i].fitness;
     }
     
-    LOG(3, 0, 0, "STATS (run %d, eval %d): solution population size %lu total fitness = %2.10f\r\n", run, eval, population.size(), total_fitness);
+    LOG(3, 0, 0, "STATS (run %d, eval %d): solution population size %lu total fitness = %2.10f\r\n", run, eval, filtered_sol.size(), total_fitness);
     
     if(eval_stats.average_local_best_fitnesses.size() > 1) {
         eval_stats.average_local_best_fitness = std::accumulate(eval_stats.average_local_best_fitnesses.begin(), eval_stats.average_local_best_fitnesses.end(), 0.0) / eval_stats.average_local_best_fitnesses.size();
     } else {
-        eval_stats.average_local_best_fitness = population[0].fitness;
+        eval_stats.average_local_best_fitness = filtered_sol[0].fitness;
     }
     
     eval_stats.average_global_best_fitness = std::accumulate(eval_stats.average_global_best_fitnesses.begin(), eval_stats.average_global_best_fitnesses.end(), 0.0) / eval_stats.average_global_best_fitnesses.size();
@@ -192,11 +194,11 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
         eval_stats.average_local_best_topo_fitnesses.size();
     eval_stats.average_global_best_topo_fitness = std::accumulate(eval_stats.average_global_best_topo_fitnesses.begin(), eval_stats.average_global_best_topo_fitnesses.end(), 0.0) / eval_stats.average_global_best_topo_fitnesses.size();
     
-    double average_fitness = total_fitness / population.size();
+    double average_fitness = total_fitness / filtered_sol.size();
     double average_gather_time = eval_stats.total_gather_time / eval;
     double average_scatter_time = eval_stats.total_scatter_time / eval;
     double average_migrate_time = eval_stats.total_migrate_time / eval;
-    double average_topo_fitness = filtered.size() > 0 ? (total_topo_fitness / filtered.size()) : 0.0;
+    double average_topo_fitness = filtered_top.size() > 0 ? (total_topo_fitness / filtered_top.size()) : 0.0;
     
     double eval_duration = ( std::clock() - eval_stats.eval_start ) / (double) CLOCKS_PER_SEC;
     
@@ -211,7 +213,7 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
                                     average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration);
     
     std::fprintf(config::stats_out, "%3.10f,"             "%d,"            "%d,"               "%d,"                       "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%3.10f,"                           "%3.10f," ,
-                                    average_topo_fitness, filtered[0].id,  filtered[0].rounds, filtered[0].channel_count,  filtered[0].round_fitness,  filtered[0].fitness, eval_stats.local_best_topo_fitness,  eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness);
+                                    average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness,  eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness);
     
     std::fprintf(config::stats_out, "%3.10f,"                                    "%d,"       "%d,"       "%d,"              "%3.10f\r\n",
                                     eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness);
@@ -225,7 +227,7 @@ void log_fn_eval_stats(std::vector<solution> &population, std::vector<topology> 
                  run,   eval,   average_fitness,    eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration, "|");
         
     LOG(2, 0, 0, "%3.10f,"             "%03d,"          "%05d,"             "%03d,"                     "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%s"   "%3.10f,"                           "%s"  "%3.10f"                                    "%s,",
-                 average_topo_fitness, filtered[0].id,  filtered[0].rounds, filtered[0].channel_count,  filtered[0].round_fitness,  filtered[0].fitness, eval_stats.local_best_topo_fitness,  BLU,   eval_stats.global_best_topo_fitness, YEL, eval_stats.average_local_best_topo_fitness, RESET);
+                 average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness,  BLU,   eval_stats.global_best_topo_fitness, YEL, eval_stats.average_local_best_topo_fitness, RESET);
     
     LOG(2, 0, 0, "%3.10f,"                                    "%03d,"     "%05d,"     "%03d,"             "%013.10f,"    "%013.10f,"          "%013.10f\r\n",
                  eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness,        t.total_migration_time, eval_stats.total_migrate_time);
