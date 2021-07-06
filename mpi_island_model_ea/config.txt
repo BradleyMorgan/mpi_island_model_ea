@@ -10,12 +10,14 @@ mu:5120
 topo_lambda:32
 topo_mu:256
 dim:10
-mutation_rate:0.03
+mutation_rate:0.08
 loglevel:2
 sparsity:0.08
 migration_cap:2
 send_cap:2
 topo_evals:5
-ea_mode:2
+ea_mode:0
 migration_interval:1
-topo_mutation_rate:0.08
+topo_mutation_rate:0.10
+island_lambda:0.20
+mu_multiplier: 100

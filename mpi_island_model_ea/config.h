@@ -36,7 +36,10 @@ namespace config {
     int topo_evals = 0;
     int ea_mode = 0;
     int migration_interval = 1;
-    
+    int island_lambda = 0;
+    int mu_multiplier = 0;
+    int island_mu = 0;
+
     double mutation_rate = 0.0;
     double topo_mutation_rate = 0.0;
     double sparsity = 0.0;
@@ -78,7 +81,8 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::runs = stoi(config::items["runs"]);
     config::evals = stoi(config::items["evals"]);
     config::lambda = stoi(config::items["lambda"]);
-    config::mu = stoi(config::items["mu"]);
+    //config::mu = stoi(config::items["mu"]);
+    config::mu = world_size * stoi(config::items["mu_multiplier"]);
     config::topo_lambda = stoi(config::items["topo_lambda"]);
     config::topo_mu = stoi(config::items["topo_mu"]);
     config::mutation_rate = stod(config::items["mutation_rate"]);
@@ -88,7 +92,11 @@ void config::load(const char *input, int world_size, int world_rank) {
     config::topo_evals = stoi(config::items["topo_evals"]);
     config::ea_mode = stoi(config::items["ea_mode"]);
     config::migration_interval = stoi(config::items["migration_interval"]);
-    config::migration_interval = stod(config::items["topo_mutation_rate"]);
+    config::topo_mutation_rate = stod(config::items["topo_mutation_rate"]);
+    //config::island_lambda = stod(config::items["island_lambda"]);
+    config::island_mu = config::mu / world_size;
+    config::island_lambda = config::island_mu * stod(config::items["island_lambda"]);
+    config::mu_multiplier = stoi(config::items["mu_multiplier"]);
     
     char mode[5];
     

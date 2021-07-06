@@ -133,7 +133,7 @@ template<typename C> void objective<C>::calculate::cpd(objective &o, island &isl
     
     double cumulative_probability = 0.0;
     
-    o.cpd.clear();
+    isle.cpd.clear();
     
     LOG(6, 0, 0, "calculating total fitness ...\r\n");
     
@@ -146,7 +146,7 @@ template<typename C> void objective<C>::calculate::cpd(objective &o, island &isl
     
     LOG(6, 0, 0, "isle %d objective %d cpd calculation total fitness = %f", isle.id, o.id, isle.total_fitness)
 
-    for(int i=0; i<isle.population.size() ; i++) {
+    for(int i=0; i<isle.population.size(); i++) {
 
         isle.population[i].selection_distribution = (double)isle.population[i].fitness / isle.total_fitness;
 
@@ -391,9 +391,7 @@ std::vector<solution> crossover(ea &multi) {
     
     std::vector<solution> children;
     
-    int island_lambda = config::lambda / multi.meta.islands;
-    
-    for(int i = 0; i < island_lambda; i++) {
+    for(int i = 0; i < config::island_lambda; i++) {
         
         LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n", multi.meta.isle.id, i);
         
@@ -666,7 +664,7 @@ void solutions_evolve(ea &multi, topology &t) {
     
     // perform migration of best solutions using the currently applied topology ...
     
-    if(multi.solutions.eval_id%1 == 0) {
+    if(multi.solutions.eval_id%config::migration_interval == 0) {
         
         double migrate_start = MPI_Wtime();
         
