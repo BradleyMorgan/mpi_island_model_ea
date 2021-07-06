@@ -85,7 +85,6 @@ int main(int argc, const char * argv[]) {
             
             while(multi.solutions.eval_id <= config::evals) {
                 multi.evolve(solutions_evolve, multi.topologies.population[0]);
-                //multi.evaluate(solution_evaluate, multi.topologies.population[0]);
             }
             
         }
@@ -96,19 +95,6 @@ int main(int argc, const char * argv[]) {
         
     }
 
-    if(multi.meta.isle.id == 0) {
-    
-        char canary[30];
-
-        sprintf(canary, "%s/end.txt", config::logs_subpath);
-        FILE *eaend = fopen(canary, "w");
-        
-        fprintf(eaend, "ended at %lu", time(0));
-        
-        fclose(eaend);
-        
-    }
-        
-    MPI_Finalize();
+    multi.ea_end();
          
  }

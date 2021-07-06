@@ -95,45 +95,45 @@ void island::calculate::average_fitness(island &p) {
     
 }
 
-#pragma mark FUNCTION: island::calculate::cpd()
+// #pragma mark FUNCTION: island::calculate::cpd()
 
 // this function calculates the cumulative probability distribution to be used by
 // the fitness proportional (roulette wheel) selection ...
 
-void island::calculate::cpd(island &p) {
-    
-    LOG(6, 0, 0, "island %d, population size %lu calculating cpd ...\r\n", p.id, p.population.size());
-    
-    double cumulative_probability = 0.0;
-    
-    LOG(6, 0, 0, "calculating total fitness ...\r\n");
-    
-    island::calculate::total_fitness(p);
-    
-    // std::sort(p.population.begin(), p.population.end(), compare_fitness);
-    // std::reverse(p.population.begin(), p.population.end());
-    
-    LOG(6, 0, 0, "island %d total fitness = %f\r\n", p.id, p.total_fitness);
-    
-    p.cpd.clear();
-    
-    LOG(7, 0, 0, "calculating island %d (population size = %lu) selection distribution\r\n", p.id, p.population.size());
-    
-    for(int i=0; i<p.population.size(); i++) {
-
-        p.population[i].selection_distribution = (double)p.population[i].fitness / p.total_fitness;
-
-        LOG(8, 0, 0, "calculating island %d solution %d fitness %f selection distribution = %f\r\n", p.id, i, p.population[i].fitness, p.population[i].selection_distribution);
-        
-        cumulative_probability += p.population[i].selection_distribution;
-        
-        LOG(8, 0, 0, "island %d solution %d cumulative prob = %f\r\n", p.id, i, cumulative_probability);
-        
-        p.cpd.push_back(cumulative_probability);
-        
-    }
-    
-}
+//void island::calculate::cpd(island &p) {
+//
+//    LOG(6, 0, 0, "island %d, population size %lu calculating cpd ...\r\n", p.id, p.population.size());
+//
+//    double cumulative_probability = 0.0;
+//
+//    LOG(6, 0, 0, "calculating total fitness ...\r\n");
+//
+//    island::calculate::total_fitness(p);
+//
+//    // std::sort(p.population.begin(), p.population.end(), compare_fitness);
+//    // std::reverse(p.population.begin(), p.population.end());
+//
+//    LOG(6, 0, 0, "island %d total fitness = %f\r\n", p.id, p.total_fitness);
+//
+//    p.cpd.clear();
+//
+//    LOG(7, 0, 0, "calculating island %d (population size = %lu) selection distribution\r\n", p.id, p.population.size());
+//
+//    for(int i=0; i<p.population.size(); i++) {
+//
+//        p.population[i].selection_distribution = (double)p.population[i].fitness / p.total_fitness;
+//
+//        LOG(8, 0, 0, "calculating island %d solution %d fitness %f selection distribution = %f\r\n", p.id, i, p.population[i].fitness, p.population[i].selection_distribution);
+//
+//        cumulative_probability += p.population[i].selection_distribution;
+//
+//        LOG(8, 0, 0, "island %d solution %d cumulative prob = %f\r\n", p.id, i, cumulative_probability);
+//
+//        p.cpd.push_back(cumulative_probability);
+//
+//    }
+//
+//}
 
 
 #pragma mark FUNCTION: island::migration::receive()

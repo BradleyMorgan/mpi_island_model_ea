@@ -58,6 +58,7 @@ template<typename O> struct objective {
     struct calculate {
      
         static void cpd(objective &o);
+        static void cpd(objective &o, island &isle);
         static void total_fitness(objective &o);
         
     };
@@ -105,8 +106,8 @@ template<typename C> void objective<C>::calculate::cpd(objective &o) {
     
     LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
     
-//    std::sort(o.population.begin(), o.population.end(), comp_fitness());
-//    std::reverse(o.population.begin(), o.population.end());
+    std::sort(o.population.begin(), o.population.end(), comp_fitness());
+    std::reverse(o.population.begin(), o.population.end());
     
     LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", o.id, o.total_fitness)
 
@@ -125,6 +126,42 @@ template<typename C> void objective<C>::calculate::cpd(objective &o) {
     }
     
 }
+
+template<typename C> void objective<C>::calculate::cpd(objective &o, island &isle) {
+    
+    LOG(10, 0, 0, "generating cpd\r\n");
+    
+    double cumulative_probability = 0.0;
+    
+    o.cpd.clear();
+    
+    LOG(6, 0, 0, "calculating total fitness ...\r\n");
+    
+    island::calculate::total_fitness(isle);
+    
+    LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
+    
+    std::sort(isle.population.begin(), isle.population.end(), comp_fitness());
+    std::reverse(isle.population.begin(), isle.population.end());
+    
+    LOG(6, 0, 0, "isle %d objective %d cpd calculation total fitness = %f", isle.id, o.id, isle.total_fitness)
+
+    for(int i=0; i<isle.population.size() ; i++) {
+
+        isle.population[i].selection_distribution = (double)isle.population[i].fitness / isle.total_fitness;
+
+        LOG(8, 0, 0, "calculated island %d solution %d fitness %f selection distribution = %f\r\n", isle.id, i, isle.population[i].fitness, isle.population[i].selection_distribution);
+        
+        cumulative_probability += isle.population[i].selection_distribution;
+        
+        LOG(8, 0, 0, "solution %d cumulative prob = %f\r\n", i, cumulative_probability);
+        
+        isle.cpd.push_back(cumulative_probability);
+        
+    }
+    
+}
+
 
 
 #pragma mark DATATYPE: @ea_meta{}
@@ -235,6 +272,25 @@ struct ea {
         
     }
     
+    void ea_end() {
+        
+        if(this->meta.isle.id == 0) {
+        
+            char canary[30];
+
+            sprintf(canary, "%s/end.txt", config::logs_subpath);
+            FILE *eaend = fopen(canary, "w");
+            
+            fprintf(eaend, "ended at %lu", time(0));
+            
+            fclose(eaend);
+            
+        }
+        
+        MPI_Finalize();
+        
+    }
+    
 };
 
 template<typename otype>
@@ -253,7 +309,7 @@ otype parent(ea &multi, objective<otype> &o) {
     
     // spin the wheel
     
-    objective<otype>::calculate::cpd(o);
+    objective<otype>::calculate::cpd(o, multi.meta.isle);
     
     while (o.cpd[i] < r ) { i++; }
     
@@ -284,9 +340,9 @@ solution select_parent(island &isle) {
 
     LOG(10, 0, 0, "spin the wheel ...\r\n");
 
-    while (isle.cpd[i] < r ) { LOG(8, 0, 0, "island %d, cpd[%d] = %f, r = %f\r\n", isle.id, i, isle.cpd[i], r); i++; }
+    while (isle.cpd[i] < r ) { LOG(10, 0, 0, "island %d, cpd[%d] = %f, r = %f\r\n", isle.id, i, isle.cpd[i], r); i++; }
 
-    LOG(8, 0, 0, "island %d selected individual %d ...\r\n", isle.id, i);
+    LOG(8, 0, 0, "island %d selected individual %d cpd[%d] = %f = ...\r\n", isle.id, i, i, isle.cpd[i]);
 
     p = isle.population[i];
 
@@ -329,18 +385,20 @@ void mutate(solution &mutant) {
     
 }
 
-std::vector<solution> crossover(island &isle, std::array<double, DIM> &offsets) {
-
+std::vector<solution> crossover(ea &multi) {
+    
+    objective<solution>::calculate::cpd(multi.solutions, multi.meta.isle);
+    
     std::vector<solution> children;
     
     for(int i = 0; i < config::lambda; i++) {
         
-        LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n", isle.id, i);
+        LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n", multi.meta.isle.id, i);
         
-        solution p1 = select_parent(isle);
-        LOG(6, 0, 0, "island %d selected p1<solution> cpd = %f, fitness = %f ...\r\n", isle.id, p1.selection_distribution, p1.fitness);
-        solution p2 = select_parent(isle);
-        LOG(6, 0, 0, "island %d selected p2<solution> cpd = %f, fitness = %f...\r\n", isle.id, p2.selection_distribution, p2.fitness);
+        solution p1 = select_parent(multi.meta.isle);
+        LOG(6, 0, 0, "island %d selected p1<solution> cpd = %f, fitness = %f ...\r\n", multi.meta.isle.id, p1.selection_distribution, p1.fitness);
+        solution p2 = select_parent(multi.meta.isle);
+        LOG(6, 0, 0, "island %d selected p2<solution> cpd = %f, fitness = %f...\r\n", multi.meta.isle.id, p2.selection_distribution, p2.fitness);
         
         solution child;
         
@@ -358,16 +416,16 @@ std::vector<solution> crossover(island &isle, std::array<double, DIM> &offsets) 
         
         if(rand()/(RAND_MAX+1.0) < config::mutation_rate) {
             
-            LOG(6, 0, 0, "island %d mutating child<solution> %d ...\r\n", isle.id, i);
+            LOG(6, 0, 0, "island %d mutating child<solution> %d ...\r\n", multi.meta.isle.id, i);
             
             mutate(child);
             
         }
         
-        child.fitness = offset_rastrigin(child.input, offsets);
+        child.fitness = offset_rastrigin(child.input, multi.offsets);
         
         if(child.fitness > (p1.fitness / 4)) {
-           LOG(4, 0, 0, "LOW island %d %f<->%f child<solution> %d fitness %f\r\n", isle.id, p1.fitness, p2.fitness, i, child.fitness);
+           LOG(4, 0, 0, "LOW island %d %f<->%f child<solution> %d fitness %f\r\n", multi.meta.isle.id, p1.fitness, p2.fitness, i, child.fitness);
         } else {
             LOG(8, 0, 0, "child<solution> %d fitness %f\r\n", i, child.fitness);
         }
@@ -376,7 +434,7 @@ std::vector<solution> crossover(island &isle, std::array<double, DIM> &offsets) 
         
     }
     
-    LOG(6, 0, 0, "rank %d returning %lu child solutions from crossover\r\n", isle.id, children.size());
+    LOG(6, 0, 0, "rank %d returning %lu child solutions from crossover\r\n", multi.meta.isle.id, children.size());
     
     return children;
     
@@ -587,13 +645,14 @@ void solutions_evolve(ea &multi, topology &t) {
 
     LOG(8, multi.meta.isle.id, 0, "calculating island %d cpd, topology %d, eval %d\r\n", multi.meta.isle.id, t.id, multi.solutions.eval_id);
     
-    island::calculate::cpd(multi.meta.isle);
+    objective<solution>::calculate::cpd(multi.solutions, multi.meta.isle);
+    //island::calculate::cpd(multi.meta.isle);
     
     LOG(6, multi.meta.isle.id, 0, "performing crossover island %d, topology %d, eval %d\r\n", multi.meta.isle.id, t.id, multi.solutions.eval_id);
 
     // crossover function performs parent selection iteratively, creating n child solutions with fitness calculated ...
     
-    std::vector<solution> children = crossover(multi.meta.isle, multi.offsets);
+    std::vector<solution> children = crossover(multi);
 
     LOG(4, multi.meta.isle.id, 0, "island %d created %lu child solutions, population size = %lu ... selecting %d survivors  ...\r\n", multi.meta.isle.id, children.size(), multi.meta.isle.population.size(), multi.meta.island_size);
 
@@ -1147,7 +1206,6 @@ ea ea_init() {
     //for(const auto& s: multi.offsets)
     //    printf("%f", s);
    
-    
     //printf("\r\n");
     
     // collect the time consumed by all islands in this initialization ...
