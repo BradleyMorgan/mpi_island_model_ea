@@ -1214,6 +1214,12 @@ ea ea_init() {
     
     // MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
     
+    LOG(2, multi.meta.isle.id, 0, "world size: %d\r\n", multi.meta.islands);
+    LOG(2, multi.meta.isle.id, 0, "subpopulation size (multiplier): %d\r\n", config::mu_multiplier);
+    LOG(2, multi.meta.isle.id, 0, "calculated total mu: %d\r\n", config::mu);
+    LOG(2, multi.meta.isle.id, 0, "island lambda multiplier: %f\r\n", stod(config::items["island_lambda"]));
+    LOG(2, multi.meta.isle.id, 0, "calculated island lambda: %d\r\n", config::island_lambda);
+    
     return multi;
     
 }

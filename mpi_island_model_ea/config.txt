@@ -5,8 +5,6 @@ topo_file:rastrigin
 seed:0
 runs:30
 evals:10000
-lambda:512
-mu:5120
 topo_lambda:32
 topo_mu:256
 dim:10

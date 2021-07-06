@@ -80,7 +80,7 @@ void config::load(const char *input, int world_size, int world_rank) {
     
     config::runs = stoi(config::items["runs"]);
     config::evals = stoi(config::items["evals"]);
-    config::lambda = stoi(config::items["lambda"]);
+    //config::lambda = stoi(config::items["lambda"]);
     //config::mu = stoi(config::items["mu"]);
     config::mu = world_size * stoi(config::items["mu_multiplier"]);
     config::topo_lambda = stoi(config::items["topo_lambda"]);
@@ -171,7 +171,12 @@ void config::load(const char *input, int world_size, int world_rank) {
         }
         
         fprintf(config::log_out, "log file: %s\r\n", config::log_fname);
-            
+        fprintf(config::log_out, "world size: %d\r\n", world_size);
+        fprintf(config::log_out, "subpopulation size (multiplier): %d\r\n", config::mu_multiplier);
+        fprintf(config::log_out, "calculated total mu: %d\r\n", config::mu);
+        fprintf(config::log_out, "island lambda multiplier: %f\r\n", stod(config::items["island_lambda"]));
+        fprintf(config::log_out, "calculated island lambda: %d\r\n", config::island_lambda);
+        
     }
     
     if(world_rank == 0) {
