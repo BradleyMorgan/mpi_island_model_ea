@@ -146,6 +146,14 @@ void config::load(const char *input, const int world_size, const int world_rank)
         sprintf(mode, "%s", "evo");
     }
     
+    char mumode[8];
+    
+    if(config::ea_mode < 1) {
+        sprintf(mumode, "%s", "dynmu" );
+    } else {
+        sprintf(mumode, "%s", "fixedmu" );
+    }
+    
     // create unique pathing for the supplied configuration so we can keep better track of results ...
     
     if(world_rank == 0) {
@@ -167,6 +175,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
         char sub1[12];
         char sub2[4];
         char sub3[58];
+        char sub4[68];
         
         sprintf(sub1, "logs/%s", dstr);
         mkdir(sub1,0740);
@@ -174,8 +183,10 @@ void config::load(const char *input, const int world_size, const int world_rank)
         mkdir(sub2,0740);
         sprintf(sub3, "%s/%s", sub2, mode);
         mkdir(sub3,0740);
+        sprintf(sub4, "%s/%s", sub3, mumode);
+        mkdir(sub4,0740);
         
-        sprintf(config::logs_subpath, "%s/%s_%s_%ld", sub3, config::items["config_name"].c_str(), mode, time(0));
+        sprintf(config::logs_subpath, "%s/%s_%s_%ld", sub4, config::items["config_name"].c_str(), mode, time(0));
         mkdir(config::logs_subpath, 0740);
         
         sprintf(config::stats_subpath, "%s/stats", logs_subpath);
