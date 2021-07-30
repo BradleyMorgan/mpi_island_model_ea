@@ -38,7 +38,7 @@ char* uniqid(unsigned long long int instance) {
 
 struct genome {
     
-    char id[64] = "0";
+    char id[64];
     
     std::array<double, DIM> input = {};
     
@@ -52,7 +52,7 @@ struct genome {
     int selected = 0;
     int survival = 0;
     
-    std::array<char[64], 2> parents = { "0", "0" };
+    std::array<char[64], 2> parents;
     
     genome() { strcpy(id, uniqid(sinstances++)); }
 

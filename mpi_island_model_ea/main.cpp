@@ -16,6 +16,8 @@
 #include <ctime>
 #include <time.h>
 #include <algorithm>
+#include <stdio.h>
+#include <string.h>
 #include "config.h"
 #include "utility.h"
 #include "dtype_heirarchy.h"

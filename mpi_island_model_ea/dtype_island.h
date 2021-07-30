@@ -17,7 +17,7 @@ struct visa {
     
     char genome_id[64];
     
-    visa() : eval(0), source(0), destination(0), genome_id("0") {}
+    visa() : eval(0), source(0), destination(0) {}
     visa(int e, int s, int d, char g[64]) : eval(e), source(s), destination(d) { strcpy(genome_id, g); }
     
 };
