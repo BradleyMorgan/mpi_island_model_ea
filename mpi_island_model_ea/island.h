@@ -9,74 +9,23 @@
 #ifndef island_h
 #define island_h
 
-#pragma mark DATATYPE: island{}
-
-// representation of an island model EA entity that performs evaluations on
-// a subpopulation of the primary (rastrigin) objective function solutions.
-// islands perform migrations of individuals using designated communication
-// channels as implemented in @island{receive_migrant}, @island{send_migrant}
-
-struct island {
-    
-    int id;
-    
-    double total_fitness;
-    double average_fitness;
-    
-    std::vector<solution> population;
-    std::vector<double> cpd;
-    std::vector<int> senders;
-    std::vector<int> receivers;
-    
-    MPI_Comm tcomm;
-    
-    struct calculate {
-    
-        static void total_fitness(island &p);
-        static void average_fitness(island &p);
-        static void cpd(island &p);
-        
-    };
-    
-    struct migration {
-        
-        static void send(island &p, MPI_Comm &comm);
-        static void receive(island &p, MPI_Comm &comm);
-        
-    };
-    
-    void init() {
-        
-        LOG(6, 0, 0, "initializing island %d\r\n", this->id);
-            
-        this->total_fitness = 0.0;
-        this->average_fitness = 0.0;
-    
-        this->tcomm = MPI_COMM_WORLD;
-        
-        this->senders.clear();
-        this->receivers.clear();
-        this->population.clear();
-        this->cpd.clear();
-
-        LOG(6, 0, 0, "island %d initalized\r\n", this->id);
-        
-    }
-
-};
-
 #pragma mark FUNCTION: island::calculate::total_fitness()
 
 // calculate the island's total fitness for distribution ...
+
+struct ea;
 
 void island::calculate::total_fitness(island &p) {
     
     p.total_fitness = 0.0;
     
-    std::vector<solution>::iterator it;
+    int i = 0;
     
-    for(it = p.population.begin(); it != p.population.end(); ++it) {
+    for(std::vector<genome>::iterator it = p.population.begin(); it != p.population.end(); ++it) {
+        LOG(10, 0, 0, "isle %d solution %d fitness = %f\r\n", p.id, i, it->fitness);
         p.total_fitness += it->fitness;
+        //printf("CALC id %llu p1 %llu p2 %llu\r\n", it->id, it->parents[0], it->parents[1]);
+        i++;
     }
     
     LOG(6, 0, 0, "island::calculate::total_fitness island %d = %f\r\n", p.id, p.total_fitness);
@@ -95,82 +44,60 @@ void island::calculate::average_fitness(island &p) {
     
 }
 
-// #pragma mark FUNCTION: island::calculate::cpd()
-
-// this function calculates the cumulative probability distribution to be used by
-// the fitness proportional (roulette wheel) selection ...
-
-//void island::calculate::cpd(island &p) {
-//
-//    LOG(6, 0, 0, "island %d, population size %lu calculating cpd ...\r\n", p.id, p.population.size());
-//
-//    double cumulative_probability = 0.0;
-//
-//    LOG(6, 0, 0, "calculating total fitness ...\r\n");
-//
-//    island::calculate::total_fitness(p);
-//
-//    // std::sort(p.population.begin(), p.population.end(), compare_fitness);
-//    // std::reverse(p.population.begin(), p.population.end());
-//
-//    LOG(6, 0, 0, "island %d total fitness = %f\r\n", p.id, p.total_fitness);
-//
-//    p.cpd.clear();
-//
-//    LOG(7, 0, 0, "calculating island %d (population size = %lu) selection distribution\r\n", p.id, p.population.size());
-//
-//    for(int i=0; i<p.population.size(); i++) {
-//
-//        p.population[i].selection_distribution = (double)p.population[i].fitness / p.total_fitness;
-//
-//        LOG(8, 0, 0, "calculating island %d solution %d fitness %f selection distribution = %f\r\n", p.id, i, p.population[i].fitness, p.population[i].selection_distribution);
-//
-//        cumulative_probability += p.population[i].selection_distribution;
-//
-//        LOG(8, 0, 0, "island %d solution %d cumulative prob = %f\r\n", p.id, i, cumulative_probability);
-//
-//        p.cpd.push_back(cumulative_probability);
-//
-//    }
-//
-//}
-
-
 #pragma mark FUNCTION: island::migration::receive()
 
 // initiate a receive operation for every island in this island's senders list ...
 
-void island::migration::receive(island &p, MPI_Comm &comm) {
+//void island::migration::receive(island &p, MPI_Comm &comm, int &eval) {
+void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
     
     LOG(5, 0, 0, "island::migration::receive(%d) operations for %lu senders\r\n", p.id, p.senders.size());
     
-    std::array<double, DIM> x;
+    //std::array<double, DIM> x;
     
     MPI_Status migrant_status;
     
     for(int i=0; i<p.senders.size(); i++) {
-        LOG(5, 0, 0, "island %d waiting for migrant from island %d ... \r\n", p.id, p.senders[i]);
-        MPI_Recv(&x, DIM, MPI_DOUBLE, p.senders[i], 0, comm, &migrant_status);
-        p.population[rand()%p.population.size()].input = x;
-        LOG(5, 0, 0, "island %d received migrant from island %d: [%f,%f] with status %d\r\n", p.id, migrant_status.MPI_SOURCE, p.population[0].fitness, p.population[0].fitness, migrant_status.MPI_ERROR);
+        genome x;
+        int tag = ((p.senders[i]+1)*10000)+eval;
+        LOG(5, 0, 0, "island %d waiting for migrant recv tag %d from island %d ... \r\n", p.id, tag, p.senders[i]);
+        //MPI_Recv(&x, DIM, MPI_DOUBLE, p.senders[i], 0, p.tcomm, &migrant_status);
+        MPI_Recv(&x, 1, d, p.senders[i], tag, p.tcomm, &migrant_status);
+        int idx = rand()%p.population.size();
+        
+        x.migrations++;
+        x.locale = p.id;
+        p.population[idx] = x;
+        
+        visa v(eval, p.id, p.senders[i], p.population[idx].id);
+        p.visas.push_back(v);
+        
+        //printf("rec %d id %llu p1 %llu p2 %llu\r\n", tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1]);
+        
+        LOG(5, 0, 0, "island %d received migrant %s tag=%d from island %d: [%f,%f] with status %d\r\n", p.id, x.id, tag, migrant_status.MPI_SOURCE, p.population[0].fitness, p.population[0].fitness, migrant_status.MPI_ERROR);
     }
     
 }
-
 #pragma mark FUNCTION: island::migration::send()
 
 // initiate a send operation for every island in this island's receivers list ...
 
-void island::migration::send(island &p, MPI_Comm &comm) {
+void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
+//void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
     
     LOG(5, 0, 0, "island::migration::send(%d) initiating operations for %lu receivers\r\n", p.id, p.receivers.size());
+
+    //TODO: test different migration selection methods ...
     
     for(int i=0; i<p.receivers.size(); i++) {
-        LOG(6, 0, 0, "island %d sending migrant to island %d ... \r\n", p.id, p.receivers[i]);
-        MPI_Send(&p.population[i].input, DIM, MPI_DOUBLE, p.receivers[i], 0, comm);
-        LOG(6, 0, 0, "island %d sent migrant to island %d: [%f,%f]\r\n", p.id, p.receivers[i], p.population[i].input[0], p.population[i].input[1]);
+        int tag = ((p.id+1)*10000+eval);
+        int idx = rand()%p.population.size();
+        LOG(6, 0, 0, "island %d sending migrant %s to island %d ... \r\n", p.id, p.population[i].id, p.receivers[i]);
+        //printf("send %d id %s p1 %s p2 %s\r\n", tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1]);
+        MPI_Send(&p.population[idx], 1, d, p.receivers[i], tag, p.tcomm);
+        LOG(6, 0, 0, "island %d sent tag %d migrant to island %d: [%f,%f]\r\n", p.id, tag, p.receivers[i], p.population[i].input[0], p.population[i].input[1]);
     }
-            
+
 }
 
 

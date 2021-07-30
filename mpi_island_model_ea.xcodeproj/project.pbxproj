@@ -37,6 +37,11 @@
 		9A6508A32407593900C7A63D /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9A6508A42407595800C7A63D /* utility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utility.h; sourceTree = "<group>"; };
 		9A8A0AC324113D5300DBB5DB /* config.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.txt; sourceTree = "<group>"; };
+		9AA0392726A1D870003435AF /* csv2xlsx.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = csv2xlsx.py; sourceTree = "<group>"; };
+		9AA41B3226AA241B00312BB5 /* dtype_topology.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_topology.h; sourceTree = "<group>"; };
+		9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_heirarchy.h; sourceTree = "<group>"; };
+		9AA41B3426AA253200312BB5 /* dtype_solution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_solution.h; sourceTree = "<group>"; };
+		9AA41B3526AA256D00312BB5 /* dtype_island.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_island.h; sourceTree = "<group>"; };
 		9AB97848261CA06B0099EB0B /* ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea.h; sourceTree = "<group>"; };
 		9AEEAED02432987B001DF574 /* stats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stats.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -73,6 +78,7 @@
 		9A6508952406B3C100C7A63D /* mpi_island_model_ea */ = {
 			isa = PBXGroup;
 			children = (
+				9AA0392726A1D870003435AF /* csv2xlsx.py */,
 				9A6508962406B3C100C7A63D /* main.cpp */,
 				9A6508A02406B4A400C7A63D /* mpi_island_model_ea.entitlements */,
 				9A6508A12407590500C7A63D /* evolution.h */,
@@ -84,6 +90,10 @@
 				9AB97848261CA06B0099EB0B /* ea.h */,
 				9A0B0388262486240041E266 /* topology.h */,
 				9A0B038A262497CC0041E266 /* solution.h */,
+				9AA41B3226AA241B00312BB5 /* dtype_topology.h */,
+				9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */,
+				9AA41B3426AA253200312BB5 /* dtype_solution.h */,
+				9AA41B3526AA256D00312BB5 /* dtype_island.h */,
 			);
 			path = mpi_island_model_ea;
 			sourceTree = "<group>";

@@ -20,9 +20,10 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
+
 struct rstats {
     
-    solution sol;
+    genome sol;
     
     double init_duration;
     
@@ -49,14 +50,14 @@ struct estats {
     double average_local_best_topo_fitness = 0.0;
     double average_global_best_topo_fitness = 0.0;
     
-    topology best_topology;
+    topology *best_topology;
     
     std::vector<double> average_local_best_fitnesses;
     std::vector<double> average_global_best_fitnesses;
     std::vector<double> average_local_best_topo_fitnesses;
     std::vector<double> average_global_best_topo_fitnesses;
     
-    solution sol;
+    genome *sol;
     
     void init() {
         
@@ -124,15 +125,94 @@ void log_topology_matrix(int world_size, topology &t, int count) {
     
 }
 
-void log_fn_eval_stats(std::vector<solution> &solutions, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
+void log_pop_stats(int &run, int &eval, std::vector<genome> &solutions, island &isle, MPI_Datatype &visa_type) {
+    
+    std::vector<visa> visas;
+    unsigned long int vrecsize = 0;
+    unsigned long int vsndsize = isle.visas.size();
+
+    if(isle.id==0) {
+        for(int i=1; i<config::world_size; i++) {
+            MPI_Recv(&vrecsize, 1, MPI_INT, i, i, isle.tcomm, MPI_STATUS_IGNORE);
+            std::vector<visa> v;
+            v.resize(vrecsize);
+            MPI_Recv(&v[0], int(vrecsize), visa_type, i, i*10, isle.tcomm, MPI_STATUS_IGNORE);
+            visas.insert(visas.end(), v.begin(), v.end());
+        }
+        visas.insert(visas.end(), isle.visas.begin(), isle.visas.end());
+    } else {
+        MPI_Send(&vsndsize, 1, MPI_INT, 0, isle.id, isle.tcomm);
+        MPI_Send(&isle.visas[0], int(vsndsize), visa_type, 0, isle.id*10, isle.tcomm);        
+    }
+    
+    if(isle.id==0) {
+            
+        std::map<long long int, int> groups_e5;
+        std::map<long long int, int> groups_e4;
+        std::map<long int, int> groups_e3;
+        
+        for (auto it = solutions.begin(); it != solutions.end(); ++it) {
+            
+            long long int e5 = (it->group * 1000000000);
+            ++groups_e5[e5];
+            
+            long long int e4 = (it->group * 1000000);
+            ++groups_e4[e4];
+            
+            long int e3 = (it->group * 1000);
+            ++groups_e3[e3];
+            
+            //std::sort(sol_stats.begin(), sol_stats.end());
+            
+            char sol[DIM*sizeof(double)];
+            
+            int offs = 0;
+            
+            for(int i=0; i<DIM; i++) {
+                char delim = (i == DIM-1) ? '\0' : ';';
+                offs += snprintf(sol+offs, sizeof(sol)>offs?sizeof(sol)-offs:0, "%f%c", it->input[i], delim);
+            }
+    
+    //            char vis[it->data.visas.size()];
+    //
+    //            int offv = 0;
+    //
+    //            for(int i=0; i<it->data.visas.size(); i++) {
+    //            //for(int island : it->visas) {
+    //                char delim = (i == it->data.visas.size()-1) ? '\0' : ';';
+    //                //char prefix = (i==0) ? '"' : ' ';
+    //                //offv += snprintf(vis+offv, sizeof(vis)-offv, "%c%d%c", prefix, it->visas[i], delim);
+    //                //offv += snprintf(vis+offv, sizeof(sol)>offv?sizeof(sol)-offv:0, "%c%d%c", prefix, it->visas[i], delim);
+    //                offv += snprintf(vis+offv, sizeof(vis)>offv?sizeof(vis)-offv:0, "%d%c", it->data.visas[i], delim);
+    //            }
+                
+                std::fprintf(config::solpop_out, "%d,"  "%d,"    "%s,"      "%d,"       "%d,"       "%s,"            "%s,"             "%d,"          "%d,",
+                                                  run,   eval,    it->id,   it->source, it->locale, it->parents[0],   it->parents[1],  it->selected,  it->survival);
+                             
+                             
+                             
+                std::fprintf(config::solpop_out, "%lld,"  "%d,"          "%lld,"   "%d,"           "%ld,"   "%d,",
+                                                 e5,      groups_e5[e5],  e4,      groups_e4[e4],   e3,     groups_e3[e3]);
+                             
+                             
+                std::fprintf(config::solpop_out, "%f,"        "%f,"                      "%d,"             "%s,"            "%s\r\n",
+                                                 it->fitness, it->selection_distribution, it->migrations, "placeholder",    sol);
+            
+        }
+        
+    }
+    
+}
+
+void log_fn_eval_stats(std::vector<genome> &solutions, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
     
     // only consider evaluated topologies for stats
     
-    std::vector<solution> filtered_sol;
+    std::vector<genome> filtered_sol;
     std::vector<topology> filtered_top;
     
-    std::copy_if( solutions.begin(), solutions.end(), std::back_inserter(filtered_sol), [](const solution &item) { return item.fitness != 0.0; });
-    std::sort(filtered_sol.begin(), filtered_sol.end(), compare_fitness);
+    std::copy_if( solutions.begin(), solutions.end(), std::back_inserter(filtered_sol), [](const genome &item) { return item.fitness != 0.0; });
+    std::sort(filtered_sol.begin(), filtered_sol.begin(), compare_fitness);
     std::reverse(filtered_sol.begin(), filtered_sol.end());
     
     std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered_top), [](const topology &item) { return item.fitness != 0.0 && item.rounds >= config::topo_evals; });
@@ -151,19 +231,19 @@ void log_fn_eval_stats(std::vector<solution> &solutions, std::vector<topology> &
     
     if(filtered_sol[0].fitness > eval_stats.global_best_fitness) {
         LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best solution %f > %f\r\n", run, eval, filtered_sol[0].fitness, eval_stats.global_best_fitness);
-        eval_stats.sol = filtered_sol[0];
+        eval_stats.sol = &filtered_sol[0];
         eval_stats.average_global_best_fitnesses.push_back(filtered_sol[0].fitness);
         eval_stats.global_best_fitness = filtered_sol[0].fitness;
     }
     
     if(filtered_top[0].fitness > 0) {
-        LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology\r\n", topologies[0].fitness);
+        LOG(1, 0, 0, "FOUND NEGATIVE FITNESS: %2.10f in topology\r\n", filtered_top[0].fitness);
     }
     
     if(filtered_top[0].fitness > eval_stats.global_best_topo_fitness || eval_stats.global_best_topo_fitness == 0.0) {
         LOG(3, 0, 0, "STATS (run %d, eval %d): found new global best topology %f > %f\r\n", run, eval, topologies[0].fitness, eval_stats.global_best_topo_fitness);
         eval_stats.topo_best_count++;
-        eval_stats.best_topology = filtered_top[0];
+        //eval_stats.best_topology = &filtered_top.genomes[0];
         eval_stats.average_global_best_topo_fitnesses.push_back(filtered_top[0].fitness);
         eval_stats.global_best_topo_fitness = filtered_top[0].fitness;
         log_topology_matrix(t.world_size, filtered_top[0], eval_stats.topo_best_count);
@@ -213,7 +293,7 @@ void log_fn_eval_stats(std::vector<solution> &solutions, std::vector<topology> &
                                     average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration);
     
     std::fprintf(config::stats_out, "%3.10f,"             "%d,"            "%d,"               "%d,"                       "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%3.10f,"                           "%3.10f," ,
-                                    average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness,  eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness);
+                 average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness,  eval_stats.global_best_topo_fitness, eval_stats.average_local_best_topo_fitness);
     
     std::fprintf(config::stats_out, "%3.10f,"                                    "%d,"       "%d,"       "%d,"              "%3.10f\r\n",
                                     eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness);
@@ -227,10 +307,11 @@ void log_fn_eval_stats(std::vector<solution> &solutions, std::vector<topology> &
                  run,   eval,   average_fitness,    eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration, "|");
         
     LOG(2, 0, 0, "%3.10f,"             "%03d,"          "%05d,"             "%03d,"                     "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%s"   "%3.10f,"                           "%s"  "%3.10f"                                    "%s,",
-                 average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness,  BLU,   eval_stats.global_best_topo_fitness, YEL, eval_stats.average_local_best_topo_fitness, RESET);
+        average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness,  BLU,   eval_stats.global_best_topo_fitness, YEL, eval_stats.average_local_best_topo_fitness, RESET);
     
-    LOG(2, 0, 0, "%3.10f,"                                    "%03d,"     "%05d,"     "%03d,"             "%013.10f,"    "%013.10f,"          "%013.10f\r\n",
-                 eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness,        t.total_migration_time, eval_stats.total_migrate_time);
+    LOG(2, 0, 0, "%3.10f,"                                    "%03d,"     "%05d,"     "%03d,"             "%013.10f,"    "%013.10f,"            "%013.10f\r\n",
+                 eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness,     t.total_migration_time, eval_stats.total_migrate_time);
+    
     
     
     

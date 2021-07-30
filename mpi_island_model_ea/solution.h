@@ -9,21 +9,6 @@
 #ifndef solution_h
 #define solution_h
 
-#include "utility.h"
-
-#pragma mark DATATYPE: solution{}
-
-// representation of rastrigin solution
-
-struct solution {
-    
-    std::array<double, DIM> input;
-    
-    double fitness;
-    double selection_distribution;
-    
-};
-
 struct offset {
     
     std::array<double, DIM> input;
@@ -67,15 +52,5 @@ std::array<double, DIM> generate_offsets(double min, double max, double step) {
     return offsets;
     
 }
-
-
-// comparator for parent fitness values ...
-
-bool compare_fitness(const solution &p1, const solution &p2) {
-    
-    return p1.fitness < p2.fitness;
-    
-}
-
 
 #endif /* solution_h */
