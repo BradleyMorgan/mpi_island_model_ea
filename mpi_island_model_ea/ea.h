@@ -106,7 +106,7 @@ template<typename C> void objective<C>::calculate::cpd(objective &o) {
     LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
     
     std::sort(o.population.begin(), o.population.end(), comp_fitness());
-    //std::reverse(o.population.begin(), o.population.end());
+    std::reverse(o.population.begin(), o.population.end());
     
     LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", o.id, o.total_fitness)
 
@@ -752,16 +752,9 @@ void solutions_evolve(ea &multi, topology &t) {
         
         double gather_start = MPI_Wtime();
         
-        // reset the root population to prepare for the new individuals to be gathered from all islands ...
-        
-//        multi.solutions.population.clear();
-//        multi.solutions.population.resize(config::mu);
-        
         // gather island subpopulations back into the aggregate population on rank 0 ...
         
         MPI_Gather(&multi.meta.isle.population[0], multi.meta.island_size, multi.meta.solution_type, &multi.solutions.population[0], multi.meta.island_size, multi.meta.solution_type, 0, multi.meta.tcomm);
-        
-        //objective<genome>::calculate::cpd(multi.solutions);
         
         double gather_end = MPI_Wtime();
         double gather_time = gather_end - gather_start;

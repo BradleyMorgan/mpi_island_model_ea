@@ -17,9 +17,9 @@ topo_evals:5
 ea_mode:1
 migration_interval:1
 topo_mutation_rate:0.10
-mu_mode:0
-mu:600
-lambda:60
+mu_mode:1
+mu:1024
+lambda:128
 island_mu:128
 island_lambda:32
 island_lambda_pct:0.20

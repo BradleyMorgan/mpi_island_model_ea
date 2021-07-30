@@ -58,12 +58,17 @@ void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
     MPI_Status migrant_status;
     
     for(int i=0; i<p.senders.size(); i++) {
+        
         genome x;
+        
         int tag = ((p.senders[i]+1)*10000)+eval;
+        
         LOG(5, 0, 0, "island %d waiting for migrant recv tag %d from island %d ... \r\n", p.id, tag, p.senders[i]);
-        //MPI_Recv(&x, DIM, MPI_DOUBLE, p.senders[i], 0, p.tcomm, &migrant_status);
+        
         MPI_Recv(&x, 1, d, p.senders[i], tag, p.tcomm, &migrant_status);
-        int idx = rand()%p.population.size();
+        
+        int top = p.population.size() * 0.20;
+        int idx = rand()%top;
         
         x.migrations++;
         x.locale = p.id;
@@ -71,9 +76,7 @@ void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
         
         visa v(eval, p.id, p.senders[i], p.population[idx].id);
         p.visas.push_back(v);
-        
-        //printf("rec %d id %llu p1 %llu p2 %llu\r\n", tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1]);
-        
+            
         LOG(5, 0, 0, "island %d received migrant %s tag=%d from island %d: [%f,%f] with status %d\r\n", p.id, x.id, tag, migrant_status.MPI_SOURCE, p.population[0].fitness, p.population[0].fitness, migrant_status.MPI_ERROR);
     }
     
@@ -91,9 +94,10 @@ void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
     
     for(int i=0; i<p.receivers.size(); i++) {
         int tag = ((p.id+1)*10000+eval);
-        int idx = rand()%p.population.size();
-        LOG(6, 0, 0, "island %d sending migrant %s to island %d ... \r\n", p.id, p.population[i].id, p.receivers[i]);
-        //printf("send %d id %s p1 %s p2 %s\r\n", tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1]);
+        int top = p.population.size() * 0.20;
+        int idx = rand()%top;
+        //LOG(6, 0, 0, "island %d sending migrant %s to island %d ... \r\n", p.id, p.population[i].id, p.receivers[i]);
+        LOG(6, 0, 0, "island %d sending tag=%d sol_id=%s p1=%s p2=%s to island %d\r\n", p.id, tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1], p.receivers[i]);
         MPI_Send(&p.population[idx], 1, d, p.receivers[i], tag, p.tcomm);
         LOG(6, 0, 0, "island %d sent tag %d migrant to island %d: [%f,%f]\r\n", p.id, tag, p.receivers[i], p.population[i].input[0], p.population[i].input[1]);
     }
