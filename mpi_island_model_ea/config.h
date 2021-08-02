@@ -148,10 +148,10 @@ void config::load(const char *input, const int world_size, const int world_rank)
     
     char mumode[8];
     
-    if(config::ea_mode < 1) {
-        sprintf(mumode, "%s", "dynmu" );
-    } else {
+    if(config::mu_mode < 1) {
         sprintf(mumode, "%s", "fixedmu" );
+    } else {
+        sprintf(mumode, "%s", "dynmu" );
     }
     
     // create unique pathing for the supplied configuration so we can keep better track of results ...
@@ -221,15 +221,15 @@ void config::load(const char *input, const int world_size, const int world_rank)
             fprintf(config::log_out, "%s: %s\r\n", items_iterator->first.c_str(), items_iterator->second.c_str());
         }
         
-        if(config::ea_mode == 0) {
+        if(config::mu_mode == 0) {
             sprintf(subpop_msg, "(calculated: %d/%d): ", config::mu, world_size);
         }
         
-        if(config::ea_mode > 0) {
+        if(config::mu_mode > 0) {
            sprintf(mu_msg, "(calculated: %d*%d): ", world_size, config::island_mu);
         }
         
-        if(config::ea_mode == 2) {
+        if(config::mu_mode == 2) {
             sprintf(lambda_msg, "(calculated: %d*%f): ", config::island_mu, stod(config::items["island_lambda_pct"]));
         }
         
