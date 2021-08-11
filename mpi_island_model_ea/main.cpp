@@ -47,7 +47,7 @@ int main(int argc, const char * argv[]) {
     
     // begin experimental runs ...
     
-    for(multi.run.id = 1; multi.run.id <= config::runs; multi.run.id++) {
+    for(multi.run.id = 1; multi.run.id <= config::runs; multi.run.id++) {  // 30 (param) runs
 
         // clear any current populations and reset counters ...
         
@@ -63,7 +63,9 @@ int main(int argc, const char * argv[]) {
 
         if(config::ea_mode > 0) { // multi-objective, evolve topologies
 
-            multi.populate(topologies_populate);
+            if(multi.run.id == 1) {
+                multi.populate(topologies_populate);
+            }
 
             // evaluate initial topology population by applying each topology and using it for n solution evals
 
@@ -100,7 +102,7 @@ int main(int argc, const char * argv[]) {
         
         multi.run_end();
         
-    }
+    } // run end
 
     multi.ea_end();
          

@@ -775,6 +775,16 @@ void solutions_evolve(ea &multi, topology &t) {
         
     }
     
+    if(multi.solutions.eval_id%config::topo_evals == 0 && multi.meta.isle.id == 0) {
+        
+        LOG(4, 0, 0, "population size %lu, member = %2.10f\r\n", multi.meta.isle.population.size(), multi.meta.isle.population[0].fitness);
+    
+        if(multi.meta.isle.id == 0) {
+            log_fn_topology_stats(multi.topologies.population, multi.run.id, multi.solutions.eval_id, multi.eval.stats, multi.run.stats, t);
+        }
+        
+    }
+    
     if(multi.solutions.eval_id%2500 == 0) {
         
         log_pop_stats(multi.run.id, multi.solutions.eval_id, multi.solutions.population, multi.meta.isle, multi.meta.visa_type);
@@ -1081,6 +1091,8 @@ void topology_evaluate(ea &multi, topology &t) {
         LOG(5, 0, 0, "begin eval %d solution objective on topology %d\r\n", multi.topologies.eval_id, t.id);
         
         multi.evolve(solutions_evolve, t);
+        
+        fflush(config::topo_stats_out);
         
     }
     

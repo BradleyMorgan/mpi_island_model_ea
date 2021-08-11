@@ -13,7 +13,7 @@ loglevel:2
 sparsity:0.08
 migration_cap:2
 send_cap:2
-topo_evals:5
+topo_evals:5000
 ea_mode:1
 migration_interval:1
 topo_mutation_rate:0.10
