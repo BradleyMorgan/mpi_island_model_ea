@@ -208,11 +208,15 @@ void log_fn_topology_stats(std::vector<topology> &topologies, int &run, int &eva
     
     LOG(3, 0, 0, "STATS (run %d, eval %d): topologies size %lu, mem[0] fit = %f \r\n", run, eval, topologies.size(), topologies[0].fitness);
     
-    std::vector<topology> filtered_top = topologies;
+    std::vector<topology> filtered_top;
     
-//    std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered_top), [](const topology &item) { return item.fitness != 0.0 && item.rounds >= config::topo_evals; });
-//    std::sort(filtered_top.begin(), filtered_top.end(), compare_topo_fitness);
-//    std::reverse(filtered_top.begin(), filtered_top.end());
+    std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered_top), [](const topology &item) { return item.fitness != 0.00000000000 && item.rounds >= config::topo_evals; });
+    std::sort(filtered_top.begin(), filtered_top.end(), compare_topo_fitness);
+    std::reverse(filtered_top.begin(), filtered_top.end());
+    
+    if(filtered_top.size() == 0) {
+        filtered_top.push_back(topologies[0]);
+    }
     
     LOG(3, 0, 0, "STATS (run %d, eval %d): filtered topologies size %lu, mem[0] fit = %f \r\n", run, eval, filtered_top.size(), filtered_top[0].fitness);
     
