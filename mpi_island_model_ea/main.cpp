@@ -47,7 +47,7 @@ int main(int argc, const char * argv[]) {
     
     // begin experimental runs ...
     
-    for(multi.run.id = 1; multi.run.id <= config::runs; multi.run.id++) {  // 30 (param) runs
+    for(multi.run.id = 1; multi.run.id <= config::runs; multi.run.id++) {  // n (param) experimental runs
 
         // clear any current populations and reset counters ...
         

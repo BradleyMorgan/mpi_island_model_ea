@@ -469,86 +469,6 @@ std::vector<genome> crossover(ea &multi) {
     
 }
 
-#pragma mark FUNCTION: topology_populate()
-
-// returns a collection of randomly generated adjaceny matrices, representing                           |
-// an island (communication) topology.  accepts a reference to a list of island                         |
-// (process) identifiers from @ea{@meta{@island_ids[param:0}} to use as indices.                        |
-
-void topologies_populate(ea &multi) {
-    
-    multi.topologies.population.clear();
-    
-    LOG(4, multi.meta.isle.id, 0, "rank %d (root) initializing topology population ... \r\n", multi.meta.isle.id);
-    
-    //if(multi.meta.isle.id != 0) { return; }
-    
-    for(int i=0; i<config::topo_mu; i++) {
-        
-        topology t;
-        
-        t.rounds = 0;
-        t.world_size = multi.meta.islands;
-        t.fitness = 0.0;
-        t.channel_count = 0;
-        t.round_fitness = 0.0;
-        t.selection_distribution = 0.0;
-        t.channels = {};
-        
-        if(multi.meta.isle.id != 0) {
-            LOG(8, 0, 0, "island %d (leaf) adding topology stub %d, returning ... \r\n", multi.meta.isle.id, i);
-            multi.topologies.population.push_back(t);
-        } else {
-            LOG(8, 0, 0, "island %d (root) topology %d\r\n", multi.meta.isle.id, i);
-            topology::create::dynamic(t);
-            LOG(6, 0, 0, "dynamic topology %d created\r\n", i);
-            multi.topologies.population.push_back(t);
-        }
-        
-    }
-    
-    LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population size %lu, \r\n", multi.topologies.population.size());
-    
-    // we have our initial topology population, evaluated for fitness
-    
-}
-
-void benchmark_topology(ea &multi) {
-    
-    multi.topologies.population.clear();
-    
-    topology t;
-    
-    t.rounds = 0;
-    t.world_size = multi.meta.islands;
-    t.fitness = 0.0;
-    t.round_fitness = 0.0;
-    t.selection_distribution = 0.0;
-    t.channels = {};
-    t.channels.resize(multi.meta.islands);
-    
-    for(int i=0; i<multi.meta.islands; i++) {
-        
-        t.channels[i].senders = {};
-        t.channels[i].receivers = {};
-        
-        int next = i+1 < multi.meta.islands ? i+1 : 0;
-        int prev = i-1 < 0 ? (int)multi.meta.islands-1 : i-1;
-
-        t.channels[i].senders.push_back(prev);
-        t.channels[i].receivers.push_back(next);
-     
-        //multi.meta.isle.receivers[0] = next;
-        //multi.meta.isle.senders[0] = prev;
-        
-    }
-    
-    t.channel_count = t.world_size * 2;
-
-    multi.topologies.population.push_back(t);
-
-}
-
 #pragma mark FUNCTION: solution_populate()
 
 // returns a vector of a randomly generated offset rastrigin solution population                        |
@@ -1205,5 +1125,86 @@ ea ea_init() {
     return multi;
     
 }
+
+#pragma mark FUNCTION: topology_populate()
+
+// returns a collection of randomly generated adjaceny matrices, representing                           |
+// an island (communication) topology.  accepts a reference to a list of island                         |
+// (process) identifiers from @ea{@meta{@island_ids[param:0}} to use as indices.                        |
+
+void topologies_populate(ea &multi) {
+    
+    multi.topologies.population.clear();
+    
+    LOG(4, multi.meta.isle.id, 0, "rank %d (root) initializing topology population ... \r\n", multi.meta.isle.id);
+    
+    //if(multi.meta.isle.id != 0) { return; }
+    
+    for(int i=0; i<config::topo_mu; i++) {
+        
+        topology t;
+        
+        t.rounds = 0;
+        t.world_size = multi.meta.islands;
+        t.fitness = 0.0;
+        t.channel_count = 0;
+        t.round_fitness = 0.0;
+        t.selection_distribution = 0.0;
+        t.channels = {};
+        
+        if(multi.meta.isle.id != 0) {
+            LOG(8, 0, 0, "island %d (leaf) adding topology stub %d, returning ... \r\n", multi.meta.isle.id, i);
+            multi.topologies.population.push_back(t);
+        } else {
+            LOG(8, 0, 0, "island %d (root) topology %d\r\n", multi.meta.isle.id, i);
+            topology::create::dynamic(t);
+            LOG(6, 0, 0, "dynamic topology %d created\r\n", i);
+            multi.topologies.population.push_back(t);
+        }
+        
+    }
+    
+    LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population size %lu, \r\n", multi.topologies.population.size());
+    
+    // we have our initial topology population, evaluated for fitness
+    
+}
+
+void benchmark_topology(ea &multi) {
+    
+    multi.topologies.population.clear();
+    
+    topology t;
+    
+    t.rounds = 0;
+    t.world_size = multi.meta.islands;
+    t.fitness = 0.0;
+    t.round_fitness = 0.0;
+    t.selection_distribution = 0.0;
+    t.channels = {};
+    t.channels.resize(multi.meta.islands);
+    
+    for(int i=0; i<multi.meta.islands; i++) {
+        
+        t.channels[i].senders = {};
+        t.channels[i].receivers = {};
+        
+        int next = i+1 < multi.meta.islands ? i+1 : 0;
+        int prev = i-1 < 0 ? (int)multi.meta.islands-1 : i-1;
+
+        t.channels[i].senders.push_back(prev);
+        t.channels[i].receivers.push_back(next);
+     
+        //multi.meta.isle.receivers[0] = next;
+        //multi.meta.isle.senders[0] = prev;
+        
+    }
+    
+    t.channel_count = t.world_size * 2;
+
+    multi.topologies.population.push_back(t);
+
+}
+
 
 #endif /* ea_h */
