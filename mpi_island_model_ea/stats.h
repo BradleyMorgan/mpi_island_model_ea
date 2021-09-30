@@ -255,18 +255,17 @@ void log_fn_topology_stats(std::vector<topology> &topologies, int &run, int &eva
     
 
     LOG(2, 0, 0, "\r\n\r\n------ TOPOLOGY %d FITNESS=%013.10f EVALUATED %d TIMES AT %d ------", t.id, t.fitness, t.rounds, eval);
+    LOG(2, 0, 0, "\r\n\r\n%5s %9s %10s %13s %13s %13s", "t_id", "t_evals", "t_channels", "t_fitness", "t_mig_time", "sum_mig_time");
     
-    LOG(2, 0, 0, "\r\n\r\nt_id\tt_rounds\tt_channels\tt_fitness\t\tt_migration_time\ttotal_migration_time");
-        
-    LOG(2, 0, 0, "\r\n%03d\t\t"     "%05d\t\t"     "%03d\t\t\t"             "%013.10f\t"    "%013.10f\t\t"            "%013.10f",
+    LOG(2, 0, 0, "\r\n%05d,"     "%09d,"     "%010d,"             "%013.10f,"    "%013.10f,"            "%013.10f,",
                  t.id,       t.rounds,   t.channel_count,    t.fitness,     t.total_migration_time, eval_stats.total_migrate_time);
     
-    LOG(2, 0, 0, "\r\n\r\navg_t_fitness\tglbest_t_id\tglobal_best_t_rounds\tglbest_t_channels\tglbest_t_round_fitness\tglbest_t_fitness1\tlocbest_t_fitness\tglbest_t_fitness2\tavg_locbest_t_fitness\taverage_glbest_t_fitness");
+    LOG(2, 0, 0, "\r\n\r\n%13s %12s %13s %13s %13s %13s %13s %13s %13s %13s", "avg_t_fit", "gbest_t_id", "gbest_t_rounds", "gbest_t_chan", "gbest_t_efit", "gbest_tfit1", "lbest_tfit", "gbest_tfit2", "avg_lbest_tfit", "avg_gbest_tfit");
     
-    LOG(2, 0, 0, "\r\n%3.10f\t"          "%03d\t\t\t"        "%05d\t\t\t\t\t"         "%03d\t\t\t\t\t"                      "%3.10f\t\t\t"                    "%3.10f\t\t"             "%3.10f\t\t",
+    LOG(2, 0, 0, "\r\n%3.10f,"          "%012d,"               "%014d,"                 "%013d,"                         "%3.10f,"                       "%3.10f,"               "%3.10f,",
                  average_topo_fitness,   filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness);
     
-    LOG(2, 0, 0, "%s"   "%3.10f\t"                           "%s"  "%3.10f\t\t"                                    "%3.10f\t\t"                                   "%s",
+    LOG(2, 0, 0, "%s"   "%3.10f,"                           "%s,"  "%3.10f,"                                    "%3.10f,"                                   "%s",
                  BLU,   eval_stats.global_best_topo_fitness, YEL, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness, RESET);
     
     LOG(2, 0, 0, "\r\n--------------------------------------------------------------------------");
