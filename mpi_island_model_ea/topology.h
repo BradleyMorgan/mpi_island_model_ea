@@ -74,6 +74,8 @@ void topology::create::channels(topology &t, std::vector<std::vector<int>> &matr
 // 2 [0][0][1][0]  ->  2 sends to 3
 // 3 [0][0][0][0]  ->  3 sends to nobody
 // 4 [1][0][0][0]  ->  4 sends to 1
+//
+//
 
 std::vector<std::vector<int>> topology::create::matrix(const topology &t) {
     
@@ -182,6 +184,41 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
     return matrix;
     
 }
+
+//void topology::cpd(island &isle) {
+//    
+//    LOG(10, 0, 0, "generating cpd\r\n");
+//
+//    double cumulative_probability = 0.0;
+//
+//    isle.cpd.clear();
+//
+//    LOG(6, 0, 0, "calculating total fitness ...\r\n");
+//
+//    island::calculate::total_fitness(isle);
+//
+//    LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
+//
+//    std::sort(isle.population.begin(), isle.population.end(), compare_fitness);
+//    std::reverse(isle.population.begin(), isle.population.end());
+//
+//    LOG(6, 0, 0, "isle %d objective %d cpd calculation total fitness = %f", isle.id, this->id, isle.total_fitness)
+//
+//    for(int i=0; i<isle.population.size(); i++) {
+//
+//        isle.population[i].selection_distribution = (double)isle.population[i].fitness / isle.total_fitness;
+//
+//        LOG(8, 0, 0, "calculated island %d solution %d fitness %f selection distribution = %f\r\n", isle.id, i, isle.population[i].fitness, isle.population[i].selection_distribution);
+//
+//        cumulative_probability += isle.population[i].selection_distribution;
+//
+//        LOG(8, 0, 0, "solution %d cumulative prob = %f\r\n", i, cumulative_probability);
+//
+//        isle.cpd.push_back(cumulative_probability);
+//
+//    }
+//    
+//}
 
 #pragma mark FUNCTION: create_dyn_topology()
 

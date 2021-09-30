@@ -18,7 +18,11 @@ static const int DIM = 10;
 
 static unsigned long long int sinstances = 0;
 static unsigned long long int tinstances = 0;
-  
+
+# pragma mark DATATYPE config
+
+// global configuration items
+
 namespace config {
 
     std::map<std::string, std::string> items;
@@ -48,6 +52,14 @@ namespace config {
     int island_mu = 0;
     int island_lambda = 0;
     int mu_mode = 0;
+
+    int objective_1_runs = 0;
+    int objective_1_max_evo_evals = 0;
+    int objective_1_max_fit_evals = 0;
+
+    int objective_2_runs = 0;
+    int objective_2_max_evo_evals = 0;
+    int objective_2_max_fit_evals = 0;
 
     double island_lambda_pct = 0.0;
     double mutation_rate = 0.0;
@@ -111,7 +123,15 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::mu_mode = stoi(config::items["mu_mode"]);
     config::topo_mu = stoi(config::items["topo_mu"]);
     config::topo_lambda = stoi(config::items["topo_lambda"]);
-        
+    
+    config::objective_1_runs = stoi(config::items["ea_objective_1_runs"]);
+    config::objective_1_max_evo_evals = stoi(config::items["ea_objective_1_max_evo_evals"]);
+    config::objective_1_max_fit_evals = stoi(config::items["ea_objective_1_max_fit_evals"]);
+    
+    config::objective_2_runs = stoi(config::items["ea_objective_2_runs"]);
+    config::objective_2_max_evo_evals = stoi(config::items["ea_objective_2_max_evo_evals"]);
+    config::objective_2_max_fit_evals = stoi(config::items["ea_objective_2_max_fit_evals"]);
+    
     sprintf(config::mu_msg, ": ");
     sprintf(config::lambda_msg,": ");
     sprintf(config::subpop_msg, ": ");

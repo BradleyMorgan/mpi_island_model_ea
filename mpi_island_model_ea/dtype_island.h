@@ -36,7 +36,7 @@ struct island {
     double total_fitness = 0.0;
     double average_fitness = 0.0;
     
-    std::vector<genome> population;
+    std::vector<solution> population;
     
     std::vector<double> cpd = {};
     std::vector<int> senders = {};
@@ -47,9 +47,9 @@ struct island {
     
     struct calculate {
     
-        static void total_fitness(island &p);
-        static void average_fitness(island &p);
-        static void cpd(island &p);
+        void total_fitness(island &p);
+        void average_fitness(island &p);
+        void cpd(island &p);
         
     };
     
@@ -76,8 +76,48 @@ struct island {
         LOG(6, 0, 0, "island %d initalized\r\n", this->id);
         
     }
-
+    
+    calculate calculator;
+    
 };
+
+// comparator for parent fitness values ...
+
+template<typename genome> bool compare_fitness(const genome &p1, const genome &p2) {
+    return p1.fitness < p2.fitness;
+}
+
+
+void island::calculate::cpd(island &p) {
+    
+    LOG(10, 0, 0, "generating cpd\r\n");
+
+    double cumulative_probability = 0.0;
+
+    LOG(6, 0, 0, "calculating total fitness ...\r\n");
+
+    LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
+
+    std::sort(p.population.begin(), p.population.end(), compare_fitness<solution>);
+    std::reverse(p.population.begin(), p.population.end());
+
+    LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", p.id, p.total_fitness);
+
+    for(int i=0; i < p.population.size(); i++) {
+
+        p.population[i].selection_distribution = p.population[i].fitness / p.total_fitness;
+
+        LOG(8, 0, 0, "calculated island %d solution %d fitness %f selection distribution = %f\r\n", p.id, i, p.population[i].fitness, p.population[i].selection_distribution);
+
+        cumulative_probability += p.population[i].selection_distribution;
+
+        LOG(8, 0, 0, "solution %d cumulative prob = %f\r\n", i, cumulative_probability);
+
+        p.cpd.push_back(cumulative_probability);
+
+    }
+    
+}
 
 
 #endif /* dtype_island_h */

@@ -21,7 +21,7 @@ void island::calculate::total_fitness(island &p) {
     
     int i = 0;
     
-    for(std::vector<genome>::iterator it = p.population.begin(); it != p.population.end(); ++it) {
+    for(std::vector<solution>::iterator it = p.population.begin(); it != p.population.end(); ++it) {
         LOG(10, 0, 0, "isle %d solution %d fitness = %f\r\n", p.id, i, it->fitness);
         p.total_fitness += it->fitness;
         //printf("CALC id %llu p1 %llu p2 %llu\r\n", it->id, it->parents[0], it->parents[1]);
@@ -59,7 +59,7 @@ void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
     
     for(int i=0; i<p.senders.size(); i++) {
         
-        genome x;
+        solution x;
         
         int tag = ((p.senders[i]+1)*10000)+eval;
         
@@ -103,6 +103,5 @@ void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
     }
 
 }
-
 
 #endif /* island_h */

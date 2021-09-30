@@ -28,6 +28,7 @@
 /* Begin PBXFileReference section */
 		9A0B0388262486240041E266 /* topology.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = topology.h; sourceTree = "<group>"; };
 		9A0B038A262497CC0041E266 /* solution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = solution.h; sourceTree = "<group>"; };
+		9A0C408726CD469200351469 /* objective.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = objective.h; sourceTree = "<group>"; };
 		9A6508932406B3C100C7A63D /* mpi_island_model_ea */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mpi_island_model_ea; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A6508962406B3C100C7A63D /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		9A65089E2406B40D00C7A63D /* libmpi.40.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmpi.40.dylib; path = ../../../../../usr/local/lib/libmpi.40.dylib; sourceTree = "<group>"; };
@@ -94,6 +95,7 @@
 				9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */,
 				9AA41B3426AA253200312BB5 /* dtype_solution.h */,
 				9AA41B3526AA256D00312BB5 /* dtype_island.h */,
+				9A0C408726CD469200351469 /* objective.h */,
 			);
 			path = mpi_island_model_ea;
 			sourceTree = "<group>";

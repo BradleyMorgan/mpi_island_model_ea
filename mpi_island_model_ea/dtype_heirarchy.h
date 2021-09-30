@@ -36,7 +36,7 @@ char* uniqid(unsigned long long int instance) {
     return buffer;
 }
 
-struct genome {
+struct solution {
     
     char id[64];
     
@@ -54,7 +54,7 @@ struct genome {
     
     std::array<char[64], 2> parents;
     
-    genome() { strcpy(id, uniqid(sinstances++)); }
+    solution() { strcpy(id, uniqid(sinstances++)); }
 
 };
 

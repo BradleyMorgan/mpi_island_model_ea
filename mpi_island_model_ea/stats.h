@@ -23,7 +23,7 @@
 
 struct rstats {
     
-    genome sol;
+    solution sol;
     
     double init_duration;
     
@@ -57,7 +57,7 @@ struct estats {
     std::vector<double> average_local_best_topo_fitnesses;
     std::vector<double> average_global_best_topo_fitnesses;
     
-    genome *sol;
+    solution *sol;
     
     void init() {
         
@@ -125,7 +125,7 @@ void log_topology_matrix(int world_size, topology &t, int count) {
     
 }
 
-void log_pop_stats(int &run, int &eval, std::vector<genome> &solutions, island &isle, MPI_Datatype &visa_type) {
+void log_pop_stats(int &run, int &eval, std::vector<solution> &solutions, island &isle, MPI_Datatype &visa_type) {
     
     std::vector<visa> visas;
     unsigned long int vrecsize = 0;
@@ -252,25 +252,40 @@ void log_fn_topology_stats(std::vector<topology> &topologies, int &run, int &eva
 
     std::fprintf(config::topo_stats_out, "%3.10f,"                                    "%d,"       "%d,"       "%d,"              "%3.10f\r\n",
                                     eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness);
-
-    LOG(2, 0, 0, "%3.10f,"             "%03d,"          "%05d,"             "%03d,"                     "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%s"   "%3.10f,"                           "%s"  "%3.10f"                                    "%s,",
-        average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness,  BLU,   eval_stats.global_best_topo_fitness, YEL, eval_stats.average_local_best_topo_fitness, RESET);
-
-    LOG(2, 0, 0, "%3.10f,"                                    "%03d,"     "%05d,"     "%03d,"             "%013.10f,"    "%013.10f,"            "%013.10f\r\n",
-                 eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness,     t.total_migration_time, eval_stats.total_migrate_time);
-
     
+
+    LOG(2, 0, 0, "\r\n\r\n------ TOPOLOGY %d FITNESS=%013.10f EVALUATED %d TIMES AT %d ------", t.id, t.fitness, t.rounds, eval);
     
+    LOG(2, 0, 0, "\r\n\r\nt_id\tt_rounds\tt_channels\tt_fitness\t\tt_migration_time\ttotal_migration_time");
+        
+    LOG(2, 0, 0, "\r\n%03d\t\t"     "%05d\t\t"     "%03d\t\t\t"             "%013.10f\t"    "%013.10f\t\t"            "%013.10f",
+                 t.id,       t.rounds,   t.channel_count,    t.fitness,     t.total_migration_time, eval_stats.total_migrate_time);
+    
+    LOG(2, 0, 0, "\r\n\r\navg_t_fitness\tglbest_t_id\tglobal_best_t_rounds\tglbest_t_channels\tglbest_t_round_fitness\tglbest_t_fitness1\tlocbest_t_fitness\tglbest_t_fitness2\tavg_locbest_t_fitness\taverage_glbest_t_fitness");
+    
+    LOG(2, 0, 0, "\r\n%3.10f\t"          "%03d\t\t\t"        "%05d\t\t\t\t\t"         "%03d\t\t\t\t\t"                      "%3.10f\t\t\t"                    "%3.10f\t\t"             "%3.10f\t\t",
+                 average_topo_fitness,   filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, eval_stats.local_best_topo_fitness);
+    
+    LOG(2, 0, 0, "%s"   "%3.10f\t"                           "%s"  "%3.10f\t\t"                                    "%3.10f\t\t"                                   "%s",
+                 BLU,   eval_stats.global_best_topo_fitness, YEL, eval_stats.average_local_best_topo_fitness, eval_stats.average_global_best_topo_fitness, RESET);
+    
+    LOG(2, 0, 0, "\r\n--------------------------------------------------------------------------");
+    
+    LOG(2, 0, 0, "\r\n\r\n%3s %5s %14s %14s %14s %13s %13s %12s %12s %12s %12s %12s", "run,","eval,","avg_fit,","lbest_fit,","gbest_fit,","avg_lbest_fit,","avg_gbest_fit,","avg_scatt_t,","avg_gath_t,","avg_migrt,","init_t,","eval_t");
+    
+    //LOG(2, 0, 0, "%3.10f,"                                    "%03d,"     "%05d,"     "%03d,"             "%013.10f,"    "%013.10f,"            "%013.10f\r\n",
+    //             eval_stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness,     t.total_migration_time, eval_stats.total_migrate_time);
+
 }
 
-void log_fn_eval_stats(std::vector<genome> &solutions, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
+void log_fn_eval_stats(std::vector<solution> &solutions, std::vector<topology> &topologies, int &run, int &eval, estats &eval_stats, rstats &run_stats, topology &t) {
     
     // only consider evaluated topologies for stats
     
-    std::vector<genome> filtered_sol;
+    std::vector<solution> filtered_sol;
     
-    std::copy_if( solutions.begin(), solutions.end(), std::back_inserter(filtered_sol), [](const genome &item) { return item.fitness != 0.0; });
-    std::sort(filtered_sol.begin(), filtered_sol.begin(), compare_fitness);
+    std::copy_if( solutions.begin(), solutions.end(), std::back_inserter(filtered_sol), [](const solution &item) { return item.fitness != 0.0; });
+    std::sort(filtered_sol.begin(), filtered_sol.begin(), compare_fitness<solution>);
     std::reverse(filtered_sol.begin(), filtered_sol.end());
     
     LOG(3, 0, 0, "STATS (run %d, eval %d): solutions size %lu, mem[0] fit = %f \r\n", run, eval, solutions.size(), solutions[0].fitness);
@@ -325,7 +340,7 @@ void log_fn_eval_stats(std::vector<genome> &solutions, std::vector<topology> &to
     
     
     
-    LOG(2, 0, 0, "\r\n%3d," "%5d,"  "%013.10f,"         "%3.10f,"                      "%3.10f,"                       "%13.10f,"                              "%3.10f,"                               "%3.10f,"             "%3.10f,"            "%3.10f,"             "%3.10f,"               "%013.10f"     "%s",
+    LOG(2, 0, 0, "\r\n%03d," "%05d,"  "%013.10f,"         "%3.10f,"                      "%3.10f,"                       "%13.10f,"                              "%3.10f,"                               "%3.10f,"             "%3.10f,"            "%3.10f,"             "%3.10f,"               "%013.10f"     "%s",
                  run,   eval,   average_fitness,    eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration, "|");
     
     

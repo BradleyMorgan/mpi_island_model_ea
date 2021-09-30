@@ -83,7 +83,7 @@ struct topology {
     void validate(island &isle);
     void distribute(island &isle);
     void apply(island &isle, topology &t);
-    void evaluate(island &isle);
+    //void evaluate(island &isle);
     
     topology() {}
     //printf("[b=%llu|d=%llu] DEFAULT CONSTRUCTING topology<%s> [%p]\r\n", this->id, this->id, typeid(this).name(), this);

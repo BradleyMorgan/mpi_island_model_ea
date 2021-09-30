@@ -15,9 +15,9 @@
 
 // comparator for parent fitness values ...
 
-bool compare_fitness(const genome &p1, const genome &p2) {
-    return p1.fitness < p2.fitness;
-}
+//bool compare_fitness(const solution &p1, const solution &p2) {
+//    return p1.fitness < p2.fitness;
+//}
 
 //bool operator==(const genome<solution> &rhs, const genome<solution> &lhs) {
 //    return rhs.id == lhs.id;
