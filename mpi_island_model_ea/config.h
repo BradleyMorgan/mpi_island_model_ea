@@ -37,7 +37,7 @@ namespace config {
 
     int dim;
     int world_size;
-    int evals = 0;
+    //int evals = 0;
     int runs = 0;
     int lambda = 0;
     int mu = 0;
@@ -46,7 +46,7 @@ namespace config {
     int seed = 0;
     int migration_cap = 0;
     int send_cap = 0;
-    int topo_evals = 0;
+    //int topo_evals = 0;
     int ea_mode = 0;
     int migration_interval = 1;
     int island_mu = 0;
@@ -56,10 +56,13 @@ namespace config {
     int objective_1_runs = 0;
     int objective_1_max_evo_evals = 0;
     int objective_1_max_fit_evals = 0;
-
+    int objective_1_log_interval = 0;
+    int objective_1_population_log_interval = 0;
     int objective_2_runs = 0;
     int objective_2_max_evo_evals = 0;
     int objective_2_max_fit_evals = 0;
+    int objective_2_log_interval = 0;
+    int objective_2_population_log_interval = 0;
 
     double island_lambda_pct = 0.0;
     double mutation_rate = 0.0;
@@ -111,12 +114,12 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::world_size = world_size;
     config::dim = stoi(config::items["dim"]);
     config::runs = stoi(config::items["runs"]);
-    config::evals = stoi(config::items["evals"]);
+    //config::evals = stoi(config::items["evals"]);
     config::mutation_rate = stod(config::items["mutation_rate"]);
     config::sparsity = stod(config::items["sparsity"]);
     config::migration_cap = stoi(config::items["migration_cap"]);
     config::send_cap = stoi(config::items["migration_cap"]);
-    config::topo_evals = stoi(config::items["topo_evals"]);
+    //config::topo_evals = stoi(config::items["topo_evals"]);
     config::ea_mode = stoi(config::items["ea_mode"]);
     config::migration_interval = stoi(config::items["migration_interval"]);
     config::topo_mutation_rate = stod(config::items["topo_mutation_rate"]);
@@ -127,10 +130,14 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::objective_1_runs = stoi(config::items["ea_objective_1_runs"]);
     config::objective_1_max_evo_evals = stoi(config::items["ea_objective_1_max_evo_evals"]);
     config::objective_1_max_fit_evals = stoi(config::items["ea_objective_1_max_fit_evals"]);
+    config::objective_1_log_interval = stoi(config::items["ea_objective_1_log_interval"]);
+    config::objective_1_population_log_interval = stoi(config::items["ea_objective_1_population_log_interval"]);
     
     config::objective_2_runs = stoi(config::items["ea_objective_2_runs"]);
     config::objective_2_max_evo_evals = stoi(config::items["ea_objective_2_max_evo_evals"]);
     config::objective_2_max_fit_evals = stoi(config::items["ea_objective_2_max_fit_evals"]);
+    config::objective_2_log_interval = stoi(config::items["ea_objective_2_log_interval"]);
+    config::objective_1_population_log_interval = stoi(config::items["ea_objective_2_population_log_interval"]);
     
     sprintf(config::mu_msg, ": ");
     sprintf(config::lambda_msg,": ");

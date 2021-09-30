@@ -210,7 +210,7 @@ void log_fn_topology_stats(std::vector<topology> &topologies, int &run, int &eva
     
     std::vector<topology> filtered_top;
     
-    std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered_top), [](const topology &item) { return item.fitness != 0.00000000000 && item.rounds >= config::topo_evals; });
+    std::copy_if( topologies.begin(), topologies.end(), std::back_inserter(filtered_top), [](const topology &item) { return item.fitness != 0.00000000000 && item.rounds >= config::objective_1_max_fit_evals; });
     std::sort(filtered_top.begin(), filtered_top.end(), compare_topo_fitness);
     std::reverse(filtered_top.begin(), filtered_top.end());
     

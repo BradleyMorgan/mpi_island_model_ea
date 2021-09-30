@@ -513,7 +513,7 @@ void solutions_evolve(ea &multi, topology &t) {
         LOG(6, 0, 0, "island %d average fit %f\r\n", multi.meta.isle.id, multi.meta.isle.average_fitness);
     }
     
-    if(multi.solutions.eval%100 == 0) {
+    if(multi.solutions.eval%config::objective_1_log_interval == 0) {
     
         LOG(6, 0, 0, "gathering population, subpopulation %d size %lu avg fitness %f...\r\n", multi.meta.isle.id, multi.meta.isle.population.size(), multi.meta.isle.average_fitness);
         
@@ -532,7 +532,7 @@ void solutions_evolve(ea &multi, topology &t) {
         
     }
     
-    if(multi.solutions.eval%100 == 0 && multi.meta.isle.id == 0) {
+    if(multi.solutions.eval%config::objective_1_log_interval == 0 && multi.meta.isle.id == 0) {
         
         LOG(4, 0, 0, "population size %lu, member = %2.10f\r\n", multi.meta.isle.population.size(), multi.meta.isle.population[0].fitness);
     
@@ -540,7 +540,7 @@ void solutions_evolve(ea &multi, topology &t) {
             log_fn_eval_stats(multi.solutions.population, multi.topologies.population, multi.run.id, multi.solutions.eval, multi.eval.stats, multi.run.stats, t);
         }
         
-        if(multi.solutions.eval%config::topo_evals == 0) {
+        if(multi.solutions.eval%config::objective_2_max_fit_evals == 0) {
             
             LOG(4, 0, 0, "population size %lu, member = %2.10f\r\n", multi.meta.isle.population.size(), multi.meta.isle.population[0].fitness);
             
@@ -552,7 +552,7 @@ void solutions_evolve(ea &multi, topology &t) {
         
     }
     
-    if(multi.solutions.eval%2500 == 0) {
+    if(multi.solutions.eval%config::objective_1_population_log_interval == 0) {
         
         log_pop_stats(multi.run.id, multi.solutions.eval, multi.solutions.population, multi.meta.isle, multi.meta.visa_type);
         

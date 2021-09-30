@@ -6,16 +6,17 @@ ea_name:meta
 ea_objective_1:solutions
 ea_objective_1_runs:30
 ea_objective_1_log_interval:100
+ea_objective_1_population_log_interval:10000
 ea_objective_1_max_evo_evals:1000
 ea_objective_1_max_fit_evals:1000
 ea_objective_2:topologies
 ea_objective_2_runs:30
 ea_objective_2_log_interval:100
+ea_objective_2_population_log_interval:10000
 ea_objective_2_max_evo_evals:1000
 ea_objective_2_max_fit_evals:1000
 seed:0
 runs:30
-evals:10000
 topo_lambda:32
 topo_mu:256
 dim:10
@@ -24,7 +25,6 @@ loglevel:2
 sparsity:0.08
 migration_cap:2
 send_cap:2
-topo_evals:1000
 ea_mode:1
 migration_interval:1
 topo_mutation_rate:0.10

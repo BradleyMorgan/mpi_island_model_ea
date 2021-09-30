@@ -75,7 +75,7 @@ int main(int argc, const char * argv[]) {
             // topology evolution also triggers evolutionary cycles of the solution population in order
             // to determine topology fitness
 
-            while(multi.solutions.eval <= config::evals) {
+            while(multi.solutions.eval <= config::objective_1_max_evo_evals) {
                 multi.evolve(multi.solutions, topology_evolve);
             }
 
@@ -90,7 +90,7 @@ int main(int argc, const char * argv[]) {
 
             // perform solver evolution ...
 
-            while(multi.solutions.eval <= config::evals) {
+            while(multi.solutions.eval <= config::objective_1_max_evo_evals) {
                 multi.coevolve(multi.solutions, solutions_evolve, multi.topologies.population[0]);
             }
 
