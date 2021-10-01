@@ -59,7 +59,7 @@ int main(int argc, const char * argv[]) {
         multi.populate(multi.solutions, solution_populate);
         multi.distribute(multi.solutions, solution_scatter);
 
-        if(config::ea_mode > 0) { // multi-objective, evolve topologies
+        if(config::ea_mode > 0) {  // multi-objective, evolve topologies
 
             if(multi.run.id == 1) {
                 multi.populate(multi.topologies, topologies_populate);
@@ -67,10 +67,16 @@ int main(int argc, const char * argv[]) {
 
             // evaluate initial topology population by applying each topology and using it for n solution evals
 
-            for(int i=0; i<multi.topologies.mu; i++) {
+            for(int i=multi.current_topology.id; i<multi.topologies.mu; i++) {
+                
                 multi.evaluate(multi.topologies, multi.topologies.population[i], topology_evaluate);
+                
+                if(multi.solutions.eval >= config::objective_1_max_evo_evals) { break; }
+                
             }
 
+            if(multi.solutions.eval >= config::objective_1_max_evo_evals) { continue; }
+            
             // perform the remaining solution evolution cycles indirectly through topology evolution
             // topology evolution also triggers evolutionary cycles of the solution population in order
             // to determine topology fitness

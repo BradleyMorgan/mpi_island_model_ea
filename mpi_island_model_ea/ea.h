@@ -67,9 +67,6 @@ struct ea_meta {
     MPI_Datatype stats_type;
     MPI_Datatype comm_type;
     
-    MPI_Datatype MPI_TOPOLOGY;
-    MPI_Datatype MPI_CHANNEL;
-    
     MPI_Comm tcomm;
     
 };
@@ -86,6 +83,9 @@ struct ea {
     
     objective<topology> topologies;
     objective<solution> solutions;
+    
+    topology current_topology;
+    solution current_solution;
     
     std::array<double, DIM> offsets;
     
@@ -198,7 +198,7 @@ solution select_parent(island &isle) {
     
     isle.population[i].selected++;
     
-    //printf("sol %s selected=%d", isle.population[i].id, isle.population[i].selected);
+    LOG(5, 0, 0, "sol %s selected=%d", isle.population[i].id, isle.population[i].selected);
     
     solution s = isle.population[i];
     
@@ -301,10 +301,7 @@ std::vector<solution> crossover(ea &multi) {
         strcpy(child.parents[0], p1.id);
         strcpy(child.parents[1], p2.id);
         
-        //child.parents[0] = p1.id;
-        //child.parents[1] = p2.id;
-        
-        //printf("child id %s p1 %s p2 %s\r\n", child.id, child.parents[0], child.parents[1]);
+        LOG(5, 0, 0, "child id %s p1 %s p2 %s\r\n", child.id, child.parents[0], child.parents[1]);
         
         children.push_back(child);
         
@@ -509,9 +506,9 @@ void solutions_evolve(ea &multi, topology &t) {
     
     // output for various intervals ...
     
-    if(multi.solutions.eval%10 == 0) {
-        LOG(6, 0, 0, "island %d average fit %f\r\n", multi.meta.isle.id, multi.meta.isle.average_fitness);
-    }
+//    if(multi.solutions.eval%10 == 0) {
+//        LOG(6, 0, 0, "island %d average fit %f\r\n", multi.meta.isle.id, multi.meta.isle.average_fitness);
+//    }
     
     if(multi.solutions.eval%config::objective_1_log_interval == 0) {
     
@@ -557,7 +554,6 @@ void solutions_evolve(ea &multi, topology &t) {
         log_pop_stats(multi.run.id, multi.solutions.eval, multi.solutions.population, multi.meta.isle, multi.meta.visa_type);
         
     }
-    
 
 }
 
@@ -851,7 +847,19 @@ void topology_evaluate(ea &multi, topology &t) {
     
     t.apply(multi.meta.isle, t);
     
+    multi.current_topology = t;
+    
     LOG(8, 0, 0, "evaluating topology %d\r\n", t.id);
+    
+    // evaluate the supplied topology using the solution (o1) evolution cycle
+    // which will assign a fitness value based on the time spent during migration
+    
+    // this function should be called iteratively for each individual in the
+    // topology (o2) population, so it is assumed that the following loop will
+    // execute µ * o2.max_fitness_evals (for example 256 * 100 = 25,600) times
+    
+    // the (o1) population may assert a maxmimum iteration constraint as well, so
+    // 
     
     for(multi.topologies.eval = 1; multi.topologies.eval%(multi.topologies.max_fit_evals+1) != 0; multi.topologies.eval++) {
 
@@ -860,6 +868,8 @@ void topology_evaluate(ea &multi, topology &t) {
         multi.coevolve(multi.solutions, solutions_evolve, t);
         
         fflush(config::topo_stats_out);
+        
+        if(multi.solutions.eval == config::objective_1_max_evo_evals) { return; }
         
     }
     
@@ -939,15 +949,15 @@ ea ea_init() {
     multi.meta.isle.init();
     
     multi.solutions.mu = config::mu;
-    multi.solutions.max_runs = config::objective_2_runs;
-    multi.solutions.max_evo_evals = config::objective_2_max_evo_evals;
-    multi.solutions.max_fit_evals = config::objective_2_max_fit_evals;
+    multi.solutions.max_runs = config::objective_1_runs;
+    multi.solutions.max_evo_evals = config::objective_1_max_evo_evals;
+    multi.solutions.max_fit_evals = config::objective_1_max_fit_evals;
     multi.solutions.eval = 1;
     
     multi.topologies.mu = config::topo_mu;
-    multi.topologies.max_runs = config::objective_1_runs;
-    multi.topologies.max_evo_evals = config::objective_1_max_evo_evals;
-    multi.topologies.max_fit_evals = config::objective_1_max_fit_evals;
+    multi.topologies.max_runs = config::objective_2_runs;
+    multi.topologies.max_evo_evals = config::objective_2_max_evo_evals;
+    multi.topologies.max_fit_evals = config::objective_2_max_fit_evals;
     multi.topologies.islands = multi.meta.islands;
     multi.topologies.eval = 1;
     
@@ -960,9 +970,8 @@ ea ea_init() {
     MPI_Bcast(&multi.offsets, DIM, MPI_DOUBLE, 0, multi.meta.tcomm);
     
     // collect the time consumed by all islands in this initialization ...
-    // TODO: this segfaults on higher core count runs, so may need to debug at some point, but
-    // currently the init duration is somewhat insigificant
-    
+
+    // TODO: the init time gather segfaults on higher core count runs, so may need to debug at some point, but currently the init duration is somewhat insigificant
     // MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
     
     LOG(2, multi.meta.isle.id, 0, "world size: %d\r\n", multi.meta.islands);
@@ -986,9 +995,7 @@ void topologies_populate(ea &multi) {
     multi.topologies.population.clear();
     
     LOG(4, multi.meta.isle.id, 0, "rank %d (root) initializing topology population ... \r\n", multi.meta.isle.id);
-    
-    //if(multi.meta.isle.id != 0) { return; }
-    
+
     for(int i=0; i<config::topo_mu; i++) {
         
         topology t;
@@ -1014,9 +1021,13 @@ void topologies_populate(ea &multi) {
         
     }
     
+    // we have our initial topology population, *NOT* evaluated for fitness
+    
     LOG(4, multi.meta.isle.id, 0, "initialized objective (topology) population size %lu, \r\n", multi.topologies.population.size());
     
-    // we have our initial topology population, evaluated for fitness
+    // since this is a new population, reset the current topology to the first individual
+    
+    multi.current_topology = multi.topologies.population[0];
     
 }
 
@@ -1044,9 +1055,6 @@ void benchmark_topology(ea &multi) {
 
         t.channels[i].senders.push_back(prev);
         t.channels[i].receivers.push_back(next);
-     
-        //multi.meta.isle.receivers[0] = next;
-        //multi.meta.isle.senders[0] = prev;
         
     }
     
