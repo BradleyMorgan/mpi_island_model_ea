@@ -99,16 +99,31 @@ void config::load(const char *input, const int world_size, const int world_rank)
     std::string key;
     std::string value;
     
+
+//    while (config_file.good()) {
+//        while (std::getline(config_file, line)) {
+//            if (line[0] != '#') {
+//                getline(config_file, key, ':');
+//                getline(config_file, value, '\n');
+//                if(key != "") {
+//                   printf("%s => %s\r\n", key.c_str(), value.c_str());
+//                   config::items[key] = value;
+//               }
+//            }
+//        }
+//    }
+    
+
     while (config_file.good()) {
-       
-       getline(config_file, key, ':');
-       getline(config_file, value, '\n');
-       
-       if(key != "") {
+        
+        getline(config_file, key, ':');
+        getline(config_file, value, '\n');
+
+        if(key != "") {
            //printf("%s => %s\r\n", key.c_str(), value.c_str());
            config::items[key] = value;
        }
-       
+
     }
     
     config::world_size = world_size;

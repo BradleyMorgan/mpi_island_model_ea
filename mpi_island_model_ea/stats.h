@@ -331,7 +331,7 @@ void log_fn_eval_stats(std::vector<solution> &solutions, std::vector<topology> &
                                     run,  eval,  average_fitness,  eval_stats.local_best_fitness, eval_stats.global_best_fitness, eval_stats.average_local_best_fitness, eval_stats.average_global_best_fitness);
 
     
-    std::fprintf(config::sol_stats_out, "%3.10f,"             "%3.10f,"            "%3.10f,"             "%3.10f,"               "%3.10f,",
+    std::fprintf(config::sol_stats_out, "%3.10f,"             "%3.10f,"            "%3.10f,"             "%3.10f,"               "%3.10f\r\n",
                                     average_scatter_time, average_gather_time, average_migrate_time, run_stats.init_duration, eval_duration);
     
     
