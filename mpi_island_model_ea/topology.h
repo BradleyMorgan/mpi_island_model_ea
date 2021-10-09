@@ -321,7 +321,7 @@ void topology::apply(island &isle, topology &t) {
     
 }
 
-#pragma mark FUNCTION: topology_distribute()
+#pragma mark FUNCTION: topology::distribute()
 
 // this function accepts a topology index, the associated topology as described in the                  |
 // corresponding datatype (@topology{}), and an MPI communicator.                                       |

@@ -9,10 +9,19 @@
 #ifndef dtype_topology_h
 #define dtype_topology_h
 
-//
-// the @comm_group{} datatype is used primarily to track the required MPI_Send() and MPI_Recv()
+// this datatype uses an adjacency matrix (2d array) to represent and measure a communication topology
+
+// the design is likely general enough to use as a representation for any experimentation that
+// requires a way to manipulate or dynamically generate communication patterns, however the
+// intent is to find optimal communication patterns through applying the represented topology
+// to a communication-heavy algorithm (e.g. an island-model ea), with optimality measured in
+// terms of time incurred during data transfer.
+
+#pragma mark DATATYPE: channel{}
+
+// the @channel{} datatype is used primarily to track the required MPI_Send() and MPI_Recv()
 // operations and the required parameter values needed to perform the island (process)
-// execution context, e.g. from the perspective of island @comm_group{island_id}.
+// execution context, e.g. from the perspective of island @channel{island_id}.
 //
 //  i   1    2    3    4
 //  1 [ 0 ][ 1 ][ 0 ][ 0 ] => island 1 sends to island 2
@@ -23,15 +32,19 @@
 // +----+-----------------------------------------+--------------------------------------+
 // | id |        assigned send channels           |     assigned receive channels        |
 // +----+-----------------------------------------+--------------------------------------+
-// | 1  |  @comm_group[id=1]{receivers}[0] = 2    |  @comm_group[id=2]{senders}[0] = 1   |
+// | 1  |  @channel[id=1]{receivers}[0] = 2       |  @channel[id=2]{senders}[0] = 1      |
 // +----+-----------------------------------------+--------------------------------------+
-// | 2  |  @comm_group[id=2]{receivers}[0] = 1    |  @comm_group[id=1]{senders}[0] = 2   |
-// |    |  @comm_group[id=2]{receivers}[1] = 3    |  @comm_group[id=3]{senders}[0] = 2   |
+// | 2  |  @channel[id=2]{receivers}[0] = 1       |  @channel[id=1]{senders}[0] = 2      |
+// |    |  @channel[id=2]{receivers}[1] = 3       |  @channel[id=3]{senders}[0] = 2      |
 // +----+-----------------------------------------+--------------------------------------+
-// | 3  |  @comm_group[id=3]{receivers][0] = NIL  |  @comm_group[id=?]{} NOOP            |
+// | 3  |  @channel[id=3]{receivers][0] = NIL     |  @channel[id=?]{} NOOP               |
 // +----+-----------------------------------------+--------------------------------------+
-// | 4  |  @comm_group[id=4]{receivers}[0] = 1    |  @comm_group[id=1]{senders}[1] = 4   |
+// | 4  |  @channel[id=4]{receivers}[0] = 1       |  @channel[id=1]{senders}[1] = 4      |
 // +----+-----------------------------------------+--------------------------------------+
+//
+// this is convenient for protocols that require explicit, symmetric endpoint communication,
+// where the initialization of a matching source sender and target receiver is required
+// before data transfer occurs, e.g. MPI
 //
 
 struct channel {
@@ -65,10 +78,12 @@ struct topology {
     double total_migration_time = 0.0;
     double selection_distribution = 0.0; // fitness measurement for selection method
     
-    // an array of @comm_group{} describing the full context MPI_Send() and MPI_Recv()
+    // an array of @channel{} describing the full context MPI_Send() and MPI_Recv()
     // operations forms the mpi-suitable topology representation
     
     std::vector<channel> channels;
+    
+    // encapsulation for initialization methods
     
     struct create {
      
@@ -80,13 +95,13 @@ struct topology {
         
     };
     
-    void validate(island &isle);
-    void distribute(island &isle);
-    void apply(island &isle, topology &t);
-    //void evaluate(island &isle);
+    // primary methods, see topology.h
+    
+    void validate(island &isle); // experimental method for sanity-checking the representation
+    void distribute(island &isle); // from a single source (root), initate the distribution of channels to each communicating node
+    void apply(island &isle, topology &t); // for all communicating nodes, receive the corresponding channels as defined in the topology
     
     topology() {}
-    //printf("[b=%llu|d=%llu] DEFAULT CONSTRUCTING topology<%s> [%p]\r\n", this->id, this->id, typeid(this).name(), this);
     
 };
 

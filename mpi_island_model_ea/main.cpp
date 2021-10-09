@@ -44,69 +44,74 @@ int main(int argc, const char * argv[]) {
     // perform mpi and global variable initialization ...
     
     ea multi = ea_init();
+    multi.topologies.run = 1;
     
     // begin experimental runs ...
     
-    for(multi.run.id = 1; multi.run.id <= config::runs; multi.run.id++) {  // n (param) experimental runs
-
-        // clear any current populations and reset counters ...
+    for(multi.topologies.run = 1; multi.topologies.run <= multi.topologies.max_runs; multi.topologies.run++) {  // n (param) experimental runs
         
-        multi.run_init();
-        
-        // generate random objective (solution) population with fitness calculated
-        // and distribute (mu/n) subpopulations to each island
-        
-        multi.populate(multi.solutions, solution_populate);
-        multi.distribute(multi.solutions, solution_scatter);
+        for(multi.solutions.run = 1; multi.solutions.run <= multi.solutions.max_runs; multi.solutions.run++) {  // n (param) experimental runs
 
-        if(config::ea_mode > 0) {  // multi-objective, evolve topologies
-
-            if(multi.run.id == 1) {
-                multi.populate(multi.topologies, topologies_populate);
-            }
-
-            // evaluate initial topology population by applying each topology and using it for n solution evals
-
-            for(int i=multi.current_topology.id; i<multi.topologies.mu; i++) {
-                
-                multi.evaluate(multi.topologies, multi.topologies.population[i], topology_evaluate);
-                
-                if(multi.solutions.eval >= config::objective_1_max_evo_evals) { break; }
-                
-            }
-
-            if(multi.solutions.eval >= config::objective_1_max_evo_evals) { continue; }
+            // clear any current populations and reset counters ...
             
-            // perform the remaining solution evolution cycles indirectly through topology evolution
-            // topology evolution also triggers evolutionary cycles of the solution population in order
-            // to determine topology fitness
+            multi.run_init();
+            
+            // generate random objective (solution) population with fitness calculated
+            // and distribute (mu/n) subpopulations to each island
+            
+            multi.populate(multi.solutions, solution_populate);
+            multi.distribute(multi.solutions, solution_scatter);
 
-            while(multi.solutions.eval <= config::objective_1_max_evo_evals) {
-                multi.evolve(multi.solutions, topology_evolve);
+            if(config::ea_mode > 0) {  // multi-objective, evolve topologies
+
+                if(multi.topologies.run == 1) {
+                    multi.populate(multi.topologies, topologies_populate);
+                }
+
+                // evaluate initial topology population by applying each topology and using it for n solution evals
+
+                for(int i=multi.current_topology.id; i<multi.topologies.mu; i++) {
+                    
+                    multi.evaluate(multi.topologies, multi.topologies.population[i], topology_evaluate);
+                    
+                    if(multi.solutions.eval >= multi.solutions.max_evo_evals) { break; }
+                    
+                }
+
+                if(multi.solutions.eval >= multi.solutions.max_evo_evals) { continue; }
+                
+                // perform the remaining solution evolution cycles indirectly through topology evolution
+                // topology evolution also triggers evolutionary cycles of the solution population in order
+                // to determine topology fitness
+
+                while(multi.solutions.eval <= multi.solutions.max_evo_evals) {
+                    multi.evolve(multi.solutions, topology_evolve);
+                }
+
+            } else {  // benchmark, use static ring topology
+
+                // in the benchmark case, we only need to apply the topology once ...
+
+                if(multi.solutions.run == 1) {
+                    benchmark_topology(multi);
+                    multi.topologies.population[0].apply(multi.data.isle, multi.topologies.population[0]);
+                }
+
+                // perform solver evolution ...
+
+                while(multi.solutions.eval <= multi.solutions.max_evo_evals) {
+                    multi.coevolve(multi.solutions, solutions_evolve, multi.topologies.population[0]);
+                }
+
             }
 
-        } else {  // benchmark, use static ring topology
-
-            // in the benchmark case, we only need to apply the topology once ...
-
-            if(multi.run.id == 1) {
-                benchmark_topology(multi);
-                multi.topologies.population[0].apply(multi.meta.isle, multi.topologies.population[0]);
-            }
-
-            // perform solver evolution ...
-
-            while(multi.solutions.eval <= config::objective_1_max_evo_evals) {
-                multi.coevolve(multi.solutions, solutions_evolve, multi.topologies.population[0]);
-            }
-
-        }
-
-        // perform any value resets and write the run statistics to file output ...
+            // perform any value resets and write the run statistics to file output ...
+            
+            multi.run_end();
+            
+        } // ea 1 run end
         
-        multi.run_end();
-        
-    } // run end
+    } // ea 2 run_end
 
     multi.ea_end();
 

@@ -37,36 +37,36 @@ namespace config {
 
     int dim;
     int world_size;
-    //int evals = 0;
-    int runs = 0;
-    int lambda = 0;
-    int mu = 0;
-    int topo_lambda = 0;
-    int topo_mu = 0;
     int seed = 0;
     int migration_cap = 0;
     int send_cap = 0;
-    //int topo_evals = 0;
     int ea_mode = 0;
     int migration_interval = 1;
     int island_mu = 0;
     int island_lambda = 0;
     int mu_mode = 0;
 
-    int objective_1_runs = 0;
-    int objective_1_max_evo_evals = 0;
-    int objective_1_max_fit_evals = 0;
-    int objective_1_log_interval = 0;
-    int objective_1_population_log_interval = 0;
-    int objective_2_runs = 0;
-    int objective_2_max_evo_evals = 0;
-    int objective_2_max_fit_evals = 0;
-    int objective_2_log_interval = 0;
-    int objective_2_population_log_interval = 0;
+    int ea_1_runs = 0;
+    int ea_1_lambda = 0;
+    int ea_1_mu = 0;
+    int ea_1_max_evo_evals = 0;
+    int ea_1_max_fit_evals = 0;
+    int ea_1_log_interval = 0;
+    int ea_1_population_log_interval = 0;
+
+    double ea_1_mutation_rate = 0.0;
+
+    int ea_2_runs = 0;
+    int ea_2_mu = 0;
+    int ea_2_lambda = 0;
+    int ea_2_max_evo_evals = 0;
+    int ea_2_max_fit_evals = 0;
+    int ea_2_log_interval = 0;
+    int ea_2_population_log_interval = 0;
+
+    double ea_2_mutation_rate = 0.0;
 
     double island_lambda_pct = 0.0;
-    double mutation_rate = 0.0;
-    double topo_mutation_rate = 0.0;
     double sparsity = 0.0;
 
     char log_fname[100];
@@ -96,63 +96,53 @@ void config::load(const char *input, const int world_size, const int world_rank)
     
     std::ifstream config_file(input);
 
+    std::string line;
     std::string key;
     std::string value;
     
-
-//    while (config_file.good()) {
-//        while (std::getline(config_file, line)) {
-//            if (line[0] != '#') {
-//                getline(config_file, key, ':');
-//                getline(config_file, value, '\n');
-//                if(key != "") {
-//                   printf("%s => %s\r\n", key.c_str(), value.c_str());
-//                   config::items[key] = value;
-//               }
-//            }
-//        }
-//    }
-    
-
-    while (config_file.good()) {
+    while (std::getline(config_file, line)) {
         
-        getline(config_file, key, ':');
-        getline(config_file, value, '\n');
-
+        line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
+        
+        if(line[0] == '#' || line.empty() || line.length()==0 ) { continue; }
+        
+        unsigned long int delimiterPos = line.find(':');
+        key = line.substr(0, delimiterPos);
+        value = line.substr(delimiterPos + 1);
+        
         if(key != "") {
-           //printf("%s => %s\r\n", key.c_str(), value.c_str());
+           printf("%s => %s\r\n", key.c_str(), value.c_str());
            config::items[key] = value;
        }
-
+    
     }
     
     config::world_size = world_size;
     config::dim = stoi(config::items["dim"]);
-    config::runs = stoi(config::items["runs"]);
-    //config::evals = stoi(config::items["evals"]);
-    config::mutation_rate = stod(config::items["mutation_rate"]);
     config::sparsity = stod(config::items["sparsity"]);
     config::migration_cap = stoi(config::items["migration_cap"]);
     config::send_cap = stoi(config::items["migration_cap"]);
-    //config::topo_evals = stoi(config::items["topo_evals"]);
     config::ea_mode = stoi(config::items["ea_mode"]);
     config::migration_interval = stoi(config::items["migration_interval"]);
-    config::topo_mutation_rate = stod(config::items["topo_mutation_rate"]);
     config::mu_mode = stoi(config::items["mu_mode"]);
-    config::topo_mu = stoi(config::items["topo_mu"]);
-    config::topo_lambda = stoi(config::items["topo_lambda"]);
     
-    config::objective_1_runs = stoi(config::items["ea_objective_1_runs"]);
-    config::objective_1_max_evo_evals = stoi(config::items["ea_objective_1_max_evo_evals"]);
-    config::objective_1_max_fit_evals = stoi(config::items["ea_objective_1_max_fit_evals"]);
-    config::objective_1_log_interval = stoi(config::items["ea_objective_1_log_interval"]);
-    config::objective_1_population_log_interval = stoi(config::items["ea_objective_1_population_log_interval"]);
+    config::ea_1_runs = stoi(config::items["ea_1_runs"]);
+    config::ea_1_mu = stoi(config::items["ea_1_mu"]);
+    config::ea_1_lambda = stoi(config::items["ea_1_lambda"]);
+    config::ea_1_mutation_rate = stod(config::items["ea_1_mutation_rate"]);
+    config::ea_1_max_evo_evals = stoi(config::items["ea_1_max_evo_evals"]);
+    config::ea_1_max_fit_evals = stoi(config::items["ea_1_max_fit_evals"]);
+    config::ea_1_log_interval = stoi(config::items["ea_1_log_interval"]);
+    config::ea_1_population_log_interval = stoi(config::items["ea_1_population_log_interval"]);
     
-    config::objective_2_runs = stoi(config::items["ea_objective_2_runs"]);
-    config::objective_2_max_evo_evals = stoi(config::items["ea_objective_2_max_evo_evals"]);
-    config::objective_2_max_fit_evals = stoi(config::items["ea_objective_2_max_fit_evals"]);
-    config::objective_2_log_interval = stoi(config::items["ea_objective_2_log_interval"]);
-    config::objective_1_population_log_interval = stoi(config::items["ea_objective_2_population_log_interval"]);
+    config::ea_2_runs = stoi(config::items["ea_2_runs"]);
+    config::ea_2_mu = stoi(config::items["ea_2_mu"]);
+    config::ea_2_lambda = stoi(config::items["ea_2_lambda"]);
+    config::ea_2_mutation_rate = stod(config::items["ea_2_mutation_rate"]);
+    config::ea_2_max_evo_evals = stoi(config::items["ea_2_max_evo_evals"]);
+    config::ea_2_max_fit_evals = stoi(config::items["ea_2_max_fit_evals"]);
+    config::ea_2_log_interval = stoi(config::items["ea_2_log_interval"]);
+    config::ea_1_population_log_interval = stoi(config::items["ea_2_population_log_interval"]);
     
     sprintf(config::mu_msg, ": ");
     sprintf(config::lambda_msg,": ");
@@ -169,15 +159,15 @@ void config::load(const char *input, const int world_size, const int world_rank)
     if(config::mu_mode == 1) {
         config::island_mu = stoi(config::items["island_mu"]);
         config::island_lambda = stod(config::items["island_lambda"]);
-        config::mu = world_size * config::island_mu;
+        config::ea_1_mu = world_size * config::island_mu;
     } else if(config::mu_mode == 2) {
         config::island_mu = stoi(config::items["island_mu"]);
         config::island_lambda = config::island_mu * stod(config::items["island_lambda_pct"]);
-        config::mu = world_size * config::island_mu;
+        config::ea_1_mu = world_size * config::island_mu;
     } else {
-        config::mu = stoi(config::items["mu"]);
-        config::lambda = stoi(config::items["lambda"]);
-        config::island_mu = config::mu / world_size;
+        config::ea_1_mu = stoi(config::items["mu"]);
+        config::ea_1_lambda = stoi(config::items["lambda"]);
+        config::island_mu = config::ea_1_mu / world_size;
         config::island_lambda = stod(config::items["island_lambda"]);   
     }
     
@@ -265,7 +255,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
         }
         
         if(config::mu_mode == 0) {
-            sprintf(subpop_msg, "(calculated: %d/%d): ", config::mu, world_size);
+            sprintf(subpop_msg, "(calculated: %d/%d): ", config::ea_1_mu, world_size);
         }
         
         if(config::mu_mode > 0) {
@@ -279,7 +269,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
         fprintf(config::log_out, "log file: %s\r\n", config::log_fname);
         fprintf(config::log_out, "world size: %d\r\n", world_size);
         fprintf(config::log_out, "subpopulation size %s %d\r\n", config::subpop_msg, config::island_mu);
-        fprintf(config::log_out, "global mu %s %d\r\n", config::mu_msg, config::mu);
+        fprintf(config::log_out, "global mu %s %d\r\n", config::mu_msg, config::ea_1_mu);
         fprintf(config::log_out, "island lambda %s %d\r\n", config::lambda_msg, stoi(config::items["island_lambda"]));
         
     }

@@ -1,36 +1,126 @@
-config_name:rastrigin
-log_file:rastrigin
-stats_file:rastrigin
-topo_file:rastrigin
-ea_name:meta
-ea_objective_1:solutions
-ea_objective_1_runs:30
-ea_objective_1_log_interval:100
-ea_objective_1_population_log_interval:10000
-ea_objective_1_max_evo_evals:10000
-ea_objective_1_max_fit_evals:10000
-ea_objective_2:topologies
-ea_objective_2_runs:30
-ea_objective_2_log_interval:100
-ea_objective_2_population_log_interval:10000
-ea_objective_2_max_evo_evals:1000
-ea_objective_2_max_fit_evals:1000
-seed:0
-runs:30
-topo_lambda:32
-topo_mu:256
+##########################################
+# -- BEGIN SECTION: custom parameters -- #
+##########################################
+
+# --- PARAMETER[dim]: dimensions of benchmark problem ---
 dim:10
-mutation_rate:0.08
-loglevel:2
+
+# --- PARAMETER[sparsity]: maximum percentage of adjacency matrix to populate ---
 sparsity:0.08
+
+# --- PARAMETER[migration_cap]: maximum number of received population individuals per island ---
 migration_cap:2
+
+# --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
 send_cap:2
-ea_mode:1
-migration_interval:1
-topo_mutation_rate:0.10
+
+# --- PARAMETER[send_cap]: maximum number of individuals sent per island
+# 0: fixed global mu, comm size based island mu, fixed island lambda
+# 1: comm size based global mu, fixed island mu, fixed island lambda
+# 2: comm size based global mu, fixed island mu, percentage island lambda ---
 mu_mode:1
-mu:1024
-lambda:128
+    
+# --- PARAMETER[island_mu]: use for ea modes 1,2 (fixed island mu) ---
 island_mu:128
+
+# --- PARAMETER[island_lambda]: use for ea modes 0,1 (fixed island lambda) ---
 island_lambda:32
+
+# --- PARAMETER[send_cap]: use for ea mode 2 (percentage island lambda) ---
 island_lambda_pct:0.20
+
+# --- PARAMETER[migration_interval]: perform island migrations every 𝑒 evaluations ---
+migration_interval:1
+
+# --- PARAMETER[ea_mode]: benchmark vs. experimental mode(s)
+ea_mode:1
+
+####### END SECTION: custom parameters #######
+
+
+################################
+# -- BEGIN SECTION: logging -- #
+################################
+
+# --- PARAMETER[loglevel]: verbosity of stdout logging [2(standard)..10(massive)] ---
+loglevel:2
+
+# --- PARAMETER[seed]: seed for rng, use 0 to create new seed ---
+seed:0
+
+# --- PARAMETER[config_name]: display name for this configuration ---
+config_name:meta
+
+# --- PARAMETER[log_file]: configuration log file prefix ---
+log_file:meta
+
+# --- PARAMETER[stats_file]: prefix for statistics output files ---
+stats_file:meta
+
+# --- PARAMETER[topo_file]: prefix for second statistics output files ---
+topo_file:meta
+
+# --- PARAMETER[implementation_name]: display name for the ea implementation ---
+implementation_name:meta
+
+####### END SECTION: logging #######
+
+
+########################################################
+# -- BEGIN SECTION: ea-specific parameters --          #
+# -- use ea_𝑛 for multiple ea implementations in [1,𝑛] #
+########################################################
+
+##### BEGIN SUBSECTION: ea 𝑛 = 1 #####
+
+## ---- PARAMETER[ea_𝑛_name]: display name for this ea
+ea_1_name:solutions
+
+## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum
+ea_1_runs:30
+
+## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
+ea_1_log_interval:100
+
+## ---- PARAMETER[ea_𝑛_population_log_interval]: verbose log every 𝑒 evaluations
+ea_1_population_log_interval:10000
+
+## ---- PARAMETER[ea_1_max_evo_evals]: terminate run at 𝑒 evaluations
+ea_1_max_evo_evals:10000
+
+## ---- PARAMETER[ea_1_max_evo_evals]: minimum number of evaluations required for fitness
+ea_1_max_fit_evals:10000
+
+## ---- PARAMETER[ea_𝑛_mu]: population size
+ea_1_mu:1024
+
+## ---- PARAMETER[ea_𝑛_lambda]: number of offspring created per evolution cycle
+ea_1_lambda:128
+
+## ---- PARAMETER[ea_𝑛_mutation_rate]: number of offspring created per evolution cycle
+ea_1_mutation_rate:0.08
+
+## ---- PARAMETER[ea_𝑛_o𝑘_name]:  use ea_𝑛_o𝑘 [0..𝑘] to define multiple objectives within each ea
+## ea_1_o1_name:placeholder_o1
+## ea_1_o1_name:placeholder_o2
+
+##### END SUBSECTION: ea 𝑛 = 1 #####
+
+##### BEGIN SUBSECTION: ea 𝑛 = 2 #####
+
+ea_2:topologies
+ea_2_runs:30
+ea_2_mu:128
+ea_2_lambda:16
+ea_2_log_interval:100
+ea_2_population_log_interval:10000
+ea_2_max_evo_evals:1000
+ea_2_max_fit_evals:1000
+ea_2_mutation_rate:0.10
+## ea_2_o1_name:placeholder1
+## ea_2_o2_name:placeholder2
+
+##### END SUBSECTION: ea 𝑛 = 2 #####
+
+####### END SECTION: ea-specific parameters #######
+
