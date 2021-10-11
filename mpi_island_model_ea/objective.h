@@ -28,17 +28,20 @@ template<typename genome> struct objective {
     
     std::vector<genome> population = {};
     
-    template<typename f, typename e> void populate(e &multi, f function) { function(multi); }
-    template<typename f, typename e> void distribute(e &multi, f function) { function(multi); }
-    template<typename f, typename e> void evaluate(e &multi, genome &individual, f function) { function(multi, individual); }
-    template<typename f> void calculate(f function) { function(*this); }
+    #pragma mark GENERIC: evolution functions
     
+    template<typename f, typename e> void populate(e &ea, f function) { function(ea); }
+    template<typename f, typename m, typename e> void populate(m &meta, e &solver,  f function) { function(meta, solver); }
+    template<typename f, typename e> void distribute(e &ea, f function) { function(ea); }
+    template<typename f, typename e> void evaluate(e &ea, genome &individual, f function) { function(ea, individual); }
+    template<typename f, typename m, typename e> void evaluate(m &meta, e &solver, genome &individual, f function) { function(meta, solver, individual); }
+    template<typename f> void calculate(f function) { function(*this); }
     template<typename f> genome select(f function) { return function(*this); }
     template<typename f> genome crossover(f function) { return function(*this); }
+    template<typename f, typename e> void evolve(e &ea, f function) { function(ea); };
+    template<typename f, typename m, typename e, typename d> void evolve(m &meta, e &solver, f function, d &dependent) {
+        function(meta, solver, dependent);
     
-    template<typename f, typename e> void evolve(e &multi, f function) { function(multi); };
-    template<typename f, typename e, typename d> void coevolve(e &multi, f function, d &dependent) {
-        function(multi, dependent);
     };
     
     #pragma mark DATATYPE: metrics
@@ -121,6 +124,5 @@ template<typename genome> void objective<genome>::metrics::cpd(objective<genome>
     }
 
 }
-
 
 #endif /* objective_h */

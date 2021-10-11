@@ -11,6 +11,7 @@
 
 #include <random>
 #include <cpuid.h>
+#include <array>
 
 #pragma mark FUNCTION prob_true()
 

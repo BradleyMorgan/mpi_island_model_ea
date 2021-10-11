@@ -32,7 +32,7 @@ island_lambda_pct:0.20
 # --- PARAMETER[migration_interval]: perform island migrations every 𝑒 evaluations ---
 migration_interval:1
 
-# --- PARAMETER[ea_mode]: benchmark vs. experimental mode(s)
+# --- PARAMETER[ea_mode]: benchmark vs. experimen tal mode(s)
 ea_mode:1
 
 ####### END SECTION: custom parameters #######
@@ -77,19 +77,19 @@ implementation_name:meta
 ea_1_name:solutions
 
 ## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum
-ea_1_runs:30
+ea_1_runs:10
 
 ## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
 ea_1_log_interval:100
 
 ## ---- PARAMETER[ea_𝑛_population_log_interval]: verbose log every 𝑒 evaluations
-ea_1_population_log_interval:10000
+ea_1_population_log_interval:1000
 
 ## ---- PARAMETER[ea_1_max_evo_evals]: terminate run at 𝑒 evaluations
-ea_1_max_evo_evals:10000
+ea_1_max_evo_evals:1000
 
 ## ---- PARAMETER[ea_1_max_evo_evals]: minimum number of evaluations required for fitness
-ea_1_max_fit_evals:10000
+ea_1_max_fit_evals:1000
 
 ## ---- PARAMETER[ea_𝑛_mu]: population size
 ea_1_mu:1024
@@ -112,8 +112,8 @@ ea_2:topologies
 ea_2_runs:30
 ea_2_mu:128
 ea_2_lambda:16
-ea_2_log_interval:100
-ea_2_population_log_interval:10000
+ea_2_log_interval:1000
+ea_2_population_log_interval:1000
 ea_2_max_evo_evals:1000
 ea_2_max_fit_evals:1000
 ea_2_mutation_rate:0.10
