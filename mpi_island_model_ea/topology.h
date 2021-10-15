@@ -500,4 +500,22 @@ bool is_zero(topology t) {
     return t.fitness == 0.0;
 }
 
+void run(ea &meta) {
+
+    if(meta.variant.isle.id != 0) { return; }
+    
+    LOG(2, meta.variant.isle.id, 0, "\r\n--- END META RUN %d ---\r\n", meta.run.id);
+
+    double run_end = MPI_Wtime();
+
+    meta.run.stats.run_duration = run_end - meta.run.start;
+
+    fprintf(config::topo_run_stats_out, "average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
+
+    std::fprintf(config::topo_run_stats_out, "%d,%f,%f,%f,%f,%f,%d", meta.run.id, meta.run.stats.run_duration, meta.run.eval.stats.average_local_best_topo_fitness, meta.run.eval.stats.average_global_best_topo_fitness, meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.total_migrate_time, meta.run.stats.total_channels);
+
+    fflush(config::topo_run_stats_out);
+
+}
+
 #endif /* topology_h */

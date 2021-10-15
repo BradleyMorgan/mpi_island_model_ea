@@ -30,6 +30,7 @@ namespace config {
     FILE *log_out;
     FILE *sol_stats_out;
     FILE *topo_stats_out;
+    FILE *topo_run_stats_out;
     FILE *run_stats_out;
     FILE *solution_out;
     FILE *topo_out;
@@ -73,6 +74,7 @@ namespace config {
     char stats_fname[100];
     char solution_fname[100];
     char topo_fname[100];
+    char topo_run_fname[100];
     char run_stats_fname[100];
     char solpop_fname[100];
     char logs_subpath[100];
@@ -142,7 +144,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::ea_2_max_evo_evals = stoi(config::items["ea_2_max_evo_evals"]);
     config::ea_2_max_fit_evals = stoi(config::items["ea_2_max_fit_evals"]);
     config::ea_2_log_interval = stoi(config::items["ea_2_log_interval"]);
-    config::ea_1_population_log_interval = stoi(config::items["ea_2_population_log_interval"]);
+    config::ea_2_population_log_interval = stoi(config::items["ea_2_population_log_interval"]);
     
     sprintf(config::mu_msg, ": ");
     sprintf(config::lambda_msg,": ");
@@ -282,6 +284,9 @@ void config::load(const char *input, const int world_size, const int world_rank)
         sprintf(config::topo_fname, "%s/%s_topo_%d_%s.csv", config::stats_subpath, config::items["topo_file"].c_str(), world_size, mode);
         config::topo_stats_out = fopen(config::topo_fname, "w");
         
+        sprintf(config::topo_run_fname, "%s/%s_topo_run_%d_%s.csv", config::stats_subpath, config::items["topo_file"].c_str(), world_size, mode);
+        config::topo_run_stats_out = fopen(config::topo_run_fname, "w");
+        
         sprintf(config::run_stats_fname, "%s/%s_run_%d_%s.csv", config::stats_subpath, config::items["stats_file"].c_str(), world_size, mode);
         config::run_stats_out = fopen(config::run_stats_fname, "w");
         
@@ -294,6 +299,8 @@ void config::load(const char *input, const int world_size, const int world_rank)
         fprintf(config::sol_stats_out, "run,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration\r\n");
         
         fprintf(config::topo_stats_out, "average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
+        
+        fprintf(config::topo_run_stats_out, "average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
         
         fprintf(config::run_stats_out, "run,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_gather_time,total_migration_time,run_duration,init_duration,world_size,subpopulation_size, global_best_topo_fitness, average_local_best_topo_fitness, average_global_best_topo_fitness\r\n");
         

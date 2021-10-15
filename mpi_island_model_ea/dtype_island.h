@@ -25,7 +25,7 @@ struct visa {
 #pragma mark DATATYPE: island{}
 
 // representation of an island model EA entity that performs evaluations on
-// a subpopulation of the primary (rastrigin) objective function solutions.
+// a subpopulation of the primary (rastrigin) objective functionsolver.solutions.population.
 // islands perform migrations of individuals using designated communication
 // channels as implemented in @island{receive_migrant}, @island{send_migrant}
 

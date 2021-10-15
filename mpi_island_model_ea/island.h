@@ -13,8 +13,6 @@
 
 // calculate the island's total fitness for distribution ...
 
-struct ea;
-
 void island::calculate::total_fitness(island &p) {
     
     p.total_fitness = 0.0;

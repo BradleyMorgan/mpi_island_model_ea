@@ -9,192 +9,18 @@
 #ifndef ea_h
 #define ea_h
 
+#include <sys/time.h>
 #include "solution.h"
 #include "island.h"
 #include "topology.h"
 #include "objective.h"
 #include "stats.h"
 
-#pragma mark DATATYPE: @ea_eval{}
-
-// track eval stats, etc. per island
-
-struct ea_eval {
-  
-    int id;
-    double start;
-    estats stats;
-};
-
-#pragma mark DATATYPE: @ea_run{}
-
-// track run stats, etc. per island
-
-struct ea_run {
-    
-    //int id;
-    double start;
-    rstats stats;
-    ea_eval eval;
-    
-};
-
-#pragma mark DATATYPE: @ea_meta{}
-
-// describes the properties needed for parallel (island model) EA
-
-struct ea_variant {
-
-    std::clock_t start;
-
-    int islands;
-    int island_size;
-    int root = 0;
-
-    // isle holds context specific population and migration data
-    // from the perspective of *this* island (mpi rank)
-    // see @island{} datatype
-    
-    island isle;
-    
-    // TODO: maintaining a list of island_ids doesn't seem necessary
-    
-    std::vector<int> island_ids;
-    
-    MPI_Datatype solution_type;
-    MPI_Datatype visa_type;
-    MPI_Datatype topology_type;
-    MPI_Datatype stats_type;
-    MPI_Datatype comm_type;
-    
-    MPI_Comm tcomm;
-    
-};
-
-//template<typename o> struct ea_objectives {
-//    //objective<genome> objective;
-//    std::vector<o> genomes;
-//};
-
-#pragma mark DATATYPE: @ea{}
-
-// wrapper type to serve as the trunk for ea properties
-
-struct ea {
-    
-    ea_variant variant;
-    ea_run run;
-    ea_eval eval;
-    
-    template<typename f> void init(f function) { function(*this); }
-    template<typename f, typename v> void init(f function, v &variant) { function(*this, variant); }
-    template<typename f> void run_init(f function) { function(*this); }
-    template<typename f> void run_end(f function) { function(*this); }
-    
-    std::array<double, DIM> offsets;
-    
-    objective<topology> topologies;
-    objective<solution> solutions;
-    
-//    void run_init() {
-//
-//        this->solutions.population.clear();
-//        this->variant.isle.population.clear();
-//        this->variant.isle.population.resize(config::island_mu);
-//
-//        this->solutions.eval = 1;
-//        //this->topologies.eval = 1;
-//
-//        this->run.start = MPI_Wtime();
-//
-//    }
-    
-//    void run_end() {
-//
-//        LOG(8, 0, 0, "island %d end run\r\n", this->variant.isle.id);
-//
-//        if(this->variant.isle.id != 0) { return; }
-//
-//        double run_end = MPI_Wtime();
-//
-//        std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d,%2.10f,%2.10f,%2.10f\r\n", this->solutions.run, this->eval.stats.global_best_fitness, this->eval.stats.average_local_best_fitness, this->eval.stats.average_global_best_fitness, this->eval.stats.total_scatter_time, this->eval.stats.total_gather_time, this->eval.stats.total_migrate_time, run_end - this->run.start, this->run.stats.init_duration, this->variant.islands, this->variant.island_size, this->eval.stats.global_best_topo_fitness, this->eval.stats.average_local_best_topo_fitness, this->eval.stats.average_global_best_topo_fitness);
-//
-//        fflush(config::run_stats_out);
-//
-//    }
-    
-    void ea_end() {
-        
-        LOG(8, 0, 0, "island %d end EA\r\n", this->variant.isle.id);
-        
-        if(this->variant.isle.id == 0) {
-
-            char canary[128];
-
-            sprintf(canary, "%s/end.txt", config::logs_subpath);
-            FILE *eaend = fopen(canary, "w");
-
-            fprintf(eaend, "ended at %lu", time(0));
-
-            fclose(eaend);
-
-        }
-        
-        MPI_Finalize();
-        
-    }
-    
-    template<typename f, typename o> void populate(objective<o> &obj, f function) { obj.populate(*this, function); }
-    template<typename f, typename o> void distribute(objective<o> &obj, f function) { obj.distribute(*this, function); }
-    template<typename f, typename o, typename g> void evaluate(objective<o> &obj, g &individual, f function) { obj.evaluate(*this, individual, function); }
-    
-    template<typename f, typename o> void evolve(objective<o> &obj, f function) { obj.evolve(*this, function); }
-    template<typename f, typename m, typename o, typename g> void evolve(m &meta, objective<o> &obj, f function, g &individual) { obj.evolve(meta, *this, function, individual);
-    }
-    
-    template<typename f, typename o, typename g> void coevolve(objective<o> &obj, f function, g &individual) { obj.evolve(*this, function, individual);
-    }
-    
-};
-
-
-void solver_run_init(ea &solver) {
-          
-    solver.solutions.population.clear();
-    solver.variant.isle.population.clear();
-    solver.variant.isle.population.resize(config::island_mu);
-    solver.solutions.eval = 1;
-    solver.run.start = MPI_Wtime();
-    
-}
-
-void meta_run_init(ea &meta) {
-    
-    meta.topologies.population.clear();
-    
-    
-}
-
-void solver_run_end(ea &solver) {
-    
-    LOG(8, 0, 0, "island %d end run\r\n", solver.variant.isle.id);
-    
-    if(solver.variant.isle.id != 0) { return; }
-    
-    double run_end = MPI_Wtime();
-    
-    std::fprintf(config::run_stats_out, "%d,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%2.10f,%d,%d,%2.10f,%2.10f,%2.10f\r\n", solver.solutions.run, solver.eval.stats.global_best_fitness, solver.eval.stats.average_local_best_fitness, solver.eval.stats.average_global_best_fitness, solver.eval.stats.total_scatter_time, solver.eval.stats.total_gather_time, solver.eval.stats.total_migrate_time, run_end - solver.run.start, solver.run.stats.init_duration, solver.variant.islands, solver.variant.island_size, solver.eval.stats.global_best_topo_fitness, solver.eval.stats.average_local_best_topo_fitness, solver.eval.stats.average_global_best_topo_fitness);
-    
-    fflush(config::run_stats_out);
-    
-}
-
-
 template<typename genome> genome parent(objective<genome> &o) {
     
     genome p;
 
-    o.aggregate.cpd(o);
+    o.cpd();
     
     // implementation uses the single armed roulette wheel approach to select
     // an individual from the population
@@ -361,12 +187,12 @@ std::vector<solution> crossover(ea &multi) {
 // accepts an array of floating point numbers of n-dimensions @offsets[param:0]                         |
 // used to calculate the solution fitness.                                                              |
 
-void solution_populate(ea &multi) {
+void solution_populate(ea &solver) {
     
-    LOG(6, 0, 0, "rank %d of %d entered solution_populate\r\n", multi.variant.isle.id, multi.variant.islands);
+    LOG(6, 0, 0, "rank %d of %d entered solution_populate\r\n", solver.variant.isle.id, solver.variant.islands);
     
-    if(multi.variant.isle.id != 0) {
-        LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.variant.isle.id);
+    if(solver.variant.isle.id != 0) {
+        LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", solver.variant.isle.id);
         return;
     }
     
@@ -374,10 +200,10 @@ void solution_populate(ea &multi) {
     // an array of size DIM = @dim[config.txt:12] holding the solution's randomly
     // generated gene values.
     
-    LOG(4, multi.variant.isle.id, 0, "initializing objective (solution) population ...\r\n");
-    LOG(6, 0, 0, "island %d (root) initializing mu=%d solutions ...\r\n", multi.variant.isle.id, multi.solutions.mu);
+    LOG(4, solver.variant.isle.id, 0, "initializing objective (solution) population ...\r\n");
+    LOG(6, 0, 0, "island %d (root) initializing mu=%d solutions ...\r\n", solver.variant.isle.id, solver.solutions.mu);
 
-    for(int i=0; i<multi.solutions.mu; i++) {
+    for(int i=0; i<solver.solutions.mu; i++) {
         
         LOG(6, 0, 0, "creating solution %d ...\r\n", i);
         
@@ -386,7 +212,7 @@ void solution_populate(ea &multi) {
         //p.id = uniqid(sinstances++);
         //strcpy(p.id, uniqid(sinstances++));
         
-        p.source = multi.variant.isle.id;
+        p.source = solver.variant.isle.id;
         p.migrations++;
         
         //p.parents[0] = 0;
@@ -395,48 +221,48 @@ void solution_populate(ea &multi) {
         strcpy(p.parents[0], "0");
         strcpy(p.parents[1], "0");
         
-        LOG(6, 0, 0, "rank %d assigning solution values\r\n", multi.variant.isle.id);
+        LOG(6, 0, 0, "rank %d assigning solution values\r\n", solver.variant.isle.id);
         
         for (int j = 0; j < DIM; j++) {
             p.input[j] = drand(-5.12, 5.12); // rastrigin says: x[i] ∈ [-5.12,5.12]
             p.group += p.input[j];
-            LOG(10, multi.variant.isle.id, 0, "rank %d solution %d group = %f\r\n", multi.variant.isle.id, i, p.group);
+            LOG(10, solver.variant.isle.id, 0, "rank %d solution %d group = %f\r\n", solver.variant.isle.id, i, p.group);
         }
         
-        LOG(10, multi.variant.isle.id, 0, "rank %d solution %d FINAL id = %f\r\n", multi.variant.isle.id, i, p.group);
+        LOG(10, solver.variant.isle.id, 0, "rank %d solution %d FINAL id = %f\r\n", solver.variant.isle.id, i, p.group);
                 
-        LOG(6, 0, 0, "rank %d assigning solution fitness\r\n", multi.variant.isle.id);
+        LOG(6, 0, 0, "rank %d assigning solution fitness\r\n", solver.variant.isle.id);
         
-        p.fitness = offset_rastrigin(p.input, multi.offsets);
+        p.fitness = offset_rastrigin(p.input, solver.offsets);
         
-        LOG(6, 0, 0, "rank %d assigned solution fitness = %f\r\n", multi.variant.isle.id, p.fitness);
+        LOG(6, 0, 0, "rank %d assigned solution fitness = %f\r\n", solver.variant.isle.id, p.fitness);
         
-        LOG(6, 0, 0, "rank %d adding solution %d with fitness %f to population, current size = %lu\r\n", multi.variant.isle.id, i, p.fitness, multi.solutions.population.size());
+        LOG(6, 0, 0, "rank %d adding solution %d with fitness %f to population, current size = %lu\r\n", solver.variant.isle.id, i, p.fitness, solver.solutions.population.size());
         
-        multi.solutions.aggregate.value.fitness += p.fitness;
+        solver.solutions.aggregate.value.fitness += p.fitness;
 
-        visa v(multi.solutions.eval, p.source, p.source, p.id);
+        visa v(solver.run.eval.id, p.source, p.source, p.id);
 
-        multi.variant.isle.visas.push_back(v);
+        //multi.variant.isle.visas.push_back(v);
 
-        multi.solutions.population.push_back(p);
+        solver.solutions.population.push_back(p);
     
-        LOG(6, 0, 0, "island %d (root) initialized solution %d with fitness %f ...\r\n", multi.variant.isle.id, i, p.fitness);
+        LOG(6, 0, 0, "island %d (root) initialized solution %d with fitness %f ...\r\n", solver.variant.isle.id, i, p.fitness);
         
     }
     
-    LOG(4, multi.variant.isle.id, 0, "initialized objective (solution) population: total fitness = %f\r\n", multi.solutions.aggregate.value.fitness);
-    LOG(6, 0, 0, "%lu solutions initialized ...\r\n", multi.solutions.population.size());
+    LOG(4, solver.variant.isle.id, 0, "initialized objective (solution) population: total fitness = %f\r\n", solver.solutions.aggregate.value.fitness);
+    LOG(6, 0, 0, "%lu solutions initialized ...\r\n", solver.solutions.population.size());
 
 //    std::sort(multi.solutions.population.begin(), multi.solutions.population.end(), compare_fitness);
 //    std::reverse(multi.solutions.population.begin(), multi.solutions.population.end());
     
-    if(multi.eval.stats.global_best_fitness == 0.0) {
-        multi.eval.stats.global_best_fitness = multi.solutions.population.data()[0].fitness;
+    if(solver.run.eval.stats.global_best_fitness == 0.0) {
+        solver.run.eval.stats.global_best_fitness = solver.solutions.population.data()[0].fitness;
     }
     
     
-    LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", multi.variant.isle.id);
+    LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", solver.variant.isle.id);
     
     // we have our initial primary population with the calculated fitnesses
     
@@ -446,56 +272,53 @@ void solution_populate(ea &multi) {
 
 // separate the single full population from the root process to subpopulations across all processes ...
 
-void solution_scatter(ea &multi) {
+void solution_scatter(ea &solver) {
     
-    LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", multi.variant.isle.id);
+    LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", solver.variant.isle.id);
 
-    LOG(6, 0, 0, "rank %d of %d resized local island population to %lu\r\n", multi.variant.isle.id, multi.variant.islands, multi.variant.isle.population.size());
+    LOG(6, 0, 0, "rank %d of %d resized local island population to %lu\r\n", solver.variant.isle.id, solver.variant.islands, solver.variant.isle.population.size());
     
-    if(multi.variant.isle.id == 0) {
-        LOG(4, multi.variant.isle.id, 0, "rank 0 scattering population root size = %lu mem 0 = %f...\r\n", multi.solutions.population.size(), multi.solutions.population[0].fitness);
+    if(solver.variant.isle.id == 0) {
+        LOG(4, solver.variant.isle.id, 0, "rank 0 scattering population root size = %lu mem 0 = %f...\r\n", solver.solutions.population.size(), solver.solutions.population[0].fitness);
     } else {
-          LOG(4, 0, 0, "rank %d instantiating scatter with = %lu subpopulation size ...\r\n", multi.variant.isle.id, multi.variant.isle.population.size());
+          LOG(4, 0, 0, "rank %d instantiating scatter with = %lu subpopulation size ...\r\n", solver.variant.isle.id, solver.variant.isle.population.size());
     }
 
     double scatter_start = MPI_Wtime();
     
-    MPI_Scatter(&multi.solutions.population[0], config::island_mu, multi.variant.solution_type, &multi.variant.isle.population[0], config::island_mu, multi.variant.solution_type, 0, multi.variant.tcomm);
+    MPI_Scatter(&solver.solutions.population[0], config::island_mu, solver.variant.solution_type, &solver.variant.isle.population[0], config::island_mu, solver.variant.solution_type, 0, solver.variant.tcomm);
     
-    LOG(4, multi.variant.isle.id, 0, "rank %d scatter return ...\r\n", multi.variant.isle.id);
+    LOG(4, solver.variant.isle.id, 0, "rank %d scatter return ...\r\n", solver.variant.isle.id);
     
     double scatter_end = MPI_Wtime();
     double scatter_time = scatter_end - scatter_start;
 
-    LOG(4, 0, 0, "population scattered, island %d population %lu mem 0 = %f...\r\n", multi.variant.isle.id, multi.variant.isle.population.size(), multi.variant.isle.population[0].fitness);
+    LOG(4, 0, 0, "population scattered, island %d population %lu mem 0 = %f...\r\n", solver.variant.isle.id, solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
 
-    multi.variant.isle.calculator.average_fitness(multi.variant.isle);
+    solver.variant.isle.calculator.average_fitness(solver.variant.isle);
 
-    LOG(4, 0, 0, "island %d scattered population size %lu, average fitness: %f\r\n", multi.variant.isle.id, multi.variant.isle.population.size(), multi.variant.isle.average_fitness);
+    LOG(4, 0, 0, "island %d scattered population size %lu, average fitness: %f\r\n", solver.variant.isle.id, solver.variant.isle.population.size(), solver.variant.isle.average_fitness);
 
-    MPI_Reduce(&scatter_time, &multi.eval.stats.total_scatter_time, 1, MPI_DOUBLE, MPI_SUM, 0, multi.variant.tcomm);
+    MPI_Reduce(&scatter_time, &solver.run.eval.stats.total_scatter_time, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
 
-    multi.eval.stats.total_scatter_time += scatter_time;
+    solver.run.eval.stats.total_scatter_time += scatter_time;
 
-    LOG(6, 0, 0, "rank %d leaving solution_scatter\r\n", multi.variant.isle.id);
+    LOG(6, 0, 0, "rank %d leaving solution_scatter\r\n", solver.variant.isle.id);
     
 }
 
 #pragma mark FUNCTION: solution_eval()
 
-void solutions_evolve(ea &meta, ea &solver, topology &t) {
-   
-    solver.solutions.eval++;
+void solutions_evolve(ea &solver, ea &meta, topology &t) {
     
-    LOG(5, solver.variant.isle.id, 0, "beginning objective<solution> evaluation %d, topology %d\r\n", solver.solutions.eval, t.id);
+    LOG(5, solver.variant.isle.id, 0, "beginning objective<solution> evaluation %d, topology %d\r\n", solver.run.eval.id, t.id);
     
-    solver.eval.start = std::clock();
-
-    LOG(8, solver.variant.isle.id, 0, "calculating island %d cpd, topology %d, eval %d\r\n", solver.variant.isle.id, t.id, solver.solutions.eval);
+    LOG(8, solver.variant.isle.id, 0, "calculating island %d cpd, topology %d, eval %d\r\n", solver.variant.isle.id, t.id, solver.run.eval.id);
     
-    solver.solutions.aggregate.cpd(solver.solutions);
+    solver.solutions.fitness();
+    solver.solutions.cpd();
     
-    LOG(6, solver.variant.isle.id, 0, "performing crossover island %d, topology %d, eval %d\r\n", solver.variant.isle.id, t.id, solver.solutions.eval);
+    LOG(6, solver.variant.isle.id, 0, "performing crossover island %d, topology %d, eval %d\r\n", solver.variant.isle.id, t.id, solver.run.eval.id);
 
     // crossover function performs parent selection iteratively, creating n child solutions with fitness calculated ...
     
@@ -511,21 +334,21 @@ void solutions_evolve(ea &meta, ea &solver, topology &t) {
     
     // perform migration of best solutions using the currently applied topology ...
     
-    if(solver.solutions.eval%config::migration_interval == 0) {
+    if(solver.run.eval.id%config::migration_interval == 0) {
         
         double migrate_start = MPI_Wtime();
         
         // issue migration imports and exports ...
         
-        island::migration::send(solver.variant.isle, solver.variant.solution_type, solver.solutions.eval);
-        island::migration::receive(solver.variant.isle, solver.variant.solution_type, solver.solutions.eval);
+        island::migration::send(solver.variant.isle, solver.variant.solution_type, solver.run.eval.id);
+        island::migration::receive(solver.variant.isle, solver.variant.solution_type, solver.run.eval.id);
         
         double migrate_end = MPI_Wtime();
         double migrate_time = migrate_end - migrate_start;
         
         LOG(8, 0, 0, "migrate start = %3.10f, migrate end = %3.10f, migrate time = %3.10f\r\n", migrate_start, migrate_end, migrate_time);
         
-        solver.eval.stats.total_migrate_time += migrate_time;
+        solver.run.eval.stats.total_migrate_time += migrate_time;
      
         // aggregate the migration time from each island into the topology fitness ...
         
@@ -533,15 +356,19 @@ void solutions_evolve(ea &meta, ea &solver, topology &t) {
         
     }
 
-    LOG(4, solver.variant.isle.id, 0, "rank %d (root) topology %d, eval %d, round %d, tfitness = %f\r\n", solver.variant.isle.id, t.id, solver.solutions.eval, t.rounds, t.fitness);
+    LOG(4, solver.variant.isle.id, 0, "rank %d (root) topology %d, eval %d, round %d, tfitness = %f\r\n", solver.variant.isle.id, t.id, solver.run.eval.id, t.rounds, t.fitness);
     
-    LOG(6, 0, 0, "rank %d topology = %d rounds = %d eval = %d\r\n", solver.variant.isle.id, t.id, t.rounds, meta.topologies.eval);
+    LOG(6, 0, 0, "rank %d topology = %d rounds = %d eval = %d\r\n", solver.variant.isle.id, t.id, t.rounds, meta.run.eval.id);
 
     if(solver.variant.isle.id == 0) {
+        
         t.rounds++;
         t.total_migration_time += t.round_fitness;
         t.round_fitness = t.round_fitness * -1;
         t.fitness = (t.total_migration_time / t.rounds) * -1;
+        
+        meta.run.eval.stats.topo_migrate_time += t.total_migration_time;
+        
     }
     
     LOG(8, solver.variant.isle.id, 0, "rounds=%d, total_time=%013.10f, round_fit=%013.10f, fit=%013.10f\r\n", t.rounds, t.total_migration_time, t.round_fitness, t.fitness);
@@ -552,7 +379,7 @@ void solutions_evolve(ea &meta, ea &solver, topology &t) {
 //        LOG(6, 0, 0, "island %d average fit %f\r\n", multi.meta.isle.id, multi.meta.isle.average_fitness);
 //    }
     
-    if(solver.solutions.eval%config::ea_1_log_interval == 0) {
+    if(solver.run.eval.id%config::ea_1_log_interval == 0) {
     
         LOG(6, 0, 0, "gathering population, subpopulation %d size %lu avg fitness %f...\r\n", solver.variant.isle.id, solver.variant.isle.population.size(), solver.variant.isle.average_fitness);
         
@@ -567,60 +394,50 @@ void solutions_evolve(ea &meta, ea &solver, topology &t) {
                     
         LOG(4, solver.variant.isle.id, 0, "population gathered by rank %d, aggregate size %lu, subpopulation size = %lu ...\r\n", solver.variant.isle.id, solver.solutions.population.size(), solver.variant.isle.population.size());
                     
-        solver.eval.stats.total_gather_time += gather_time;
+        solver.run.eval.stats.total_gather_time += gather_time;
         
     }
     
-    if(solver.solutions.eval%config::ea_1_log_interval == 0 && solver.variant.isle.id == 0) {
+    if(solver.run.eval.id%config::ea_1_log_interval == 0 && solver.variant.isle.id == 0) {
         
         LOG(4, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
     
         if(solver.variant.isle.id == 0) {
-            log_fn_eval_stats(solver.solutions.population, meta.topologies.population, solver.solutions.run, solver.solutions.eval, solver.eval.stats, solver.run.stats, t);
-        }
-        
-        if(solver.solutions.eval%config::ea_1_max_fit_evals == 0) {
             
-            LOG(4, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
-            
-            if(solver.variant.isle.id == 0) {
-                log_fn_topology_stats(meta.topologies.population, solver.solutions.run, solver.solutions.eval, solver.eval.stats, solver.run.stats, t);
-            }
+            log_fn_eval_stats(solver, meta, t);
             
         }
         
     }
     
-    if(solver.solutions.eval%config::ea_1_population_log_interval == 0) {
+    if(solver.run.eval.id%config::ea_1_max_fit_evals == 0) {
         
-        log_pop_stats(solver.solutions.run, solver.solutions.eval, solver.solutions.population, solver.variant.isle, solver.variant.visa_type);
+        LOG(4, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
+        
+        if(solver.variant.isle.id == 0) {
+            log_fn_topology_stats(solver, meta, t);
+        }
+        
+    }
+    
+    if(solver.run.eval.id%config::ea_1_population_log_interval == 0) {
+        
+        log_pop_stats(solver, solver.variant.isle, solver.variant.visa_type);
         
     }
 
 }
-
-#pragma mark FUNCTION: eval_init()
-
-// start of new eval, initialize ...
-
-ea_eval eval_init(int id) {
-    
-    ea_eval eval;
-    
-    eval.id = id;
-    eval.stats.eval_start = std::clock();
-    
-    return eval;
-    
-}
-
 
 void solver_init(ea &solver) {
     
-    solver.eval = eval_init(0);
-    solver.eval.stats.init();
+    solver.run.id = 1;
+    solver.run.eval.id = 1;
+    solver.run.stats.init();
+    solver.run.eval.stats.init();
     
-    solver.variant.start = std::clock();
+    solver.start = MPI_Wtime();
+    solver.init_start = MPI_Wtime();
+    solver.variant.start = MPI_Wtime();
     
     // initialize MPI environment ...
 
@@ -681,7 +498,6 @@ void solver_init(ea &solver) {
     solver.solutions.mutation_rate = config::ea_1_mutation_rate;
     solver.solutions.max_evo_evals = config::ea_1_max_evo_evals;
     solver.solutions.max_fit_evals = config::ea_1_max_fit_evals;
-    solver.solutions.eval = 1;
     
     if(solver.variant.isle.id == 0) {
         solver.offsets = generate_offsets(-2.5, 2.5, .5);
@@ -700,12 +516,22 @@ void solver_init(ea &solver) {
     LOG(2, solver.variant.isle.id, 0, "island mu %s %d\r\n", config::subpop_msg, config::island_mu);
     LOG(2, solver.variant.isle.id, 0, "island lambda %s %d\r\n", config::lambda_msg, stoi(config::items["island_lambda"]));
     
+    solver.init_duration += (MPI_Wtime() - solver.init_start);
+    
 }
 
 void meta_init(ea &meta, ea &solver) {
     
-    meta.eval = eval_init(0);
-    meta.eval.stats.init();
+    meta.variant = solver.variant;
+    
+    meta.start = MPI_Wtime();
+    meta.init_start = MPI_Wtime();
+    meta.variant.start = MPI_Wtime();
+    
+    meta.run.id = 1;
+    meta.run.eval.id = 1;
+    meta.run.stats.init();
+    meta.run.eval.stats.init();
     
     meta.topologies.mu = config::ea_2_mu;
     meta.topologies.lambda = config::ea_2_lambda;
@@ -714,9 +540,8 @@ void meta_init(ea &meta, ea &solver) {
     meta.topologies.max_evo_evals = config::ea_2_max_evo_evals;
     meta.topologies.max_fit_evals = config::ea_2_max_fit_evals;
     meta.topologies.islands = meta.variant.islands;
-    meta.topologies.eval = 1;
     
-    meta.variant = solver.variant;
+    meta.init_duration += (MPI_Wtime() - meta.init_start);
     
 }
 
@@ -727,69 +552,69 @@ void meta_init(ea &meta, ea &solver) {
 
 #pragma mark FUNCTION: topology_crossover()
 
-std::vector<topology> topology_crossover(ea &multi) {
+std::vector<topology> topology_crossover(ea &meta) {
    
     std::vector<topology> children;
     
-    if(multi.variant.isle.id != 0) { children.resize(multi.topologies.lambda); return children; }
+    if(meta.variant.isle.id != 0) { children.resize(meta.topologies.lambda); return children; }
         
-    multi.topologies.aggregate.cpd(multi.topologies);
+    meta.topologies.cpd();
     
-    for(int n = 0; n < multi.topologies.lambda; n++) { // loop lambda
+    for(int n = 0; n < meta.topologies.lambda; n++) { // loop lambda
 
         // create child skeleton ...
         
         topology child;
         
-        child.world_size = multi.variant.islands;
+        child.world_size = meta.variant.islands;
         child.fitness = 0.0;
         child.channel_count = 0;
         child.round_fitness = 0.0;
         child.selection_distribution = 0.0;
-        child.channels.resize(multi.variant.islands);
+        child.channels.resize(meta.variant.islands);
         child.channels.clear();
         
-        LOG(3, multi.variant.isle.id, 0, "creating topo kids\r\n");
+        LOG(3, meta.variant.isle.id, 0, "creating topo kids\r\n");
 
-        topology t1 = multi.topologies.select(parent<topology>);
-        topology t2 = multi.topologies.select(parent<topology>);
+        topology t1 = meta.topologies.select(parent<topology>);
+        topology t2 = meta.topologies.select(parent<topology>);
 
         // calculate an adjacency matrix for each parent's associated topology for use in
         // generating child topology ...
 
-        LOG(3, multi.variant.isle.id, 0, "parents<topology> t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
+        LOG(3, meta.variant.isle.id, 0, "parents<topology> t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
 
         std::vector<std::vector<int>> m1 = topology::create::matrix(t1);
         std::vector<std::vector<int>> m2 = topology::create::matrix(t2);
 
         // recombine the parent adjacency matrices, initialize ...
 
-        LOG(3, multi.variant.isle.id, 0, "recombining topology %d <-> %d ...\r\n", t1.id, t2.id);
+        LOG(3, meta.variant.isle.id, 0, "recombining topology %d <-> %d ...\r\n", t1.id, t2.id);
 
         std::vector<std::vector<int>> child_matrix;
-        child_matrix.resize(multi.variant.islands);
+        child_matrix.resize(meta.variant.islands);
 
         int comm_count = 0;
-        int rec_count[multi.variant.islands];
-        int snd_count[multi.variant.islands];
+        int rec_count[meta.variant.islands];
+        int snd_count[meta.variant.islands];
 
-        for(int i=0; i<multi.variant.islands; i++) {
+        for(int i=0; i<meta.variant.islands; i++) {
             rec_count[i] = 0;
             snd_count[i] = 0;
         }
 
-        LOG(3, multi.variant.isle.id, 0, "child<topology> %d initialized \r\n", child.id);
+        LOG(3, meta.variant.isle.id, 0, "child<topology> %d initialized \r\n", child.id);
 
         // iterate row->column for each x,y element in the child matrix, and for each
         // gene and randomly choose a parent from which to assign the value ...
 
-        LOG(3, multi.variant.isle.id, 0, "performing child<topology> %d matrix crossover ...\r\n", child.id);
+        LOG(3, meta.variant.isle.id, 0, "performing child<topology> %d matrix crossover ...\r\n", child.id);
 
         while(comm_count == 0) { // failsafe to prevent empty matrix
 
             for(int i=0; i<m1.size(); i++) {  // child matrix row
 
-                child_matrix[i].resize(multi.variant.islands);
+                child_matrix[i].resize(meta.variant.islands);
 
                 for(int j=0; j<m2.size(); j++) { // child matrix column
 
@@ -864,9 +689,9 @@ std::vector<topology> topology_crossover(ea &multi) {
                     continue;
                 }
 
-                if(rand()/(RAND_MAX+1.0) < multi.topologies.mutation_rate) {
+                if(rand()/(RAND_MAX+1.0) < meta.topologies.mutation_rate) {
 
-                    LOG(3, multi.variant.isle.id, 0, "mutating child<topology> %d ...\r\n", child.id);
+                    LOG(3, meta.variant.isle.id, 0, "mutating child<topology> %d ...\r\n", child.id);
 
                     if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
 
@@ -894,11 +719,11 @@ std::vector<topology> topology_crossover(ea &multi) {
     
         topology::create::channels(child, child_matrix);
 
-        LOG(3, multi.variant.isle.id, 0, "child<topology> %d born!\r\n", child.id);
+        LOG(3, meta.variant.isle.id, 0, "child<topology> %d born!\r\n", child.id);
 
         children.push_back(child);
 
-        LOG(3, 0, 0, "child<topology> %d created by rank %d from matrix with %lu senders and %lu receivers\r\n", child.id, multi.variant.isle.id, child.channels[n].senders.size(), child.channels[n].receivers.size());
+        LOG(3, 0, 0, "child<topology> %d created by rank %d from matrix with %lu senders and %lu receivers\r\n", child.id, meta.variant.isle.id, child.channels[n].senders.size(), child.channels[n].receivers.size());
 
     } // loop lambda
     
@@ -908,7 +733,7 @@ std::vector<topology> topology_crossover(ea &multi) {
 
 #pragma mark FUNCTION: topology_evolve()
 
-void topology_evolve(ea &meta, ea &solver) {
+void topology_evolve(ea &solver, ea &meta) {
     
     std::vector<topology> children;
     
@@ -946,11 +771,11 @@ void topology_evolve(ea &meta, ea &solver) {
         // once the send\recv channels have been established, we perform a user defined number of evolutionary cycles
         // of the solution population ...
 
-        for(meta.topologies.eval = 1; meta.topologies.eval <= meta.topologies.max_fit_evals; meta.topologies.eval++) {
+        for(meta.run.eval.id = 1; meta.run.eval.id <= meta.topologies.max_fit_evals; meta.run.eval.id++) {
 
-            LOG(5, 0, 0, "begin eval %d on child topology %d\r\n", meta.topologies.eval, it->id);
+            LOG(5, 0, 0, "begin eval %d on child topology %d\r\n", meta.run.eval.id, it->id);
 
-            meta.solutions.evolve(meta, solver, solutions_evolve, *it);
+            solver.evolve(solver.solutions, meta, *it, solutions_evolve);
             
         }
 
@@ -970,7 +795,7 @@ void topology_evolve(ea &meta, ea &solver) {
 
         meta.topologies.population.erase(meta.topologies.population.begin()+(meta.topologies.mu-1), meta.topologies.population.end());
 
-        //meta.topologies.calculate(meta.topologies.aggregate);
+        meta.topologies.fitness();
         
     }
    
@@ -987,42 +812,42 @@ void topology_evolve(ea &meta, ea &solver) {
 // perform n evolutionary cycles of objective (1)
 //
 
-void topology_evaluate(ea &meta, ea &solver, topology &t) {
-    
-    LOG(4, solver.variant.isle.id, 0, "applying topology %d to %d islands ...\r\n", t.id, solver.variant.islands);
-    
-    t.fitness = 0.0;
-    t.round_fitness = 0.0;
-    
-    // distribute the send\recv channels from the passed topology to all islands ...
-    
-    t.apply(solver.variant.isle, t);
-    
-    LOG(8, 0, 0, "evaluating topology %d\r\n", t.id);
-    
-    // evaluate the supplied topology using the solution (o1) evolution cycle
-    // which will assign a fitness value based on the time spent during migration
-    
-    // this function should be called iteratively for each individual in the
-    // topology (o2) population, so it is assumed that the following loop will
-    // execute µ * o2.max_fitness_evals (for example 256 * 100 = 25,600) times
-    
-    // the (o1) population may assert a maxmimum iteration constraint as well, so
-    // 
-    
-    for(meta.topologies.eval = 1; meta.topologies.eval%(meta.topologies.max_fit_evals+1) != 0; meta.topologies.eval++) {
-
-        LOG(5, 0, 0, "begin eval %d solution objective on topology %d\r\n", solver.topologies.eval, t.id);
-        
-        solver.solutions.evolve(meta, solver, solutions_evolve, t);
-        
-        fflush(config::topo_stats_out);
-        
-    }
-    
-    LOG(8, solver.variant.isle.id, 0, "evaluated topology id=%d rounds=%d fitness=%3.10f\r\n", t.id, t.rounds, t.fitness);
-
-}
+//void topology_evaluate(ea &meta, ea &solver, topology &t) {
+//
+//    LOG(4, solver.variant.isle.id, 0, "applying topology %d to %d islands ...\r\n", t.id, solver.variant.islands);
+//
+//    t.fitness = 0.0;
+//    t.round_fitness = 0.0;
+//
+//    // distribute the send\recv channels from the passed topology to all islands ...
+//
+//    t.apply(solver.variant.isle, t);
+//
+//    LOG(8, 0, 0, "evaluating topology %d\r\n", t.id);
+//
+//    // evaluate the supplied topology using the solution (o1) evolution cycle
+//    // which will assign a fitness value based on the time spent during migration
+//
+//    // this function should be called iteratively for each individual in the
+//    // topology (o2) population, so it is assumed that the following loop will
+//    // execute µ * o2.max_fitness_evals (for example 256 * 100 = 25,600) times
+//
+//    // the (o1) population may assert a maxmimum iteration constraint as well, so
+//    //
+//
+//    for(meta.run.eval.id = 1; meta.run.eval.id%(meta.topologies.max_fit_evals+1) != 0; meta.run.eval.id++) {
+//
+//        LOG(5, 0, 0, "begin meta ea run %d solution objective on topology %d\r\n", solver.run.eval.id, t.id);
+//
+//        solver.evolve(solver.solutions, meta, t, solutions_evolve);
+//
+//        fflush(config::topo_stats_out);
+//
+//    }
+//
+//    LOG(8, solver.variant.isle.id, 0, "evaluated topology id=%d rounds=%d fitness=%3.10f\r\n", t.id, t.rounds, t.fitness);
+//
+//}
 
 #pragma mark FUNCTION: ea_init()
 
@@ -1030,110 +855,110 @@ void topology_evaluate(ea &meta, ea &solver, topology &t) {
 // successful completion results in a data heirarchy describing the ea components
 // needed to implement a parallelized (island model) multi-objective evolutionary algorithm.
 
-ea ea_init() {
-  
-    // each process ("island") calling this function will reference its own unique instance
-    // with some values determined from the process ("island") id ...
-    
-    ea multi;
-    
-    multi.variant.start = std::clock();
-    
-    // initialize MPI environment ...
-
-    MPI_Init(NULL, NULL);
-    MPI_Comm_size(MPI_COMM_WORLD, &multi.variant.islands);
-    MPI_Comm_rank(MPI_COMM_WORLD, &multi.variant.isle.id);
-
-    // load configuration items ...
-
-    config::load("config.txt", multi.variant.islands, multi.variant.isle.id);
-    
-    for(int i=0; i<multi.variant.islands; i++) { multi.variant.island_ids.push_back(i); }
-
-    // ----- start mpi derived datatypes...
-
-    MPI_Datatype ptype;
-    
-    MPI_Type_contiguous(128, MPI_CHAR, &ptype);
-    MPI_Type_commit(&ptype);
-    
-    MPI_Datatype sol_types[11] = { MPI_CHAR, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT, ptype };
-    
-    MPI_Aint sol_offsets[11] = { 0,                                  // id                       + 1 lluint
-        sizeof(char)*64,                                             // input                    + 10 double
-        sizeof(double)*DIM + sizeof(char)*64,                        // fitness                  + 11 double
-        sizeof(double)*(DIM+1) + sizeof(char)*64,                    // selection_distribution   + 12 double
-        sizeof(double)*(DIM+2) + sizeof(char)*64,                    // group                    + 13 double
-        sizeof(double)*(DIM+3) + sizeof(char)*64,                    // source                   + 1 int
-        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)),    // locale                   + 1 int
-        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*2),  // migrations               + 1 int
-        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*3),  // selected                 + 1 int
-        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*4),  // survival                 + 1 int
-        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*5)   // parents                  + 2 int
-    };
-    
-    int sol_lengths[11] = { 64, DIM, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-    
-    MPI_Type_create_struct(11, sol_lengths, sol_offsets, sol_types, &multi.variant.solution_type);
-    MPI_Type_commit(&multi.variant.solution_type);
-    
-    MPI_Datatype visa_types[4] = { MPI_INT, MPI_INT, MPI_INT, MPI_CHAR };
-    MPI_Aint visa_offsets[4] = { 0, sizeof(int), sizeof(int)*2, sizeof(int)*3 };
-    
-    int visa_lengths[4] = { 1, 1, 1, 64 };
-    
-    MPI_Type_create_struct(4, visa_lengths, visa_offsets, visa_types, &multi.variant.visa_type);
-    MPI_Type_commit(&multi.variant.visa_type);
-    
-    // ----- end derived mpi datatypes
-    
-    multi.eval = eval_init(0);
-    multi.eval.stats.init();
-    
-    multi.variant.tcomm = MPI_COMM_WORLD;
-    multi.variant.island_size = config::island_mu;
-    multi.variant.isle.init();
-    
-    multi.solutions.mu = config::ea_1_mu;
-    multi.solutions.lambda = config::ea_1_lambda;
-    multi.solutions.max_runs = config::ea_1_runs;
-    multi.solutions.mutation_rate = config::ea_1_mutation_rate;
-    multi.solutions.max_evo_evals = config::ea_1_max_evo_evals;
-    multi.solutions.max_fit_evals = config::ea_1_max_fit_evals;
-    multi.solutions.eval = 1;
-    
-    multi.topologies.mu = config::ea_2_mu;
-    multi.topologies.lambda = config::ea_2_lambda;
-    multi.topologies.max_runs = config::ea_2_runs;
-    multi.topologies.mutation_rate = config::ea_2_mutation_rate;
-    multi.topologies.max_evo_evals = config::ea_2_max_evo_evals;
-    multi.topologies.max_fit_evals = config::ea_2_max_fit_evals;
-    multi.topologies.islands = multi.variant.islands;
-    multi.topologies.eval = 1;
-    
-    multi.run.stats.init_duration = ( std::clock() - multi.variant.start ) / (double) CLOCKS_PER_SEC;
-    
-    if(multi.variant.isle.id == 0) {
-        multi.offsets = generate_offsets(-2.5, 2.5, .5);
-    }
-    
-    MPI_Bcast(&multi.offsets, DIM, MPI_DOUBLE, 0, multi.variant.tcomm);
-    
-    // collect the time consumed by all islands in this initialization ...
-
-    // TODO: the init time gather segfaults on higher core count runs, so may need to debug at some point, but currently the init duration is somewhat insigificant
-    // MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
-    
-    LOG(2, multi.variant.isle.id, 0, "world size: %d\r\n", multi.variant.islands);
-    LOG(2, multi.variant.isle.id, 0, "mu mode: %d\r\n", config::mu_mode);
-    LOG(2, multi.variant.isle.id, 0, "global mu %s %d\r\n", config::mu_msg, config::ea_1_mu);
-    LOG(2, multi.variant.isle.id, 0, "island mu %s %d\r\n", config::subpop_msg, config::island_mu);
-    LOG(2, multi.variant.isle.id, 0, "island lambda %s %d\r\n", config::lambda_msg, stoi(config::items["island_lambda"]));
-    
-    return multi;
-    
-}
+//ea ea_init() {
+//
+//    // each process ("island") calling this function will reference its own unique instance
+//    // with some values determined from the process ("island") id ...
+//
+//    ea multi;
+//
+//    multi.variant.start = std::clock();
+//
+//    // initialize MPI environment ...
+//
+//    MPI_Init(NULL, NULL);
+//    MPI_Comm_size(MPI_COMM_WORLD, &multi.variant.islands);
+//    MPI_Comm_rank(MPI_COMM_WORLD, &multi.variant.isle.id);
+//
+//    // load configuration items ...
+//
+//    config::load("config.txt", multi.variant.islands, multi.variant.isle.id);
+//
+//    for(int i=0; i<multi.variant.islands; i++) { multi.variant.island_ids.push_back(i); }
+//
+//    // ----- start mpi derived datatypes...
+//
+//    MPI_Datatype ptype;
+//
+//    MPI_Type_contiguous(128, MPI_CHAR, &ptype);
+//    MPI_Type_commit(&ptype);
+//
+//    MPI_Datatype sol_types[11] = { MPI_CHAR, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT, ptype };
+//
+//    MPI_Aint sol_offsets[11] = { 0,                                  // id                       + 1 lluint
+//        sizeof(char)*64,                                             // input                    + 10 double
+//        sizeof(double)*DIM + sizeof(char)*64,                        // fitness                  + 11 double
+//        sizeof(double)*(DIM+1) + sizeof(char)*64,                    // selection_distribution   + 12 double
+//        sizeof(double)*(DIM+2) + sizeof(char)*64,                    // group                    + 13 double
+//        sizeof(double)*(DIM+3) + sizeof(char)*64,                    // source                   + 1 int
+//        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)),    // locale                   + 1 int
+//        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*2),  // migrations               + 1 int
+//        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*3),  // selected                 + 1 int
+//        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*4),  // survival                 + 1 int
+//        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*5)   // parents                  + 2 int
+//    };
+//
+//    int sol_lengths[11] = { 64, DIM, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+//
+//    MPI_Type_create_struct(11, sol_lengths, sol_offsets, sol_types, &multi.variant.solution_type);
+//    MPI_Type_commit(&multi.variant.solution_type);
+//
+//    MPI_Datatype visa_types[4] = { MPI_INT, MPI_INT, MPI_INT, MPI_CHAR };
+//    MPI_Aint visa_offsets[4] = { 0, sizeof(int), sizeof(int)*2, sizeof(int)*3 };
+//
+//    int visa_lengths[4] = { 1, 1, 1, 64 };
+//
+//    MPI_Type_create_struct(4, visa_lengths, visa_offsets, visa_types, &multi.variant.visa_type);
+//    MPI_Type_commit(&multi.variant.visa_type);
+//
+//    // ----- end derived mpi datatypes
+//
+//    multi.eval = eval_init(0);
+//    multi.eval.stats.init();
+//
+//    multi.variant.tcomm = MPI_COMM_WORLD;
+//    multi.variant.island_size = config::island_mu;
+//    multi.variant.isle.init();
+//
+//    multi.solutions.mu = config::ea_1_mu;
+//    multi.solutions.lambda = config::ea_1_lambda;
+//    multi.solutions.max_runs = config::ea_1_runs;
+//    multi.solutions.mutation_rate = config::ea_1_mutation_rate;
+//    multi.solutions.max_evo_evals = config::ea_1_max_evo_evals;
+//    multi.solutions.max_fit_evals = config::ea_1_max_fit_evals;
+//    multi.solutions.eval.id = 1;
+//
+//    multi.topologies.mu = config::ea_2_mu;
+//    multi.topologies.lambda = config::ea_2_lambda;
+//    multi.topologies.max_runs = config::ea_2_runs;
+//    multi.topologies.mutation_rate = config::ea_2_mutation_rate;
+//    multi.topologies.max_evo_evals = config::ea_2_max_evo_evals;
+//    multi.topologies.max_fit_evals = config::ea_2_max_fit_evals;
+//    multi.topologies.islands = multi.variant.islands;
+//    multi.topologies.eval.id = 1;
+//
+//    multi.run.stats.init_duration = ( std::clock() - multi.variant.start ) / (double) CLOCKS_PER_SEC;
+//
+//    if(multi.variant.isle.id == 0) {
+//        multi.offsets = generate_offsets(-2.5, 2.5, .5);
+//    }
+//
+//    MPI_Bcast(&multi.offsets, DIM, MPI_DOUBLE, 0, multi.variant.tcomm);
+//
+//    // collect the time consumed by all islands in this initialization ...
+//
+//    // TODO: the init time gather segfaults on higher core count runs, so may need to debug at some point, but currently the init duration is somewhat insigificant
+//    // MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
+//
+//    LOG(2, multi.variant.isle.id, 0, "world size: %d\r\n", multi.variant.islands);
+//    LOG(2, multi.variant.isle.id, 0, "mu mode: %d\r\n", config::mu_mode);
+//    LOG(2, multi.variant.isle.id, 0, "global mu %s %d\r\n", config::mu_msg, config::ea_1_mu);
+//    LOG(2, multi.variant.isle.id, 0, "island mu %s %d\r\n", config::subpop_msg, config::island_mu);
+//    LOG(2, multi.variant.isle.id, 0, "island lambda %s %d\r\n", config::lambda_msg, stoi(config::items["island_lambda"]));
+//
+//    return multi;
+//
+//}
 
 #pragma mark FUNCTION: topology_populate()
 
@@ -1168,6 +993,7 @@ void topologies_populate(ea &meta) {
             topology::create::dynamic(t);
             LOG(6, 0, 0, "dynamic topology %d created\r\n", i);
             meta.topologies.population.push_back(t);
+            meta.run.stats.total_channels += t.channel_count;
         }
         
     }
@@ -1178,27 +1004,27 @@ void topologies_populate(ea &meta) {
     
 }
 
-void benchmark_topology(ea &multi) {
+void benchmark_topology(ea &meta) {
     
-    multi.topologies.population.clear();
+    meta.topologies.population.clear();
     
     topology t;
     
     t.rounds = 0;
-    t.world_size = multi.variant.islands;
+    t.world_size = meta.variant.islands;
     t.fitness = 0.0;
     t.round_fitness = 0.0;
     t.selection_distribution = 0.0;
     t.channels = {};
-    t.channels.resize(multi.variant.islands);
+    t.channels.resize(meta.variant.islands);
     
-    for(int i=0; i<multi.variant.islands; i++) {
+    for(int i=0; i<meta.variant.islands; i++) {
         
         t.channels[i].senders = {};
         t.channels[i].receivers = {};
         
-        int next = i+1 < multi.variant.islands ? i+1 : 0;
-        int prev = i-1 < 0 ? (int)multi.variant.islands-1 : i-1;
+        int next = i+1 < meta.variant.islands ? i+1 : 0;
+        int prev = i-1 < 0 ? (int)meta.variant.islands-1 : i-1;
 
         t.channels[i].senders.push_back(prev);
         t.channels[i].receivers.push_back(next);
@@ -1207,7 +1033,7 @@ void benchmark_topology(ea &multi) {
     
     t.channel_count = t.world_size * 2;
 
-    multi.topologies.population.push_back(t);
+    meta.topologies.population.push_back(t);
 
 }
 

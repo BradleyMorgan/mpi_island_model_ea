@@ -36,26 +36,5 @@ char* uniqid(unsigned long long int instance) {
     return buffer;
 }
 
-struct solution {
-    
-    char id[64];
-    
-    std::array<double, DIM> input = {};
-    
-    double fitness = 0.0;
-    double selection_distribution = 0.0;
-    double group = 0.0;
-
-    int source = 0;
-    int locale = 0;
-    int migrations = 0;
-    int selected = 0;
-    int survival = 0;
-    
-    std::array<char[64], 2> parents;
-    
-    solution() { strcpy(id, uniqid(sinstances++)); }
-
-};
 
 #endif /* dtype_heirarchy_h */

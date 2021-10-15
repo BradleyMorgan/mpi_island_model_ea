@@ -38,6 +38,8 @@
 		9A6508A32407593900C7A63D /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9A6508A42407595800C7A63D /* utility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utility.h; sourceTree = "<group>"; };
 		9A8A0AC324113D5300DBB5DB /* config.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.txt; sourceTree = "<group>"; };
+		9A9F8D112717DF3900B6CE5F /* dtype_stats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_stats.h; sourceTree = "<group>"; };
+		9A9F8D122717E23700B6CE5F /* dtype_ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_ea.h; sourceTree = "<group>"; };
 		9AA0392726A1D870003435AF /* csv2xlsx.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = csv2xlsx.py; sourceTree = "<group>"; };
 		9AA41B3226AA241B00312BB5 /* dtype_topology.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_topology.h; sourceTree = "<group>"; };
 		9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_heirarchy.h; sourceTree = "<group>"; };
@@ -95,7 +97,9 @@
 				9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */,
 				9AA41B3426AA253200312BB5 /* dtype_solution.h */,
 				9AA41B3526AA256D00312BB5 /* dtype_island.h */,
+				9A9F8D112717DF3900B6CE5F /* dtype_stats.h */,
 				9A0C408726CD469200351469 /* objective.h */,
+				9A9F8D122717E23700B6CE5F /* dtype_ea.h */,
 			);
 			path = mpi_island_model_ea;
 			sourceTree = "<group>";
