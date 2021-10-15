@@ -45,7 +45,7 @@ migration_interval:1
 ##### BEGIN SUBSECTION: experimental parameters #####
 
 # --- PARAMETER[ea_mode]: benchmark vs. experimental mode(s)
-ea_mode:1
+ea_mode:0
 
 ##### END SUBSECTION: experimental parameters #####
 
@@ -134,7 +134,12 @@ ea_2_lambda:16
 ea_2_log_interval:2500
 ea_2_population_log_interval:2500
 ea_2_max_evo_evals:2500
-ea_2_max_fit_evals:2500
+
+# for meta ea, the value for max_fit_evals
+# should probably be <= obj1_max_evo_evals,
+# e.g. after an obj1 run completes
+
+ea_2_max_fit_evals:500
 ea_2_mutation_rate:0.10
 ## ea_2_o1_name:placeholder1
 ## ea_2_o2_name:placeholder2

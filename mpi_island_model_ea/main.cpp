@@ -161,6 +161,15 @@ int main(int argc, const char * argv[]) {
     ea solver = solver_ea();
     ea meta = meta_ea(solver);
     
-    meta_begin(meta, solver);
+    if(config::ea_mode > 0) {
+        meta_begin(meta, solver);
+    } else {
+        benchmark_topology(meta);
+        solver_begin(meta, solver, meta.topologies.population[0]);
+    }
+    
+    solver.end(solver.solutions);
+    meta.end(meta.topologies);
+    
     
 }

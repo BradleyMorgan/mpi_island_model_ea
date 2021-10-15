@@ -410,7 +410,7 @@ void solutions_evolve(ea &solver, ea &meta, topology &t) {
         
     }
     
-    if(solver.run.eval.id%config::ea_1_max_fit_evals == 0) {
+    if(solver.run.eval.id%meta.topologies.max_fit_evals == 0) {
         
         LOG(4, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
         
@@ -436,7 +436,7 @@ void solver_init(ea &solver) {
     solver.run.eval.stats.init();
     
     solver.start = MPI_Wtime();
-    solver.init_start = MPI_Wtime();
+    solver.init_start = std::clock();
     solver.variant.start = MPI_Wtime();
     
     // initialize MPI environment ...
@@ -514,9 +514,11 @@ void solver_init(ea &solver) {
     LOG(2, solver.variant.isle.id, 0, "mu mode: %d\r\n", config::mu_mode);
     LOG(2, solver.variant.isle.id, 0, "global mu %s %d\r\n", config::mu_msg, config::ea_1_mu);
     LOG(2, solver.variant.isle.id, 0, "island mu %s %d\r\n", config::subpop_msg, config::island_mu);
-    LOG(2, solver.variant.isle.id, 0, "island lambda %s %d\r\n", config::lambda_msg, stoi(config::items["island_lambda"]));
+    LOG(2, solver.variant.isle.id, 0, "island lambda %s %d\r\n\r\n\r\n", config::lambda_msg, stoi(config::items["island_lambda"]));
     
-    solver.init_duration += (MPI_Wtime() - solver.init_start);
+    unsigned long int init_end = std::clock();
+    
+    solver.init_duration = (init_end - solver.init_start);
     
 }
 
@@ -1036,6 +1038,32 @@ void benchmark_topology(ea &meta) {
     meta.topologies.population.push_back(t);
 
 }
+
+void ea_end(ea &solver, objective<solution> &obj) {
+    LOG(5, 0, 0, "--- END META EA (island %d)\r\n", solver.variant.isle.id);
+}
+
+void ea_end(ea &meta, objective<topology> &obj) {
+
+    LOG(5, 0, 0, "--- END META EA (island %d)\r\n", meta.variant.isle.id);
+
+    if(meta.variant.isle.id == 0) {
+
+        char canary[128];
+
+        sprintf(canary, "%s/end.txt", config::logs_subpath);
+        FILE *eaend = fopen(canary, "w");
+
+        fprintf(eaend, "ended at %lu", time(0));
+
+        fclose(eaend);
+
+    }
+
+    MPI_Finalize();
+   
+}
+
 
 
 #endif /* ea_h */

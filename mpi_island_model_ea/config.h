@@ -113,7 +113,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
         value = line.substr(delimiterPos + 1);
         
         if(key != "") {
-           printf("%s => %s\r\n", key.c_str(), value.c_str());
+           //printf("%s => %s\r\n", key.c_str(), value.c_str());
            config::items[key] = value;
        }
     
@@ -315,6 +315,8 @@ void config::load(const char *input, const int world_size, const int world_rank)
         mkdir(topos_subpath, 0775);
     
         fflush(config::log_out);
+        fflush(config::topo_stats_out);
+        fflush(config::topo_run_stats_out);
         
     }
     

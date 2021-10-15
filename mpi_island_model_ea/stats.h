@@ -143,7 +143,13 @@ void log_pop_stats(ea &solver, island &isle, MPI_Datatype &visa_type) {
 
 void log_fn_topology_stats(ea &solver, ea &meta, topology &t) {
     
-    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n    --- META GENOME %d AT SOLVER[%d,%d] migrations = %d | duration = %f | ", t.id, solver.run.id, solver.run.eval.id, t.rounds, meta.run.eval.stats.eval_duration);
+    meta.run.eval.stats.eval_duration = MPI_Wtime() - meta.run.eval.start;
+    
+    char msg[24];
+    
+    sprintf(msg, config::ea_mode > 0 ? "BENCHMARK" : "EXPERIMENTAL");
+    
+    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n    --- META GENOME %d (%s) AT SOLVER[%d,%d] migrations = %d | duration = %f | ", t.id, msg, solver.run.id, solver.run.eval.id, t.rounds, meta.run.eval.stats.eval_duration);
     
     LOG(3, 0, 0, "STATS (run %d, eval %d): topologies size %lu, mem[0] fit = %f \r\n", meta.run.id, meta.run.eval.id, meta.topologies.population.size(), meta.topologies.population[0].fitness);
     
@@ -190,6 +196,8 @@ void log_fn_topology_stats(ea &solver, ea &meta, topology &t) {
 
     std::fprintf(config::topo_stats_out, "%3.10f,"                                    "%d,"       "%d,"       "%d,"              "%3.10f\r\n",
                  meta.run.eval.stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness);
+    
+    
     
 
     LOG(2, 0, 0, "fitness=%f | channels=%d | time=%f || global best=%d | channels=%d | fitness=%f\r\n", t.fitness, t.channel_count, t.total_migration_time, filtered_top[0].id, filtered_top[0].channel_count, filtered_top[0].fitness);
@@ -261,7 +269,7 @@ void log_fn_eval_stats(ea &solver, ea &meta, topology &t) {
     std::fprintf(config::sol_stats_out, "%f," "%f," "%f," "%lu," "%f\r\n", average_scatter_time, average_gather_time, average_migrate_time, solver.init_duration,solver.run.eval.stats.eval_duration);
         
     
-    LOG(2, 0, 0, "\r\n%5d," "%6d,"  "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f,""%16.11f," "%16.11lu," "%016.11f", solver.run.id, solver.run.eval.id, average_fitness, solver.run.eval.stats.local_best_fitness, solver.run.eval.stats.global_best_fitness, solver.run.eval.stats.average_local_best_fitness, solver.run.eval.stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, solver.init_duration, solver.run.eval.stats.eval_duration);
+    LOG(2, 0, 0, "\r\n%5d," "%6d,"  "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f,""%16.11f," "%016.11f", solver.run.id, solver.run.eval.id, average_fitness, solver.run.eval.stats.local_best_fitness, solver.run.eval.stats.global_best_fitness, solver.run.eval.stats.average_local_best_fitness, solver.run.eval.stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, solver.run.eval.stats.eval_duration);
     
     
 }

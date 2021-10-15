@@ -59,6 +59,8 @@ template<typename genome> struct objective {
     template<typename e> void log_begin(objective_eval &eval, objective<genome> &o, e &ea);
     template<typename e> void log_end(objective_eval &eval, objective<genome> &o, e &ea);
     
+    template<typename e> void end(e &ea, objective<genome> &o) { ea.end(ea, *this); };
+    
 //    template<typename f, typename e> void begin(objective_run &run, e &ea) { run.begin(ea, *this); }
 //    template<typename f, typename e> void end(objective_run &run, e &ea) { run.end(ea, *this); }
 //
@@ -188,7 +190,7 @@ template<typename e> void log_begin(objective_run &run, objective<solution> &obj
     solver.variant.isle.population.resize(config::island_mu);
     solver.run.eval.stats.init();
 
-    LOG(2, solver.variant.isle.id, 0, "\r\n%5s %6s %16s %16s %16s %16s %16s %16s %16s %16s %16s %16s", "r", "e", "avg_fit", "lbest_fit", "gbest_fit", "avg_lbest", "avg_gbest", "avg_scat_t", "avg_gathr_t", "avg_migr", "init_t", "eval_t");
+    LOG(2, solver.variant.isle.id, 0, "\r\n%5s %6s %16s %16s %16s %16s %16s %16s %16s %16s %16s", "r", "e", "avg_fit", "lbest_fit", "gbest_fit", "avg_lbest", "avg_gbest", "avg_scat_t", "avg_gathr_t", "avg_migr", "eval_t");
     
 }
 
@@ -200,7 +202,7 @@ template<typename e> void log_end(objective_run &run, objective<solution> &obj, 
 
     solver.run.stats.run_duration = run_end - solver.run.start;
 
-    LOG(2, solver.variant.isle.id, 0, "\r\n   --- END SOLVER RUN %d ---\r\n", solver.run.id);
+    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n   --- END SOLVER RUN %d ---\r\n", solver.run.id);
 
     std::fprintf(config::run_stats_out, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d\r\n", solver.run.id, solver.run.eval.stats.global_best_fitness, solver.run.eval.stats.average_local_best_fitness, solver.run.eval.stats.average_global_best_fitness, solver.run.eval.stats.total_scatter_time, solver.run.eval.stats.total_gather_time, solver.run.eval.stats.total_migrate_time, solver.run.stats.run_duration, solver.run.stats.init_duration, solver.variant.islands, solver.variant.island_size);
 
@@ -209,15 +211,14 @@ template<typename e> void log_end(objective_run &run, objective<solution> &obj, 
 }
 
 template<typename e> void log_begin(objective_eval &eval, objective<solution> &obj, e &solver) {
-    //LOG(2, solver.variant.isle.id, 0, "\r\n  --- BEGIN SOLVER EVOLUTION %d (RUN %d) ---\r\n\r\n", solver.run.eval.id, solver.run.id);
+    LOG(5, solver.variant.isle.id, 0, "\r\n\r\n  --- BEGIN SOLVER EVOLUTION CYCLE %d (RUN %d) ---\r\n\r\n", solver.run.eval.id, solver.run.id);
 }
 
 template<typename e> void log_end(objective_eval &eval, objective<solution> &obj, e &solver) {
-    //LOG(2, solver.variant.isle.id, 0, "\r\n  --- END SOLVER EVOLUTION %d (RUN %d) ---\r\n\r\n", solver.run.eval.id, solver.run.id);
+    LOG(5, solver.variant.isle.id, 0, "\r\n  --- END SOLVER EVOLUTION CYCLE %d (RUN %d) ---\r\n\r\n", solver.run.eval.id, solver.run.id);
 }
 
 template<typename e> void log_begin(objective_eval &eval, objective<topology> &obj, e &meta) {
-    meta.run.eval.start = MPI_Wtime();
     LOG(2, meta.variant.isle.id, 0, "\r\n  --- BEGIN META GENOME %d (RUN %d) ---\r\n\r\n", meta.run.eval.id, meta.run.id);
 }
 
@@ -225,9 +226,5 @@ template<typename e> void log_end(objective_eval &eval, objective<topology> &obj
     meta.run.eval.stats.eval_duration = MPI_Wtime() - meta.run.eval.start;
     LOG(2, meta.variant.isle.id, 0, "\r\n  --- END META GENOME %d (RUN %d) duration = %f ---\r\n", meta.run.eval.id, meta.run.id, meta.run.eval.stats.eval_duration);
 }
-
-
-
-
 
 #endif /* objective_h */

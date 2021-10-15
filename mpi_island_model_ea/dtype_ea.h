@@ -105,26 +105,26 @@ struct ea {
     objective<topology> topologies;
     objective<solution> solutions;
     
-    void ea_end() {
-        
-        LOG(8, 0, 0, "island %d end EA\r\n", this->variant.isle.id);
-        
-        if(this->variant.isle.id == 0) {
-
-            char canary[128];
-
-            sprintf(canary, "%s/end.txt", config::logs_subpath);
-            FILE *eaend = fopen(canary, "w");
-
-            fprintf(eaend, "ended at %lu", time(0));
-
-            fclose(eaend);
-
-        }
-        
-        MPI_Finalize();
-        
-    }
+//    void ea_end() {
+//        
+//        LOG(8, 0, 0, "island %d end EA\r\n", this->variant.isle.id);
+//        
+//        if(this->variant.isle.id == 0) {
+//
+//            char canary[128];
+//
+//            sprintf(canary, "%s/end.txt", config::logs_subpath);
+//            FILE *eaend = fopen(canary, "w");
+//
+//            fprintf(eaend, "ended at %lu", time(0));
+//
+//            fclose(eaend);
+//
+//        }
+//        
+//        MPI_Finalize();
+//        
+//    }
     
     template<typename f, typename o> void populate(objective<o> &obj) { obj.populate(*this); }
     template<typename f, typename o> void populate(objective<o> &obj, f function) { obj.populate(*this, function); }
@@ -141,6 +141,9 @@ struct ea {
     template<typename f, typename o, typename m> void evolve(objective<o> &obj, m &meta, f function) { obj.evolve(*this, meta, function); }
     template<typename f, typename o, typename m, typename g> void evolve(objective<o> &obj, m &meta, g &individual, f function) { obj.evolve(*this, meta, individual, function); }
     template<typename f, typename o, typename v, typename m, typename g> void evolve(objective<o> &obj, v &variant, m &meta, g &individual, f function) { obj.evolve(*this, variant, meta, individual, function); }
+    
+    template<typename o> void end(objective<o> &obj) { obj.end(*this, obj); }
+    template<typename o> void end(ea &ea, objective<o> &obj) { ea_end(*this, obj); }
     
 };
 
