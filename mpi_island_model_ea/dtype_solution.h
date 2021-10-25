@@ -9,7 +9,7 @@
 #ifndef dtype_solution_h
 #define dtype_solution_h
 
-#pragma mark DATATYPE: solution{}
+#pragma mark DATATYPE: @solution{}
 
 struct solution {
     
@@ -32,15 +32,5 @@ struct solution {
     solution() { strcpy(id, uniqid(sinstances++)); }
 
 };
-
-// comparator for parent fitness values ...
-
-//bool compare_fitness(const solution &p1, const solution &p2) {
-//    return p1.fitness < p2.fitness;
-//}
-
-//bool operator==(const genome<solution> &rhs, const genome<solution> &lhs) {
-//    return rhs.id == lhs.id;
-//}
 
 #endif /* dtype_solution_h */

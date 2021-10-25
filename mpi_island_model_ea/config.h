@@ -19,7 +19,7 @@ static const int DIM = 10;
 static unsigned long long int sinstances = 0;
 static unsigned long long int tinstances = 0;
 
-# pragma mark DATATYPE config
+# pragma mark DATATYPE @config{}
 
 // global configuration items
 
@@ -319,6 +319,8 @@ void config::load(const char *input, const int world_size, const int world_rank)
         fflush(config::topo_run_stats_out);
         
     }
+    
+    // associate each mpi rank (island) with
     
     config::id_field_prefix1 = std::make_pair(world_rank, 3);
     

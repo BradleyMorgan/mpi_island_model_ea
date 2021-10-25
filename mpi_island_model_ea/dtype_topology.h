@@ -17,7 +17,7 @@
 // to a communication-heavy algorithm (e.g. an island-model ea), with optimality measured in
 // terms of time incurred during data transfer.
 
-#pragma mark DATATYPE: channel{}
+#pragma mark DATATYPE: @channel{}
 
 // the @channel{} datatype is used primarily to track the required MPI_Send() and MPI_Recv()
 // operations and the required parameter values needed to perform the island (process)
@@ -61,22 +61,22 @@ struct channel {
     
 };
 
-#pragma mark DATATYPE: topology{}
+#pragma mark EA::META::OBJECTIVE::DATATYPE: @topology{}
 
-// represents the full island topology calculated from adjacency                            |
-// matrices and mapped to into the @channel{} datatype.                                     |
+// represents a communication topology, calculated from adjacency
+// matrices and mapped to into the @channel{} datatype.
 
 struct topology {
   
-    int id = 0;
+    int id = 1;
     int rounds = 0;
-    int world_size;
+    int world_size = 0;
     int channel_count = 0;
     
-    double fitness = 0.0; // track in terms of aggregate communication time
-    double round_fitness = 0.0; // number of evaluations performed
+    double fitness = 0.0;
+    double round_fitness = 0.0;
     double total_migration_time = 0.0;
-    double selection_distribution = 0.0; // fitness measurement for selection method
+    double selection_distribution = 0.0;
     
     // an array of @channel{} describing the full context MPI_Send() and MPI_Recv()
     // operations forms the mpi-suitable topology representation
@@ -101,7 +101,7 @@ struct topology {
     void distribute(island &isle); // from a single source (root), initate the distribution of channels to each communicating node
     void apply(island &isle, topology &t); // for all communicating nodes, receive the corresponding channels as defined in the topology
     
-    topology() {}
+    topology(): world_size(config::world_size) {};
     
 };
 

@@ -9,7 +9,48 @@
 #ifndef dtype_ea_h
 #define dtype_ea_h
 
-#pragma mark DATATYPE: @ea_meta{}
+#include "solution.h"
+
+// ----- start mpi derived datatypes...
+
+template<typename e> void parallel_types(e &pea) {
+    
+    MPI_Datatype ptype;
+
+    MPI_Type_contiguous(128, MPI_CHAR, &ptype);
+    MPI_Type_commit(&ptype);
+
+    MPI_Datatype sol_types[11] = { MPI_CHAR, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT, ptype };
+
+    MPI_Aint sol_offsets[11] = { 0,                                  // id                       + 1 lluint
+        sizeof(char)*64,                                             // input                    + 10 double
+        sizeof(double)*DIM + sizeof(char)*64,                        // fitness                  + 11 double
+        sizeof(double)*(DIM+1) + sizeof(char)*64,                    // selection_distribution   + 12 double
+        sizeof(double)*(DIM+2) + sizeof(char)*64,                    // group                    + 13 double
+        sizeof(double)*(DIM+3) + sizeof(char)*64,                    // source                   + 1 int
+        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)),    // locale                   + 1 int
+        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*2),  // migrations               + 1 int
+        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*3),  // selected                 + 1 int
+        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*4),  // survival                 + 1 int
+        sizeof(double)*(DIM+3) + sizeof(char)*64 + (sizeof(int)*5)   // parents                  + 2 int
+    };
+
+    int sol_lengths[11] = { 64, DIM, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+    MPI_Type_create_struct(11, sol_lengths, sol_offsets, sol_types, &pea.variant.solution_type);
+    MPI_Type_commit(&pea.variant.solution_type);
+
+    MPI_Datatype visa_types[4] = { MPI_INT, MPI_INT, MPI_INT, MPI_CHAR };
+    MPI_Aint visa_offsets[4] = { 0, sizeof(int), sizeof(int)*2, sizeof(int)*3 };
+
+    int visa_lengths[4] = { 1, 1, 1, 64 };
+
+    MPI_Type_create_struct(4, visa_lengths, visa_offsets, visa_types, &pea.variant.visa_type);
+    MPI_Type_commit(&pea.variant.visa_type);
+
+}
+
+#pragma mark DATATYPE: @ea_variant{}
 
 // describes the properties needed for parallel (island model) EA
 
@@ -22,8 +63,10 @@ struct ea_variant {
     int root = 0;
 
     // isle holds context specific population and migration data
-    // from the perspective of *this* island (mpi rank)
-    // see @island{} datatype
+    // from the perspective of a specific island instance (e.g. mpi rank)
+    //
+    // @island.h::island{} datatype
+    //
     
     island isle;
     
@@ -33,20 +76,37 @@ struct ea_variant {
     
     MPI_Datatype solution_type;
     MPI_Datatype visa_type;
-    MPI_Datatype topology_type;
-    MPI_Datatype stats_type;
-    MPI_Datatype comm_type;
     
     MPI_Comm tcomm;
     
+    template<typename e> void init(e &pea) {
+
+        pea.variant.start = MPI_Wtime();
+        
+        // initialize MPI environment ...
+        
+        MPI_Init(NULL, NULL);
+        MPI_Comm_size(MPI_COMM_WORLD, &pea.variant.islands);
+        MPI_Comm_rank(MPI_COMM_WORLD, &pea.variant.isle.id);
+
+        // load configuration items ...
+
+        config::load("config.txt", pea.variant.islands, pea.variant.isle.id);
+
+        for(int i=0; i < pea.variant.islands; i++) { pea.variant.island_ids.push_back(i); }
+
+        pea.variant.tcomm = MPI_COMM_WORLD;
+        pea.variant.island_size = config::island_mu;
+        
+        parallel_types(pea);
+        
+        pea.variant.isle.init();
+        
+    }
+    
 };
 
-//template<typename o> struct ea_objectives {
-//    //objective<genome> objective;
-//    std::vector<o> genomes;
-//};
-
-#pragma mark DATATYPE: @ea{}
+#pragma mark EA::DATATYPE: @ea{}
 
 // wrapper type to serve as the trunk for ea properties
 
@@ -55,119 +115,54 @@ struct ea {
     ea_run run;
     ea_variant variant;
     
-    unsigned long int start = 0;
-    unsigned long int duration = 0;
-    
-    unsigned long int init_start = 0;
-    unsigned long int init_duration = 0;
-    
-    template<typename f> void init(f function) { function(*this); }
-    template<typename f, typename v> void init(f function, v &variant) { function(*this, variant); }
-    
-    //template<typename o, typename v, typename genome> void begin(ea_run &run, v &variant, objective<genome> &obj) { run.begin(*this, obj); }
-    template<typename o> void begin(ea_run &run, objective<o> &obj) { run.begin(*this, obj); log_begin(obj.run, obj, *this); }
-    template<typename o> void end(ea_run &run, objective<o> &obj) { run.end(*this, obj); log_end(obj.run, obj, *this); }
-    
-    template<typename o> void begin(ea_eval &eval, objective<o> &obj) { eval.begin(); log_begin(obj.run.eval, obj, *this);  }
-    template<typename o> void end(ea_eval &eval, objective<o> &obj) { eval.end(); log_end(obj.run.eval, obj, *this); }
-    
-    template<typename o, typename g> void log(ea_run &run, objective<o> &obj, ea &meta, g &genome) { log(run, obj, *this, meta, genome); }
-    template<typename o, typename g> void log(ea_eval &eval, objective<o> &obj, ea &meta, g &genome) { log(eval, obj, *this, meta, genome); }
-    
-    template<typename o, typename g> void log(objective_run &run, objective<o> &obj, ea &meta, g &genome) { obj.log(run, obj, *this, meta, genome); }
-    template<typename o, typename g> void log(objective_eval &eval, objective<o> &obj, ea &meta, g &genome) { obj.log(eval, obj, *this, meta, genome); }
-    
-//    template<typename o> void begin(ea_eval &eval, objective<o> &obj) { this->run.eval.begin(*this, obj); }
-//    template<typename o> void end(ea_eval &eval, objective<o> &obj) { this->run.eval.end(*this, obj); }
-    
-//    template<typename o> void begin(ea_eval &eval, objective<o> &obj) { eval.begin(*this, obj); }
-//    template<typename o> void end(ea_eval &eval, objective<o> &obj) { eval.end(*this, obj); }
-//
-//    template<typename f, typename o> void begin(ea_run &run, objective<o> &obj) { run.begin(*this, obj); }
-//    template<typename f, typename o> void end(ea_run &run, objective<o> &obj) { run.end(*this, obj); }
-        
-//    template<typename f> void run_init(f function) { function(*this); }
-//    template<typename f, typename v> void run_init(f function, v &variant) { function(*this, variant); }
-//    
-//    template<typename f> void run_end(f function) { function(*this); }
-//    template<typename f, typename v> void run_end(f function, v &variant) { function(*this, variant); }
-//    
-//    template<typename f> void eval_init(f function) { function(*this); }
-//    template<typename f, typename v> void eval_init(f function, v &variant) { function(*this, variant); }
-//    
-//    template<typename f> void eval_end(f function) { function(*this); }
-//    template<typename f, typename v> void eval_end(f function, v &variant) { function(*this, variant); }
-    
-    std::array<double, DIM> offsets;
+    double start = 0;
+    double duration = 0;
+    double init_start = 0;
+    double init_duration = 0;
     
     // TODO: generalize collection type to store multiple objectives
     
-    objective<topology> topologies;
-    objective<solution> solutions;
+    ea() {
+        
+//        this->start = MPI_Wtime();
+//        this->init_start = MPI_Wtime();
+//        this->run.id = 0;
+//        this->run.eval.id = 0;
+//        this->run.stats.init();
+//        this->run.eval.stats.init();
+        
+    };
     
-//    void ea_end() {
-//        
-//        LOG(8, 0, 0, "island %d end EA\r\n", this->variant.isle.id);
-//        
-//        if(this->variant.isle.id == 0) {
-//
-//            char canary[128];
-//
-//            sprintf(canary, "%s/end.txt", config::logs_subpath);
-//            FILE *eaend = fopen(canary, "w");
-//
-//            fprintf(eaend, "ended at %lu", time(0));
-//
-//            fclose(eaend);
-//
-//        }
-//        
-//        MPI_Finalize();
-//        
-//    }
+    #pragma mark EA::DATATYPE::FUNCTION::TEMPLATES
     
-    template<typename f, typename o> void populate(objective<o> &obj) { obj.populate(*this); }
+    template<typename o> void begin(ea_run &run, objective<o> &obj) { run.begin(); obj.begin(obj.run, *this); }
+    template<typename o> void begin(ea_eval &eval, objective<o> &obj) { eval.begin(); obj.begin(obj.run.eval, *this); }
+    
+    //template<typename o> void begin(ea_run &run, objective<o> &obj, o &genome) { run.begin(); obj.run.begin(); obj.begin(obj.run, *this); }
+    //template<typename o> void begin(ea_eval &eval, objective<o> &obj, o &genome) { eval.begin(); obj.begin(obj.run.eval, *this); }
+    
+    template<typename o> void end(ea_run &run, objective<o> &obj) { run.end(); obj.end(obj.run, *this); }
+    template<typename o> void end(ea_eval &eval, objective<o> &obj) { eval.end(); obj.end(obj.run.eval, *this); }
+    
+//    template<typename o> void end(ea_run &run, objective<o> &obj, o &genome) { run.end(); }
+//    template<typename o> void end(ea_eval &eval, objective<o> &obj, o &genome) { eval.end(); }
+    
+//    template<typename o, typename g> void log(ea_run &run, objective<o> &obj, ea &meta, g &genome) { log(run, obj, *this, meta, genome); }
+//    template<typename o, typename g> void log(ea_eval &eval, objective<o> &obj, ea &meta, g &genome) { log(eval, obj, *this, meta, genome); }
+//    
+//    template<typename o, typename g> void log(objective_run &run, objective<o> &obj, ea &meta, g &genome) { obj.log(run, obj, *this, meta, genome); }
+//    template<typename o, typename g> void log(objective_eval &eval, objective<o> &obj, ea &meta, g &genome) { obj.log(eval, obj, *this, meta, genome); }
+    
     template<typename f, typename o> void populate(objective<o> &obj, f function) { obj.populate(*this, function); }
-    template<typename f, typename o, typename v> void populate(objective<o> &obj, v &variant, f function) { obj.populate(*this, variant, function); }
-    template<typename f, typename o, typename v, typename m> void populate(objective<o> &obj, v &variant, m &meta, f function) { obj.populate(*this, variant, meta, function); }
-    
-    template<typename f, typename o> void distribute(objective<o> &obj, f function) { obj.distribute(*this, function); }
-    template<typename f, typename o, typename v> void distribute(objective<o> &obj, v &variant, f function) { obj.distribute(*this, variant, function); }
     
     template<typename f, typename o, typename g> void evaluate(objective<o> &obj, g &individual, f function) { obj.evaluate(*this, individual, function); }
     
-    template<typename o> void evolve(objective<o> &obj) { obj.evolve(*this); }
-    template<typename f, typename o> void evolve(objective<o> &obj, f function) { obj.evolve(*this, function); }
     template<typename f, typename o, typename m> void evolve(objective<o> &obj, m &meta, f function) { obj.evolve(*this, meta, function); }
     template<typename f, typename o, typename m, typename g> void evolve(objective<o> &obj, m &meta, g &individual, f function) { obj.evolve(*this, meta, individual, function); }
-    template<typename f, typename o, typename v, typename m, typename g> void evolve(objective<o> &obj, v &variant, m &meta, g &individual, f function) { obj.evolve(*this, variant, meta, individual, function); }
     
-    template<typename o> void end(objective<o> &obj) { obj.end(*this, obj); }
+    template<typename o> void end(objective<o> &obj) { obj.end(*this); }
     template<typename o> void end(ea &ea, objective<o> &obj) { ea_end(*this, obj); }
     
 };
-
-void log_eval() {
-    
-    //void meta_run_end(ea &meta) {
-    //
-    //    if(meta.variant.isle.id != 0) { return; }
-    //
-    //    LOG(2, meta.variant.isle.id, 0, "\r\n--- END META RUN %d ---\r\n", meta.run.id);
-    //
-    //    double run_end = MPI_Wtime();
-    //
-    //    meta.run.stats.run_duration = run_end - meta.run.start;
-    //
-    //    fprintf(config::topo_run_stats_out, "average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
-    //
-    //    std::fprintf(config::topo_run_stats_out, "%d,%f,%f,%f,%f,%f,%d", meta.run.id, meta.run.stats.run_duration, meta.run.eval.stats.average_local_best_topo_fitness, meta.run.eval.stats.average_global_best_topo_fitness, meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.total_migrate_time, meta.run.stats.total_channels);
-    //
-    //    fflush(config::topo_run_stats_out);
-    //
-    //}
-
-    
-}
 
 #endif /* dtype_ea_h */

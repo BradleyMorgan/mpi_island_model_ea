@@ -52,6 +52,8 @@ struct estats {
     
     void init() {
         
+        LOG(3, 0, 0, "INIT EA STATS\r\n");
+        
         this->init_duration = 0.0;
         this->eval_start = 0.0;
         this->eval_duration = 0.0;
@@ -72,8 +74,9 @@ struct estats {
         
     }
     
-    template<typename f, typename e, typename o, typename genome> void log(e &ea, e &meta, o &obj, genome &g, f function) { function(ea, meta, g); }
-    template<typename f, typename e, typename o> void log(e &ea, o &obj, f function) { function(ea, obj, *this); }
+//    template<typename f, typename e, typename o, typename genome> void log(e &ea, e &meta, o &obj, genome &g, f function) { function(ea, meta, g); }
+//
+//    template<typename f, typename e, typename o> void log(e &ea, o &obj, f function) { function(ea, obj, *this); }
     
 };
 
@@ -87,6 +90,8 @@ struct rstats {
     
     void init() {
         
+        LOG(3, 0, 0, "INIT RUN STATS\r\n");
+        
         this->run_start = 0.0;
         this->run_duration = 0.0;
         this->init_duration = 0.0;
@@ -94,7 +99,7 @@ struct rstats {
         
     }
     
-    template<typename f, typename o, typename e> void log(e &ea, o &obj, f function) { function(ea, obj); }
+    //template<typename f, typename o, typename e> void log(e &ea, o &obj, f function) { function(ea, obj); }
     
 };
 
@@ -111,27 +116,21 @@ struct ea_eval {
     ea_eval(): id(0) {};
     
     void begin() {
+        LOG(3, 0, 0, "BEGIN EA EVAL %d -> ", this->id+1);
         this->start = MPI_Wtime();
     }
     
     void end() {
         double eval_end = MPI_Wtime();
         this->stats.eval_duration = eval_end - this->stats.eval_start;
+        LOG(3, 0, 0, "END EA EVAL %d\r\n", this->id);
     }
     
-//    template<typename o, typename e> void begin(e &ea, o &obj) { this->begin_eval(); }
-//    template<typename o, typename e> void end(e &ea, o &obj) { this->end_eval(); }
-    
-//    template<typename f, typename o, typename e> void begin(e &ea, o &obj, f function) { this->begin_eval(); this->stats.log(ea, obj, function); }
-//    template<typename f, typename o, typename e> void end(e &ea, o &obj, f function) { this->end_eval(); this->stats.log(ea, obj, function); }
-    
-
-    
-    template<typename e> void log(e &ea) { }
+    //template<typename e> void log(e &ea) { }
     
 };
 
-#pragma mark DATATYPE: @ea_run{}
+#pragma mark EA::DATATYPE: @ea_run{}
 
 // track run stats, etc. per island
 
@@ -144,23 +143,20 @@ struct ea_run {
   
     ea_run(): id(0) {};
     
-    void begin_t() {
+    void begin() {
+        LOG(3, 0, 0, "BEGIN EA RUN %d -> ", this->id);
         this->start = MPI_Wtime();
-        this->stats.init();
-        this->eval.stats.init();
     }
     
-    void end_t() {
+    void end() {
+        LOG(3, 0, 0, "END EA RUN %d\r\n", this->id);
         double run_end = MPI_Wtime();
-        this->stats.run_duration = run_end - this->stats.run_start;
+        this->stats.run_duration = run_end - this->start;
     }
-    
-    template<typename o, typename e> void begin(e &ea, o &obj) { this->begin_t(); }
-    template<typename o, typename e> void end(e &ea, o &obj) { this->end_t(); }
     
 };
 
-#pragma mark DATATYPE: @objective_eval{}
+#pragma mark EA::OBJECTIVE::DATATYPE: @objective_eval{}
 
 // track eval stats, etc. per island
 
@@ -168,14 +164,24 @@ struct objective_eval {
   
     int id = 0;
     double start;
+    estats stats;
     
     objective_eval(): id(0) {};
     
-    template<typename f, typename e, typename g> void log(e &ea, e &meta, g &genome, f function) { function(ea, meta, genome); }
+    void begin() {
+        LOG(3, 0, 0, "BEGIN OBJECTIVE EVAL %d\r\n", this->id);
+        this->start=MPI_Wtime();
+    }
+    
+    void end() {
+        LOG(3, 0, 0, "END OBJECTIVE EVAL %d\r\n", this->id);
+        double eval_end = MPI_Wtime();
+        this->stats.eval_duration = eval_end - this->start;
+    }
     
 };
 
-#pragma mark DATATYPE: @objective_run{}
+#pragma mark EA::OBJECTIVE::DATATYPE: @objective_run{}
 
 // track run stats, etc. per island
 
@@ -183,13 +189,23 @@ struct objective_run {
     
     int id = 0;
     double start;
+    rstats stats;
     objective_eval eval;
     
     objective_run(): id(0) {};
-        
-    template<typename f, typename o, typename e, typename genome> void log(e &ea, e &meta, o &obj, genome &g, f function) { function(obj, ea, meta, g); }
-//    template<typename f, typename e, typename o> void log(e &ea, e &meta, o &obj, f function) { function(ea, meta, obj); }
-//    template<typename f, typename o, typename e> void log(e &ea, o &obj, f function) { function(ea, obj); }
+    
+    void begin() {
+        LOG(3, 0, 0, "BEGIN OBJECTIVE RUN %d -> ", this->id);
+        this->start = MPI_Wtime();
+        this->eval.stats.init();
+        //this->eval.id = 0;
+    }
+    
+    void end() {
+        LOG(3, 0, 0, "END OBJECTIVE RUN %d\r\n", this->id);
+        double run_end = MPI_Wtime();
+        this->stats.run_duration = run_end - this->start;
+    }
     
 };
 

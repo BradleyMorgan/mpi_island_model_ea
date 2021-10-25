@@ -33,23 +33,39 @@ struct island {
     
     int id = 0;
     
-    double total_fitness = 0.0;
-    double average_fitness = 0.0;
-    
     std::vector<solution> population;
     
-    std::vector<double> cpd = {};
     std::vector<int> senders = {};
     std::vector<int> receivers = {};
     std::vector<visa> visas;
     
     MPI_Comm tcomm;
     
-    struct calculate {
+    struct metric {
+        
+        struct calculate {
+
+            void total_fitness();
+            void average_fitness();
+            void cpd();
+
+        };
     
-        void total_fitness(island &p);
-        void average_fitness(island &p);
-        void cpd(island &p);
+        struct values {
+            
+            std::vector<double> cpd = {};
+            
+            double total_fitness = 0.0;
+            double average_fitness = 0.0;
+            double fitness = 0.0;
+            
+            values() : cpd(0.0), fitness(0.0) {}
+            
+        };
+        
+        metric(void) {}
+        
+        values value;
         
     };
     
@@ -62,22 +78,23 @@ struct island {
     
     void init() {
         
-        LOG(6, 0, 0, "initializing island %d\r\n", this->id);
+        LOG(6, 0, 0, "ISLAND %d entered initialization\r\n", this->id);
         
         this->population.clear();
         this->population.resize(config::island_mu);
-        this->total_fitness = 0.0;
-        this->average_fitness = 0.0;
         this->tcomm = MPI_COMM_WORLD;
         this->senders.clear();
         this->receivers.clear();
-        this->cpd.clear();
 
-        LOG(6, 0, 0, "island %d initalized\r\n", this->id);
+        LOG(4, 0, 0, "ISLAND %d initalized with empty population [0,n] => [%f,%f] sized %lu \r\n", this->id, this->population[0].fitness, this->population[config::island_mu-1].fitness, this->population.size());
         
     }
     
-    calculate calculator;
+    metric metrics;
+    
+    void cpd();
+    void total_fitness();
+    void average_fitness();
     
 };
 
@@ -88,7 +105,7 @@ template<typename genome> bool compare_fitness(const genome &p1, const genome &p
 }
 
 
-void island::calculate::cpd(island &p) {
+void island::cpd() {
     
     LOG(10, 0, 0, "generating cpd\r\n");
 
@@ -98,22 +115,22 @@ void island::calculate::cpd(island &p) {
 
     LOG(6, 0, 0, "sorting population descending fitness ...\r\n");
 
-    std::sort(p.population.begin(), p.population.end(), compare_fitness<solution>);
-    std::reverse(p.population.begin(), p.population.end());
+    std::sort(this->population.begin(), this->population.end(), compare_fitness<solution>);
+    std::reverse(this->population.begin(), this->population.end());
 
-    LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", p.id, p.total_fitness);
+    LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", this->id, this->metrics.value.total_fitness);
 
-    for(int i=0; i < p.population.size(); i++) {
+    for(int i=0; i < this->population.size(); i++) {
 
-        p.population[i].selection_distribution = p.population[i].fitness / p.total_fitness;
+        this->population[i].selection_distribution = this->population[i].fitness / this->metrics.value.total_fitness;
 
-        LOG(8, 0, 0, "calculated island %d solution %d fitness %f selection distribution = %f\r\n", p.id, i, p.population[i].fitness, p.population[i].selection_distribution);
+        LOG(8, 0, 0, "calculated island %d solution %d fitness %f selection distribution = %f\r\n", this->id, i, this->population[i].fitness, this->population[i].selection_distribution);
 
-        cumulative_probability += p.population[i].selection_distribution;
+        cumulative_probability += this->population[i].selection_distribution;
 
         LOG(8, 0, 0, "solution %d cumulative prob = %f\r\n", i, cumulative_probability);
 
-        p.cpd.push_back(cumulative_probability);
+        this->metrics.value.cpd.push_back(cumulative_probability);
 
     }
     

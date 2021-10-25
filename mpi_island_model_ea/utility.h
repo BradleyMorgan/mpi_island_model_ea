@@ -13,7 +13,7 @@
 #include <cpuid.h>
 #include <array>
 
-#pragma mark FUNCTION prob_true()
+#pragma mark FUNCTION prob_true() --------
 
 // utility function to find arbitrary event probability
 
@@ -21,6 +21,7 @@ bool prob_true(double p){
     return rand()/(RAND_MAX+1.0) < p;
 }
 
+#pragma mark FUNCTION: drand() --------
 
 // return a random double between min and max ...
 
@@ -31,6 +32,8 @@ double drand(double min, double max) {
     return min + f * (max - min);
     
 }
+
+#pragma mark FUNCTION: prob_true() --------
 
 // the rastrigin function is a non-linear, multimodal function
 // with a large search space and a large number of local minima ...
@@ -46,17 +49,19 @@ double rastrigin(std::array<double, DIM> x) {
     return sum * -1;
 }
 
-# pragma mark FUNCTION: offset_rastrigin
+# pragma mark EA::OBJECTIVE::BENCHMARK ------------
+# pragma mark FUNCTION: offset_rastrigin() --------
 
-// accepts an array of floating point numbers @x[param:1] to be used as the dimensional     |
-// input values for the offset rastrigin fitness calculation, and returns                   |
-// the calculated fitness using a corresponding array of offset values @offsets[param:2].   |
-// the function applies the rastrigin calculation, iterating @dim[config.txt:12] for        |
-// each dimension.                                                                          |
+// accepts an array of floating point numbers @x[param:1] to be used as the dimensional
+// input values for the offset rastrigin fitness calculation, and returns
+// the calculated fitness using a corresponding array of offset values @offsets[param:2].
+// the function applies the rastrigin calculation, iterating @dim[config.txt:12] for
+// each dimension.
 
 double offset_rastrigin(std::array<double, DIM> x, std::array<double, DIM> &offsets) {
 
     // rastrigin function: f(x) = A*n + [Σ(1,n,𝜆𝑖↦(x[i]^2-Acos(2πx[i])]
+    
     // rastrigin function constants:
     // A=10
     // x[i] ∈ [-5.12,5.12]
@@ -85,22 +90,29 @@ double offset_rastrigin(std::array<double, DIM> x, std::array<double, DIM> &offs
     
 }
 
-#define CPUID(INFO, LEAF, SUBLEAF) __cpuid_count(LEAF, SUBLEAF, INFO[0], INFO[1], INFO[2], INFO[3])
+#pragma mark FUNCTION: uniqid()
 
-#define GETCPU(CPU) {                                   \
-        uint32_t CPUInfo[4];                            \
-        CPUID(CPUInfo, 1, 0);                           \
-        /* CPUInfo[1] is EBX, bits 24-31 are APIC ID */ \
-        if ( (CPUInfo[3] & (1 << 9)) == 0) {            \
-          CPU = -1;  /* no APIC on chip */              \
-        }                                               \
-        else {                                          \
-          CPU = (unsigned)CPUInfo[1] >> 24;             \
-        }                                               \
-        if (CPU < 0) CPU = 0;                           \
-      }
+// unique genome tags containing with a specifed fixed length prefix
+
+char* uniqid(unsigned long long int instance) {
+    
+    unsigned long long int count = instance <= 0 ? 1 : instance;
+    
+    int prefix = config::id_field_prefix1.second <= 0 ? 3 : config::id_field_prefix1.second;
+    int rank=config::id_field_prefix1.first+1;
+    int fixed_len=prefix;
+    int instance_len=ceil(log10(count));
+    
+    static char buffer[64];
+    
+    sprintf(buffer, "%d%0*d%0*llu", rank, fixed_len, 0, instance_len, count);
+    
+    return buffer;
+}
 
 #endif /* utility_h */
 
-//#define LOG(level, format, ...) if(level <= stoi(config::items["loglevel"])){ fprintf(stderr, "%s -- %d -- ", __FUNCTION__, __LINE__); fprintf(stderr, format, ##__VA_ARGS__);}
+#pragma mark MACRO: LOG()
+
 #define LOG(level, rank, target, format, ...) if(level <= stoi(config::items["loglevel"]) && rank==target){ fprintf(stderr, format, ##__VA_ARGS__);}
+
