@@ -361,8 +361,6 @@ void meta_begin(meta &meta, solver &solver) {
     
     for(meta.topologies.run.id = 1; meta.topologies.run.id <= meta.topologies.max_runs; meta.topologies.run.id++) {
         
-        LOG(2, 0, 0, "**** topo run %d ****", meta.topologies.run.id);
-        
         // solver ea 5 runs ... each time it runs n gens which depends on (for a max_eval limit ...
         // num solver gens = (max_solver_evals - solver_mu) / solver_lambda
         // look at eval vs. fitness solver ea graphs
@@ -390,8 +388,6 @@ void meta_begin(meta &meta, solver &solver) {
         // generations or cycles, what is the termination?  max_evals / num_offspring
         
         //for(meta.topologies.run.eval.id = 1; meta.topologies.run.eval.id <= meta.topologies.max_evo_evals; meta.topologies.run.eval.id++) {
-
-            LOG(2, 0, 0, "**** topo eval %d ****", meta.topologies.run.eval.id);
             
             //meta.topologies.begin(meta.topologies.run.eval, meta);
             

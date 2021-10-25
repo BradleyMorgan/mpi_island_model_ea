@@ -91,7 +91,7 @@ implementation_name:meta
 ea_1_name:solver
 
 ## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum
-ea_1_runs:3
+ea_1_runs:30
 
 ## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
 ea_1_log_interval:100
@@ -102,7 +102,7 @@ ea_1_population_log_interval:2500
 # TODO: merge these parameters into a per-objective multivalued collection
 
 ## ---- PARAMETER[ea_1_max_evo_evals]: terminate run at 𝑒 evaluations
-ea_1_max_evo_evals:300
+ea_1_max_evo_evals:10000
 
 ## ---- PARAMETER[ea_1_max_evo_evals]: minimum number of evaluations required for fitness
 ea_1_max_fit_evals:1
@@ -128,9 +128,9 @@ ea_1_mutation_rate:0.08
 ##### BEGIN SUBSECTION: ea 𝑛 = 2 #####
 
 ea_2:topologies
-ea_2_runs:5
-ea_2_mu:5
-ea_2_lambda:3
+ea_2_runs:30
+ea_2_mu:128
+ea_2_lambda:16
 ea_2_log_interval:300
 ea_2_population_log_interval:1000
 ea_2_max_evo_evals:100
@@ -139,8 +139,9 @@ ea_2_max_evo_evals:100
 # should probably be <= obj1_max_evo_evals,
 # e.g. after an obj1 run completes
 
-ea_2_max_fit_evals:900
+ea_2_max_fit_evals:300
 ea_2_mutation_rate:0.10
+
 ## ea_2_o1_name:placeholder1
 ## ea_2_o2_name:placeholder2
 

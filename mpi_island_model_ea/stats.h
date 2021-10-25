@@ -189,8 +189,7 @@ void log_fn_topology_stats(solver &solver, meta &meta, topology &t) {
     
     double average_topo_fitness = filtered_top.size() > 0 ? (total_topo_fitness / filtered_top.size()) : 0.0;
     
-    std::fprintf(config::topo_stats_out, "%3.10f,"             "%d,"            "%d,"               "%d,"                       "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%3.10f,"                           "%3.10f," ,
-                 average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, meta.run.eval.stats.local_best_topo_fitness,  meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.average_local_best_topo_fitness);
+    std::fprintf(config::topo_stats_out, "%d," "%d," "%3.10f,"             "%d,"            "%d,"               "%d,"                       "%3.10f,"                   "%3.10f,"            "%3.10f,"                            "%3.10f,"                           "%3.10f," , meta.run.id, meta.run.eval.id, average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, meta.run.eval.stats.local_best_topo_fitness,  meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.average_local_best_topo_fitness);
 
     std::fprintf(config::topo_stats_out, "%3.10f,"                                    "%d,"       "%d,"       "%d,"              "%3.10f\r\n",
                  meta.run.eval.stats.average_global_best_topo_fitness, t.id,       t.rounds,   t.channel_count,    t.fitness);

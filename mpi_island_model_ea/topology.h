@@ -502,6 +502,8 @@ template<> template<typename e> void objective<topology>::end(objective_run &run
     
     this->run.end();
     
+    this->log_end(this->run, meta);
+    
 }
 
 template<> template<typename e> void objective<topology>::end(objective_eval &eval, e &meta) {
@@ -524,7 +526,7 @@ template<> template<typename e> void objective<topology>::log_end(objective_run 
 
     if(meta.variant.isle.id != 0 || meta.topologies.run.id == 0) { return; }
 
-    LOG(2, meta.variant.isle.id, 0, "LOG META OBJECTIVE %d RUN %d END\r\n", this-id, this->run.id);
+    LOG(2, meta.variant.isle.id, 0, "LOG META OBJECTIVE %d RUN %d END\r\n", this->id, this->run.id);
 
     fprintf(config::topo_run_stats_out, "average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
 
