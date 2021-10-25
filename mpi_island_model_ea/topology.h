@@ -528,9 +528,7 @@ template<> template<typename e> void objective<topology>::log_end(objective_run 
 
     LOG(2, meta.variant.isle.id, 0, "LOG META OBJECTIVE %d RUN %d END\r\n", this->id, this->run.id);
 
-    fprintf(config::topo_run_stats_out, "average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
-
-    std::fprintf(config::topo_run_stats_out, "%d,%f,%f,%f,%f,%f,%d", meta.topologies.run.id, meta.topologies.run.stats.run_duration, meta.run.eval.stats.average_local_best_topo_fitness, meta.run.eval.stats.average_global_best_topo_fitness, meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.total_migrate_time, meta.run.stats.total_channels);
+    std::fprintf(config::topo_run_stats_out, "%d,%d,%f,%f,%f,%f,%f,%d", meta.topologies.run.id, meta.topologies.run.eval.id, meta.topologies.run.stats.run_duration, meta.run.eval.stats.average_local_best_topo_fitness, meta.run.eval.stats.average_global_best_topo_fitness, meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.total_migrate_time, meta.run.stats.total_channels);
 
     fflush(config::topo_run_stats_out);
 

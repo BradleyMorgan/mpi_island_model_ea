@@ -308,7 +308,8 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         fprintf(config::log_out, "stats file: %s\r\n", config::stats_fname);
         fprintf(config::log_out, "run stats file: %s\r\n", config::run_stats_fname);
-        fprintf(config::log_out, "topology files: %s\r\n", config::topo_fname);
+        fprintf(config::log_out, "topology stats file: %s\r\n", config::topo_fname);
+        fprintf(config::log_out, "topology run stats file: %s\r\n", config::topo_run_fname);
         
         sprintf(topos_subpath, "%s/%s", config::stats_subpath, "topos");
         

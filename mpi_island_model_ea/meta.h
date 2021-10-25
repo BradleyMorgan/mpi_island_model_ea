@@ -387,15 +387,18 @@ void meta_begin(meta &meta, solver &solver) {
 
         // generations or cycles, what is the termination?  max_evals / num_offspring
         
-        //for(meta.topologies.run.eval.id = 1; meta.topologies.run.eval.id <= meta.topologies.max_evo_evals; meta.topologies.run.eval.id++) {
+        int generation = 0;
+        int meta_evolution_termination = 100;
+        
+        for(generation = 1; generation <= meta_evolution_termination; generation++) {
             
             //meta.topologies.begin(meta.topologies.run.eval, meta);
             
             meta.topologies.evolve(solver, meta, topology_evolve);
             
-            //meta.topologies.end(meta.topologies.run.eval, meta);
+           // meta.topologies.end(meta.topologies.run.eval, meta);
 
-        //}
+        }
         
         meta.topologies.end(meta.topologies.run, meta);
         
