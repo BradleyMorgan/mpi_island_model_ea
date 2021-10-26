@@ -101,16 +101,13 @@ ea_1_population_log_interval:2500
 
 # TODO: merge these parameters into a per-objective multivalued collection
 
-## ---- PARAMETER[ea_1_max_evo_evals]: terminate run at 𝑒 evaluations
-ea_1_max_evo_evals:10000
-
 ## ---- PARAMETER[ea_1_max_evo_cycles]: terminate run at 𝑒 generations
 ea_1_max_evo_cycles:2500
 
-## ---- PARAMETER[ea_1_evo_termination]: aribtrary numner to use in ea terminiation
-ea_1_evo_termination:10000
+## ---- PARAMETER[ea_1_evo_termination]: aribtrary number to use in ea terminiation
+ea_1_evo_termination:0.05
 
-## ---- PARAMETER[ea_1_max_evo_evals]: minimum number of evaluations required for fitness
+## ---- PARAMETER[ea_1_max_fit_evals]: number of evaluations required for fitness
 ea_1_max_fit_evals:1
 
 ## ---- PARAMETER[ea_𝑛_mu]: population size
@@ -136,18 +133,17 @@ ea_1_mutation_rate:0.08
 ea_2:topologies
 ea_2_runs:30
 ea_2_mu:128
-ea_2_lambda:16
-ea_2_log_interval:1000
-ea_2_population_log_interval:1000
-ea_2_max_evo_evals:100
-ea_2_max_evo_cycles:10000
-ea_2_evo_termination:10000
+ea_2_lambda:24
+ea_2_log_interval:500
+ea_2_population_log_interval:500
+ea_2_max_evo_cycles:100
+ea_2_evo_termination:0.05
 
 # for meta ea, the value for max_fit_evals
-# should probably be <= obj1_max_evo_evals,
+# should probably be <= obj1_max_evo_cycles,
 # e.g. after 𝑛 (runs) * 𝐶 (cycles)
 
-ea_2_max_fit_evals:1000
+ea_2_max_fit_evals:500
 ea_2_mutation_rate:0.10
 
 ## ea_2_o1_name:placeholder1

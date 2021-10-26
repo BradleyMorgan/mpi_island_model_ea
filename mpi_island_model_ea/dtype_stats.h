@@ -27,6 +27,7 @@ struct estats {
     double init_duration = 0.0;
     double eval_start = 0.0;
     double eval_duration = 0.0;
+    double cycle_duration = 0.0;
     double total_scatter_time = 0.0;
     double total_gather_time = 0.0;
     double total_migrate_time = 0.0;

@@ -29,15 +29,15 @@ std::vector<topology> topology_crossover(meta &meta) {
     
     for(int n = 0; n < meta.topologies.lambda; n++) { // loop lambda
 
-        int test = meta.topologies.mu + ((n * meta.topologies.run.id) + meta.topologies.run.eval.id);
+        int child_id = meta.topologies.mu + (meta.topologies.lambda * meta.topologies.cycle.id + n + 1);
         
-        printf("%d + (%d * %d + %d) = %d\r\n", meta.topologies.mu, n, meta.topologies.run.id, meta.topologies.run.eval.id, test);
+        LOG(6, meta.variant.isle.id, 0, "%d * %d + %d + 1 = %d\r\n", meta.topologies.mu, meta.topologies.cycle.id, n, child_id);
        
         // create child skeleton ...
         
         topology child;
         
-        child.id = test;
+        child.id = child_id;
         child.world_size = meta.variant.islands;
         child.fitness = 0.0;
         child.channel_count = 0;
@@ -245,15 +245,11 @@ void topology_evolve(solver &solver, meta &meta) {
         // once the send\recv channels have been established, we perform a user defined number of evolutionary cycles
         // of the solution population ...
         
-        //for(meta.topologies.run.eval.id = 1; meta.topologies.run.eval.id <= meta.topologies.max_fit_evals; meta.topologies.run.eval.id++) {
-            
-            meta.topologies.begin(meta.topologies.run.eval, meta);
+        meta.topologies.begin(meta.topologies.run.eval, meta);
       
-            solver_begin(meta, solver, *it);
+        solver_begin(meta, solver, *it, 1, meta.topologies.max_fit_evals);
                 
-            meta.topologies.end(meta.topologies.run.eval, meta);
-            
-        //}
+        meta.topologies.end(meta.topologies.run.eval, meta);
         
         meta.topologies.population.push_back(*it);
 

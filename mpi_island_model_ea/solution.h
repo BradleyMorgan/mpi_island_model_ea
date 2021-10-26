@@ -95,6 +95,8 @@ template<> template<typename e> void objective<solution>::begin(objective_run &r
 template<> template<typename e> void objective<solution>::begin(evolution_cycle &cycle, e &solver) {
     
     LOG(3, 0, 0, "BEGIN ISLAND %d SOLVER OBJECTIVE %d EVOLUTION CYCLE %d\r\n", solver.variant.isle.id, this->id, this->cycle.id);
+    
+    this->run.eval.begin();
 
 }
 
@@ -151,6 +153,8 @@ template<> template<typename e> void objective<solution>::end(objective_run &run
 template<> template<typename e> void objective<solution>::end(evolution_cycle &cycle, e &solver) {
     
     LOG(3, 0, 0, "END ISLAND %d SOLVER OBJECTIVE %d EVOLUTION CYCLE %d -> ", solver.variant.isle.id, this->id, this->cycle.id);
+    
+    this->run.eval.end();
 
 }
 

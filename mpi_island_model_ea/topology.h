@@ -527,7 +527,7 @@ template<> template<typename e> void objective<topology>::log_end(evolution_cycl
 }
 
 
-#pragma mark EA::OBJECTIVE::EVAL <topology>::log_end)
+#pragma mark EA::OBJECTIVE::EVAL <topology>::log_end()
 
 // log anything of interest at the end of an evaluation
 

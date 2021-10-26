@@ -19,8 +19,7 @@ struct meta : ea {
         this->topologies.lambda = config::ea_2_lambda;
         this->topologies.max_runs = config::ea_2_runs;
         this->topologies.mutation_rate = config::ea_2_mutation_rate;
-        this->topologies.max_evo_evals = config::ea_2_max_evo_evals;
-        this->topologies.max_evo_cycles = stoi(config::items["ea_2_max_evo_cycles"]);
+        this->topologies.max_evo_cycles = config::ea_2_max_evo_cycles;
         this->topologies.max_fit_evals = config::ea_2_max_fit_evals;
         this->variant = solver.variant;
         this->init_duration += (MPI_Wtime() - this->start);

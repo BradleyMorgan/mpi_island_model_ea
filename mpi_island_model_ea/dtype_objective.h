@@ -15,7 +15,6 @@ template<typename genome> struct objective {
     
     int id = 1;
     int max_runs = 0;
-    int max_evo_evals = 0;
     int max_evo_cycles = 0;
     int max_fit_evals = 0;
     int mu = 0;
