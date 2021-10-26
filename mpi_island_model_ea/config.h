@@ -51,6 +51,7 @@ namespace config {
     int ea_1_lambda = 0;
     int ea_1_mu = 0;
     int ea_1_max_evo_evals = 0;
+    int ea_1_max_evo_cycles = 0;
     int ea_1_max_fit_evals = 0;
     int ea_1_log_interval = 0;
     int ea_1_population_log_interval = 0;
@@ -61,6 +62,7 @@ namespace config {
     int ea_2_mu = 0;
     int ea_2_lambda = 0;
     int ea_2_max_evo_evals = 0;
+    int ea_2_max_evo_cycles = 0;
     int ea_2_max_fit_evals = 0;
     int ea_2_log_interval = 0;
     int ea_2_population_log_interval = 0;
@@ -133,6 +135,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::ea_1_lambda = stoi(config::items["ea_1_lambda"]);
     config::ea_1_mutation_rate = stod(config::items["ea_1_mutation_rate"]);
     config::ea_1_max_evo_evals = stoi(config::items["ea_1_max_evo_evals"]);
+    config::ea_1_max_evo_cycles = stoi(config::items["ea_1_max_evo_cycles"]);
     config::ea_1_max_fit_evals = stoi(config::items["ea_1_max_fit_evals"]);
     config::ea_1_log_interval = stoi(config::items["ea_1_log_interval"]);
     config::ea_1_population_log_interval = stoi(config::items["ea_1_population_log_interval"]);
@@ -142,6 +145,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::ea_2_lambda = stoi(config::items["ea_2_lambda"]);
     config::ea_2_mutation_rate = stod(config::items["ea_2_mutation_rate"]);
     config::ea_2_max_evo_evals = stoi(config::items["ea_2_max_evo_evals"]);
+    config::ea_2_max_evo_cycles = stoi(config::items["ea_2_max_evo_cycles"]);
     config::ea_2_max_fit_evals = stoi(config::items["ea_2_max_fit_evals"]);
     config::ea_2_log_interval = stoi(config::items["ea_2_log_interval"]);
     config::ea_2_population_log_interval = stoi(config::items["ea_2_population_log_interval"]);

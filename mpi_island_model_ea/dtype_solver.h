@@ -26,6 +26,7 @@ struct solver: ea {
         this->solutions.max_runs = config::ea_1_runs;
         this->solutions.mutation_rate = config::ea_1_mutation_rate;
         this->solutions.max_evo_evals = config::ea_1_max_evo_evals;
+        this->solutions.max_evo_cycles = stoi(config::items["ea_1_max_evo_cycles"]);
         this->solutions.max_fit_evals = config::ea_1_max_fit_evals;
         
         if(this->variant.isle.id == 0) {

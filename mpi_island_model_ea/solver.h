@@ -297,7 +297,7 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
     
     // perform migration of best solutions using the currently applied topology ...
     
-    if(solver.solutions.run.eval.id%config::migration_interval == 0) {
+    if(solver.solutions.cycle.id%config::migration_interval == 0) {
         
         double migrate_start = MPI_Wtime();
         
@@ -338,7 +338,7 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
     
     // output for various intervals ...
     
-    if(solver.solutions.run.eval.id%config::ea_1_log_interval == 0) {
+    if(solver.solutions.cycle.id%config::ea_1_log_interval == 0) {
     
         LOG(6, 0, 0, "\r\nISLAND %d of %d GATHER INIT: %d solutions from %d islands = (%d * %d) = mu = %d\r\n", solver.variant.isle.id, solver.variant.islands, config::island_mu, solver.variant.islands, config::island_mu, solver.variant.islands, solver.solutions.mu);
         
@@ -357,20 +357,20 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
         
     }
     
-    if(solver.solutions.run.eval.id%config::ea_1_log_interval == 0 && solver.variant.isle.id == 0) {
+    if(solver.solutions.cycle.id%config::ea_1_log_interval == 0 && solver.variant.isle.id == 0) {
         
         LOG(5, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
     
         if(solver.variant.isle.id == 0) {
             
             //log_fn_eval_stats(solver, meta, t);
-            solver.solutions.log_stats(solver.solutions.run.eval, solver, meta, t);
+            solver.solutions.log_stats(solver.solutions.cycle, solver, meta, t);
             
         }
         
     }
     
-    if(solver.solutions.run.eval.id%config::ea_2_log_interval == 0) {
+    if(solver.solutions.cycle.id%config::ea_2_log_interval == 0) {
         
         LOG(5, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
         
@@ -389,13 +389,13 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
 
 }
 
-void solver_begin(meta &meta, solver &solver, topology &t) {
+void solver_begin(meta &meta, solver &solver, topology &t, int runs = config::ea_1_runs, int cycles = config::ea_1_max_evo_cycles) {
 
     // 100 evals per topology
     
     LOG(6, 0, 0, "BEGIN ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.run.eval.id, meta.topologies.run.id, meta.topologies.run.eval.id);
     
-    //for(solver.solutions.run.id = 1; solver.solutions.run.id <= solver.solutions.max_runs; solver.solutions.run.id++) {
+    for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
      
         solver.solutions.begin(solver.solutions.run, solver);
         
@@ -409,13 +409,13 @@ void solver_begin(meta &meta, solver &solver, topology &t) {
         // check eval critera ... how many evals do we need?
         // number of runs is for statistical certainty ---
         
-        for(solver.solutions.run.eval.id = 1; solver.solutions.run.eval.id <= meta.topologies.max_fit_evals; solver.solutions.run.eval.id++) {
+        for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {
 
-            solver.solutions.begin(solver.solutions.run.eval, solver);
+            solver.solutions.begin(solver.solutions.cycle, solver);
             
             solver.solutions.evolve(solver, meta, t, solutions_evolve);
             
-            solver.solutions.end(solver.solutions.run.eval, solver);
+            solver.solutions.end(solver.solutions.cycle, solver);
                 
         }
 
@@ -423,9 +423,9 @@ void solver_begin(meta &meta, solver &solver, topology &t) {
         
         solver.solutions.end(solver.solutions.run, solver);
         
-    //}
+    }
     
-    LOG(6, 0, 0, "END ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.run.eval.id, meta.topologies.run.id, meta.topologies.run.eval.id);
+    LOG(6, 0, 0, "END ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
 
 }
 

@@ -206,11 +206,7 @@ std::vector<topology> topology_crossover(meta &meta) {
 #pragma mark FUNCTION: topology_evolve()
 
 void topology_evolve(solver &solver, meta &meta) {
-    
-    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n --- ISLAND %d META EVOLUTION [%d,%d] SOLVER [%d,%d]  --- \r\n\r\n", meta.variant.isle.id, meta.topologies.run.id, meta.topologies.run.eval.id, solver.solutions.run.id, solver.solutions.run.eval.id);
-    
-    LOG(6, 0, 0, "\r\n\r\n --- ISLAND %d META EVOLUTION [%d,%d] SOLVER [%d,%d]  --- \r\n\r\n", meta.variant.isle.id, meta.topologies.run.id, meta.topologies.run.eval.id, solver.solutions.run.id, solver.solutions.run.eval.id);
-    
+       
     std::vector<topology> children;
     
     if(meta.variant.isle.id == 0) {
@@ -354,49 +350,45 @@ void benchmark_topology(meta &meta) {
 
 void meta_begin(meta &meta, solver &solver) {
     
-    // number gens and num of offspring
+    ////// number gens and num of offspring
     
-    // solver evals = total toplogy evals * solver_runs * (solver_mu + num_solver_gens * solver_lambda) = mu + lambda * gens
-    // total topo evals = topology mu + (topology generations * topology lambda)
+    ////// solver evals = total toplogy evals * solver_runs * (solver_mu + num_solver_gens * solver_lambda) = mu + lambda * gens
+    ////// total topo evals = topology mu + (topology generations * topology lambda)
     
     for(meta.topologies.run.id = 1; meta.topologies.run.id <= meta.topologies.max_runs; meta.topologies.run.id++) {
         
-        // solver ea 5 runs ... each time it runs n gens which depends on (for a max_eval limit ...
-        // num solver gens = (max_solver_evals - solver_mu) / solver_lambda
-        // look at eval vs. fitness solver ea graphs
-        // k gens -> fitness
+        ////// solver ea n runs ... each time it runs n gens which depends on (for a max_eval limit ...
+        ////// num solver gens = (max_solver_evals - solver_mu) / solver_lambda
+        ////// look at eval vs. fitness solver ea graphs
+        ////// k gens -> fitness
         
         meta.topologies.begin(meta.topologies.run, meta);
         meta.topologies.populate(meta, topologies_populate);
         
+        ////// evaluate initial population by applying each randomly generated
+        //////
+        ////// channels accordingly and return the elapsed time to perform
+        ////// all island migrations as the topology fitness
+        
         for(int i=0; i<meta.topologies.mu; i++) {
-            
-            //for(meta.topologies.run.eval.id = 1; meta.topologies.run.eval.id <= meta.topologies.max_fit_evals; meta.topologies.run.eval.id++) {
-                
-                meta.topologies.begin(meta.topologies.run.eval, meta);
-                
-                solver_begin(meta, solver, meta.topologies.population[i]);
-                
-                meta.topologies.end(meta.topologies.run.eval, meta);
-                
-            //}
 
+            meta.topologies.begin(meta.topologies.run.eval, meta);
+            
+            solver_begin(meta, solver, meta.topologies.population[i], 1, meta.topologies.max_fit_evals);
+            
+            meta.topologies.end(meta.topologies.run.eval, meta);
+                
         }
         
-        LOG(6, 0, 0, "ISLAND %d FINISHED objective<topology> POPULATION AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, solver.solutions.run.id, solver.solutions.run.eval.id, meta.topologies.run.id, meta.topologies.run.eval.id);
-
-        // generations or cycles, what is the termination?  max_evals / num_offspring
+        ////// generations or cycles, what is the termination?  max_evals / num_offspring
         
-        int generation = 0;
-        int meta_evolution_termination = 100;
-        
-        for(generation = 1; generation <= meta_evolution_termination; generation++) {
+        for(meta.topologies.cycle.id = 1; meta.topologies.cycle.id <= meta.topologies.max_evo_cycles; meta.topologies.cycle.id++) {
             
-            //meta.topologies.begin(meta.topologies.run.eval, meta);
+            meta.topologies.begin(meta.topologies.cycle, meta);
             
             meta.topologies.evolve(solver, meta, topology_evolve);
             
-           // meta.topologies.end(meta.topologies.run.eval, meta);
+            meta.topologies.end(meta.topologies.cycle, meta);
 
         }
         

@@ -188,9 +188,11 @@ struct objective_eval {
 struct objective_run {
     
     int id = 0;
+    
     double start;
     rstats stats;
     objective_eval eval;
+
     
     objective_run(): id(0) {};
     
@@ -198,7 +200,6 @@ struct objective_run {
         LOG(3, 0, 0, "BEGIN OBJECTIVE RUN %d -> ", this->id);
         this->start = MPI_Wtime();
         this->eval.stats.init();
-        //this->eval.id = 0;
     }
     
     void end() {
@@ -209,6 +210,11 @@ struct objective_run {
     
 };
 
+struct evolution_cycle {
+    
+    int id = 0;
+    
+};
 
 #endif /* dtype_stats_h */
 

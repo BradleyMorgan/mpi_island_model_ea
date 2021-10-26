@@ -16,6 +16,7 @@ template<typename genome> struct objective {
     int id = 1;
     int max_runs = 0;
     int max_evo_evals = 0;
+    int max_evo_cycles = 0;
     int max_fit_evals = 0;
     int mu = 0;
     int lambda = 0;
@@ -25,8 +26,10 @@ template<typename genome> struct objective {
     double mutation_rate = 0.0;
     
     objective_run run;
+    evolution_cycle cycle;
     
     std::vector<genome> population = {};
+    
     
     #pragma mark DATATYPE: @metrics{}
     
@@ -47,24 +50,37 @@ template<typename genome> struct objective {
         
     };
     
+    #pragma mark EA::FUNCTION::TEMPLATES: metrics
+    
     metrics aggregate;
     
-    #pragma mark EA::FUNCTION::TEMPLATES: generic evolution methods
-
     void cpd();
     void fitness();
     
-    objective<genome>() {
-        
-        this->id = 1;
-        this->run.id = 1;
-        this->run.eval.id = 1;
-//        this->run.stats.init();
-//        this->run.eval.stats.init();
-//        this->population.clear();
-//        this->population.resize(this->mu);
-        
-    }
+    #pragma mark EA::FUNCTION::TEMPLATES: initialization
+    
+    objective<genome>() { this->id = 1; this->run.id = 1; this->run.eval.id = 1; }
+    
+    template<typename e> void begin(objective_run &run, e &ea);
+    template<typename e> void begin(objective_eval &eval, e &ea);
+    template<typename e> void begin(evolution_cycle &cycle, e &ea);
+    template<typename e> void end(objective_run &run, e &ea);
+    template<typename e> void end(objective_eval &eval, e &ea);
+    template<typename e> void end(evolution_cycle &cycle, e &ea);
+    template<typename e> void end(e &ea) { ea_end(ea, *this); }
+    
+    #pragma mark EA::FUNCTION::TEMPLATES: initialization logging
+    
+    template<typename e> void log_begin(objective_run &run, e &ea);
+    template<typename e> void log_begin(objective_eval &eval, e &ea);
+    template<typename e> void log_begin(evolution_cycle &cycle, e &ea);
+    template<typename e> void log_end(objective_run &run, e &ea);
+    template<typename e> void log_end(objective_eval &eval, e &ea);
+    template<typename e> void log_end(evolution_cycle &cycle, e &ea);
+    template<typename e, typename m, typename g> void log_stats(objective_eval &eval, e &solver, m &meta, g &individual);
+    template<typename e, typename m, typename g> void log_stats(evolution_cycle &cycle, e &solver, m &meta, g &individual);
+    
+    #pragma mark EA::FUNCTION::TEMPLATES: evolution cycle
 
     template<typename f> genome select(f function) { return function(*this); }
     template<typename f, typename v> genome crossover(v &variant, f function) { return function(*this, variant); }
@@ -72,22 +88,6 @@ template<typename genome> struct objective {
     template<typename f, typename v> void distribute(v &variant, f function) { function(variant); }
     template<typename f, typename v, typename m> void evolve(v &variant, m &meta, f function) { function(variant, meta); }
     template<typename f, typename v, typename m, typename g> void evolve(v &variant, m &meta, g &individual, f function) { function(variant, meta, individual); }
-    
-    #pragma mark EA::FUNCTION::TEMPLATES: initialization
-    
-    template<typename e> void begin(objective_run &run, e &ea);
-    template<typename e> void begin(objective_eval &eval, e &ea);
-    template<typename e> void end(objective_run &run, e &ea);
-    template<typename e> void end(objective_eval &eval, e &ea);
-    template<typename e> void end(e &ea) { ea_end(ea, *this); }
-    
-    #pragma mark EA::FUNCTION::TEMPLATES: initialization logging
-    
-    template<typename e> void log_begin(objective_run &run, e &ea);
-    template<typename e> void log_begin(objective_eval &eval, e &ea);
-    template<typename e> void log_end(objective_run &run, e &ea);
-    template<typename e> void log_end(objective_eval &eval, e &ea);
-    template<typename e, typename m, typename g> void log_stats(objective_eval &eval, e &solver, m &meta, g &individual);
 
     
 };
