@@ -302,7 +302,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         fprintf(config::topo_run_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
         
-        fprintf(config::run_stats_out, "run,cycle,eval,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_gather_time,total_migration_time,run_duration,init_duration,world_size,subpopulation_size, global_best_topo_fitness, average_local_best_topo_fitness, average_global_best_topo_fitness\r\n");
+        fprintf(config::run_stats_out, "run,cycle,eval,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_gather_time,total_migration_time,run_duration,init_duration,world_size,subpopulation_size\r\n");
         
         fprintf(config::solpop_out, "run,cycle,eval,id,origin,locale,parent1,parent2,pselected,survival,10e5_fit_group,10e5_fit_count,10e4_fit_group,10e4_fit_count,10e3_fit_group,10e3_fit_count,fitness,selection_dist,migration_count,visas,genes\r\n");
         
