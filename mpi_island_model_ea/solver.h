@@ -88,20 +88,22 @@ void mutate(solution &mutant) {
     
 }
 
-std::vector<solution> crossover(solver &multi) {
+std::vector<solution> crossover(solver &solver) {
       
-    multi.variant.isle.cpd();
+    solver.variant.isle.cpd();
     
     std::vector<solution> children;
     
     for(int i = 0; i < config::island_lambda; i++) {
         
-        LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n", multi.variant.isle.id, i);
+        LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n",
+            solver.variant.isle.id, i);
         
-        solution p1 = select_parent(multi.variant.isle);
-        LOG(6, 0, 0, "island %d selected p1<solution> cpd = %f, fitness = %f ...\r\n", multi.variant.isle.id, p1.selection_distribution, p1.fitness);
-        solution p2 = select_parent(multi.variant.isle);
-        LOG(6, 0, 0, "island %d selected p2<solution> cpd = %f, fitness = %f...\r\n", multi.variant.isle.id, p2.selection_distribution, p2.fitness);
+        solution p1 = select_parent(solver.variant.isle);
+        LOG(6, 0, 0, "island %d selected p1<solution> cpd = %f, fitness = %f ...\r\n", solver.variant.isle.id, p1.selection_distribution, p1.fitness);
+        
+        solution p2 = select_parent(solver.variant.isle);
+        LOG(6, 0, 0, "island %d selected p2<solution> cpd = %f, fitness = %f...\r\n", solver.variant.isle.id, p2.selection_distribution, p2.fitness);
         
         solution child;
         
@@ -121,24 +123,28 @@ std::vector<solution> crossover(solver &multi) {
             }
         }
         
-        if(rand()/(RAND_MAX+1.0) < multi.solutions.mutation_rate) {
+        if(rand()/(RAND_MAX+1.0) < solver.solutions.mutation_rate) {
             
-            LOG(6, 0, 0, "island %d mutating child<solution> %d ...\r\n", multi.variant.isle.id, i);
+            LOG(6, 0, 0, "island %d mutating child<solution> %d ...\r\n", solver.variant.isle.id, i);
             
             mutate(child);
             
         }
         
-        child.fitness = offset_rastrigin(child.input, multi.offsets);
+        solver.solutions.begin(solver.solutions.run.eval, solver);
+        
+        child.fitness = offset_rastrigin(child.input, solver.offsets);
+        
+        solver.solutions.end(solver.solutions.run.eval, solver);
         
         if(child.fitness > (p1.fitness / 4)) {
-            LOG(3, 0, 0, "LOW island %d %f<->%f child<solution> %d fitness %f\r\n", multi.variant.isle.id, p1.fitness, p2.fitness, i, child.fitness);
+            LOG(3, 0, 0, "LOW island %d %f<->%f child<solution> %d fitness %f\r\n", solver.variant.isle.id, p1.fitness, p2.fitness, i, child.fitness);
         } else {
             LOG(8, 0, 0, "child<solution> %d fitness %f\r\n", i, child.fitness);
         }
         
-        child.source = multi.variant.isle.id;
-        child.locale = multi.variant.isle.id;
+        child.source = solver.variant.isle.id;
+        child.locale = solver.variant.isle.id;
         child.migrations = 0;
         
         strcpy(child.parents[0], p1.id);
@@ -150,7 +156,7 @@ std::vector<solution> crossover(solver &multi) {
         
     }
     
-    LOG(6, 0, 0, "rank %d returning %lu child solutions from crossover\r\n", multi.variant.isle.id, children.size());
+    LOG(6, 0, 0, "rank %d returning %lu child solutions from crossover\r\n", solver.variant.isle.id, children.size());
     
     return children;
     
@@ -165,10 +171,7 @@ std::vector<solution> crossover(solver &multi) {
 void solution_populate(solver &solver) {
     
     LOG(6, 0, 0, "rank %d of %d entered solution_populate\r\n", solver.variant.isle.id, solver.variant.islands);
-    
-//
-    
-    
+
     if(solver.variant.isle.id != 0) {
         LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", solver.variant.isle.id);
         return;
@@ -205,7 +208,13 @@ void solution_populate(solver &solver) {
                 
         LOG(6, 0, 0, "rank %d assigning solution fitness\r\n", solver.variant.isle.id);
         
+        solver.solutions.begin(solver.solutions.run.eval, solver);
+        
         p.fitness = offset_rastrigin(p.input, solver.offsets);
+        
+        solver.solutions.end(solver.solutions.run.eval, solver);
+        
+        solver.solutions.run.eval.end();
         
         LOG(6, 0, 0, "rank %d assigned solution fitness = %f\r\n", solver.variant.isle.id, p.fitness);
         
@@ -381,7 +390,7 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
         
     }
     
-    if(solver.solutions.run.eval.id%config::ea_1_population_log_interval == 0) {
+    if(solver.solutions.cycle.id%config::ea_1_population_log_interval == 0) {
         
         log_pop_stats(solver, solver.variant.isle, solver.variant.visa_type);
         
@@ -395,7 +404,7 @@ void solver_begin(meta &meta, solver &solver, topology &t, int runs = config::ea
     
     LOG(6, 0, 0, "BEGIN ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.run.eval.id, meta.topologies.run.id, meta.topologies.run.eval.id);
     
-    for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
+    for(solver.solutions.run.id = solver.solutions.run.id; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
      
         solver.solutions.begin(solver.solutions.run, solver);
         
@@ -426,6 +435,8 @@ void solver_begin(meta &meta, solver &solver, topology &t, int runs = config::ea
     }
     
     LOG(6, 0, 0, "END ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
+    
+    solver.solutions.run.id = 1;
 
 }
 

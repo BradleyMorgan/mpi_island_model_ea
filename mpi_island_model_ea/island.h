@@ -58,7 +58,7 @@ void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
         
         solution x;
         
-        int tag = ((p.senders[i]+1)*10000)+eval;
+        int tag = ((p.senders[i]+1)*10000);
         
         //LOG(5, 0, 0, "island %d waiting for migrant recv tag %d from island %d ... \r\n", p.id, tag, p.senders[i]);
         
@@ -95,7 +95,7 @@ void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
     
     for(int i=0; i<p.receivers.size(); i++) {
         
-        int tag = ((p.id+1)*10000+eval);
+        int tag = ((p.id+1)*10000);
         int top = p.population.size() * 0.20;
         int idx = rand()%top;
         

@@ -371,7 +371,7 @@ void topology::distribute(island &isle) {
 template<> template<typename e> void objective<topology>::begin(objective_run &run, e &meta) {
     
     this->run.begin();
-    
+    this->run.eval.id = 0;
     this->population.clear();
     this->population.resize(this->mu);
     
@@ -405,6 +405,7 @@ template<> template<typename e> void objective<topology>::begin(evolution_cycle 
 template<> template<typename e> void objective<topology>::begin(objective_eval &eval, e &meta) {
     
     this->run.eval.begin();
+    this->run.eval.id++;
     this->log_begin(eval, meta);
     
 }
@@ -490,7 +491,7 @@ template<> template<typename e> void objective<topology>::log_begin(evolution_cy
 
 template<> template<typename e> void objective<topology>::log_begin(objective_eval &eval, e &meta) {
     
-    if(meta.variant.isle.id != 0 || this->run.eval.id == 0) { return; }
+    if(meta.variant.isle.id != 0) { return; }
     
     LOG(3, 0, 0, "END META OBJECTIVE %d EVAL %d\r\n", this->id, this->run.eval.id);
     
@@ -533,7 +534,7 @@ template<> template<typename e> void objective<topology>::log_end(evolution_cycl
 
 template<> template<typename e> void objective<topology>::log_end(objective_eval &eval, e &meta) {
     
-    if(meta.variant.isle.id != 0 || this->run.eval.id == 0) { return; }
+    if(meta.variant.isle.id != 0) { return; }
     
     LOG(3, 0, 0, "LOG META OBJECTIVE %d EVAL %d END\r\n", this->id, this->run.eval.id);
     

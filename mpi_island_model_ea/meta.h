@@ -370,7 +370,7 @@ void meta_begin(meta &meta, solver &solver) {
 
             meta.topologies.begin(meta.topologies.run.eval, meta);
             
-            solver_begin(meta, solver, meta.topologies.population[i], 1, meta.topologies.max_fit_evals);
+            solver_begin(meta, solver, meta.topologies.population[i], 5, meta.topologies.max_fit_evals);
             
             meta.topologies.end(meta.topologies.run.eval, meta);
                 

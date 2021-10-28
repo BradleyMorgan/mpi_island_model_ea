@@ -81,7 +81,7 @@ objective<solution>::begin(objective_run &run, e &solver) {
         solver.variant.isle.id, this->id, this->run.id);
 
     this->run.begin();
-
+    this->run.eval.id = 1;
     this->population.clear();
     
     solver.variant.isle.population.clear();
@@ -123,6 +123,8 @@ void objective<solution>::begin(objective_eval &eval, e &solver) {
     LOG(3, 0, 0, "BEGIN ISLAND %d SOLVER OBJECTIVE %d EVAL %d -> ", \
         solver.variant.isle.id, this->id, this->run.eval.id);
 
+    this->run.eval.id++;
+    
     this->run.eval.begin();
     
     this->log_begin(eval, solver);
@@ -208,8 +210,8 @@ void objective<solution>::log_begin(objective_run &run, e &solver) {
     
     if(solver.variant.isle.id != 0 || this->run.id == 0) { return; }
     
-    LOG(2, solver.variant.isle.id, 0, "%5s %6s %16s %16s %16s %16s %16s %16s"
-        "%16s %16s %16s\r\n", "r", "e", "avg_fit", "lbest_fit", "gbest_fit",
+    LOG(2, solver.variant.isle.id, 0, "%5s %6s %6s %16s %16s %16s %16s %16s %16s"
+        "%16s %16s %16s\r\n", "r", "c", "e", "avg_fit", "lbest_fit", "gbest_fit",
         "avg_lbest", "avg_gbest", "avg_scat_t", "avg_gathr_t", "avg_migr",
         "eval_t");
     
@@ -236,7 +238,7 @@ void objective<solution>::log_begin(evolution_cycle &cycle, e &solver) {
 template<> template<typename e>
 void objective<solution>::log_begin(objective_eval &eval, e &solver) {
     
-    if(solver.variant.isle.id != 0 || this->run.eval.id == 0) { return; }
+    if(solver.variant.isle.id != 0) { return; }
     
     LOG(6, 0, 0, "\r\n --- BEGIN SOLVER EVOLUTION CYCLE %d ---\r\n",
         this->run.eval.id);
@@ -293,7 +295,7 @@ void objective<solution>::log_end(evolution_cycle &cycle, e &solver) {
 template<> template<typename e>
 void objective<solution>::log_end(objective_eval &eval, e &solver) {
     
-    if(solver.variant.isle.id != 0 || this->run.eval.id == 0) { return; }
+    if(solver.variant.isle.id != 0) { return; }
     
     LOG(6, 0, 0, "\r\n --- END SOLVER EVOLUTION CYCLE %d ---\r\n",
         this->run.eval.id);
@@ -322,7 +324,7 @@ template<> template<typename e, typename m, typename g>
 void objective<solution>::log_stats(objective_eval &eval, e &solver, m &meta,
                                     g &genome) {
     
-    if(solver.variant.isle.id != 0 || this->run.eval.id == 0) { return; }
+    if(solver.variant.isle.id != 0) { return; }
     
     log_fn_eval_stats(solver, meta, genome);
     
