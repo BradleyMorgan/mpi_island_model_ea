@@ -9,13 +9,13 @@
 #ifndef dtype_solver_h
 #define dtype_solver_h
 
-struct solver: ea {
+struct ea_solver: ea {
     
     std::array<double, DIM> offsets;
     
     objective<solution> solutions;
     
-    solver() {
+    ea_solver() {
     
         this->variant.init(*this);
     

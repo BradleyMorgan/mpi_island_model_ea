@@ -47,8 +47,8 @@
 		9AA41B3526AA256D00312BB5 /* dtype_island.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_island.h; sourceTree = "<group>"; };
 		9AA7AC60271D0586004C20BD /* dtype_solver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_solver.h; sourceTree = "<group>"; };
 		9AA7AC61271D059E004C20BD /* dtype_meta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_meta.h; sourceTree = "<group>"; };
-		9AA7AC62271D1294004C20BD /* solver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = solver.h; sourceTree = "<group>"; };
-		9AA7AC63271D12A2004C20BD /* meta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = meta.h; sourceTree = "<group>"; };
+		9AA7AC62271D1294004C20BD /* ea_solver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea_solver.h; sourceTree = "<group>"; };
+		9AA7AC63271D12A2004C20BD /* ea_meta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea_meta.h; sourceTree = "<group>"; };
 		9AB97848261CA06B0099EB0B /* ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea.h; sourceTree = "<group>"; };
 		9AEEAED02432987B001DF574 /* stats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stats.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -103,9 +103,9 @@
 				9AA41B3226AA241B00312BB5 /* dtype_topology.h */,
 				9A0B0388262486240041E266 /* topology.h */,
 				9AA7AC60271D0586004C20BD /* dtype_solver.h */,
-				9AA7AC62271D1294004C20BD /* solver.h */,
+				9AA7AC62271D1294004C20BD /* ea_solver.h */,
 				9AA7AC61271D059E004C20BD /* dtype_meta.h */,
-				9AA7AC63271D12A2004C20BD /* meta.h */,
+				9AA7AC63271D12A2004C20BD /* ea_meta.h */,
 				9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */,
 				9AA41B3526AA256D00312BB5 /* dtype_island.h */,
 			);

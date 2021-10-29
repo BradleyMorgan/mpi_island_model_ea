@@ -507,7 +507,7 @@ template<> template<typename e> void objective<topology>::log_end(objective_run 
 
     LOG(2, meta.variant.isle.id, 0, "END META OBJECTIVE %d RUN %d\r\n", this->id, this->run.id);
 
-    std::fprintf(config::topo_run_stats_out, "%d,%d,%f,%f,%f,%f,%f,%d", meta.topologies.run.id, meta.topologies.run.eval.id, meta.topologies.run.stats.run_duration, meta.run.eval.stats.average_local_best_topo_fitness, meta.run.eval.stats.average_global_best_topo_fitness, meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.total_migrate_time, meta.run.stats.total_channels);
+    std::fprintf(config::topo_run_stats_out, "%d,%d,%f,%f,%f,%f,%f,%d", meta.topologies.run.id, meta.topologies.run.eval.id, meta.topologies.run.stats.run_duration, meta.topologies.run.eval.stats.average_local_best_topo_fitness, meta.topologies.run.eval.stats.average_global_best_topo_fitness, meta.topologies.run.eval.stats.global_best_topo_fitness, meta.topologies.run.eval.stats.total_migrate_time, meta.topologies.run.stats.total_channels);
 
     fflush(config::topo_run_stats_out);
 

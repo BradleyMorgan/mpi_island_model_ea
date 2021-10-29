@@ -157,16 +157,16 @@ template<typename genome> void objective<genome>::cpd() {
 //    
 //    if(meta.variant.isle.id != 0) { return; }
 //
-//    LOG(2, meta.variant.isle.id, 0, "\r\n--- END META RUN %d ---\r\n", meta.run.id);
+//    LOG(2, meta.variant.isle.id, 0, "\r\n--- END META RUN %d ---\r\n", meta.topologies.run.id);
 //
 //    double run_end = MPI_Wtime();
 //
-//    meta.run.eval.id = 1;
-//    meta.run.stats.run_duration = run_end - meta.run.start;
+//    meta.topologies.run.eval.id = 1;
+//    meta.topologies.run.stats.run_duration = run_end - meta.topologies.run.start;
 //
 //    fprintf(config::topo_run_stats_out, "average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
 //
-//    std::fprintf(config::topo_run_stats_out, "%d,%f,%f,%f,%f,%f,%d", meta.run.id, meta.run.stats.run_duration, meta.run.eval.stats.average_local_best_topo_fitness, meta.run.eval.stats.average_global_best_topo_fitness, meta.run.eval.stats.global_best_topo_fitness, meta.run.eval.stats.total_migrate_time, meta.run.stats.total_channels);
+//    std::fprintf(config::topo_run_stats_out, "%d,%f,%f,%f,%f,%f,%d", meta.topologies.run.id, meta.topologies.run.stats.run_duration, meta.topologies.run.eval.stats.average_local_best_topo_fitness, meta.topologies.run.eval.stats.average_global_best_topo_fitness, meta.topologies.run.eval.stats.global_best_topo_fitness, meta.topologies.run.eval.stats.total_migrate_time, meta.topologies.run.stats.total_channels);
 //
 //    fflush(config::topo_run_stats_out);
 //
@@ -181,12 +181,12 @@ template<typename genome> void objective<genome>::cpd() {
 //}
 //
 //template<typename e> void log_begin(objective_eval &eval, objective<topology> &obj, e &meta) {
-//    LOG(2, meta.variant.isle.id, 0, "\r\n  --- BEGIN META GENOME %d (RUN %d) ---\r\n", meta.run.eval.id, meta.run.id);
+//    LOG(2, meta.variant.isle.id, 0, "\r\n  --- BEGIN META GENOME %d (RUN %d) ---\r\n", meta.topologies.run.eval.id, meta.topologies.run.id);
 //}
 //
 //template<typename e> void log_end(objective_eval &eval, objective<topology> &obj, e &meta) {
-//    meta.run.eval.stats.eval_duration = MPI_Wtime() - meta.run.eval.start;
-//    LOG(2, meta.variant.isle.id, 0, "\r\n  --- END META GENOME %d (RUN %d) duration = %f ---\r\n", meta.run.eval.id, meta.run.id, meta.run.eval.stats.eval_duration);
+//    meta.topologies.run.eval.stats.eval_duration = MPI_Wtime() - meta.topologies.run.eval.start;
+//    LOG(2, meta.variant.isle.id, 0, "\r\n  --- END META GENOME %d (RUN %d) duration = %f ---\r\n", meta.topologies.run.eval.id, meta.topologies.run.id, meta.topologies.run.eval.stats.eval_duration);
 //}
 
 #endif /* objective_h */

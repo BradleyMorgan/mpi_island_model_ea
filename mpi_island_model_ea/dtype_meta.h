@@ -9,11 +9,11 @@
 #ifndef dtype_meta_h
 #define dtype_meta_h
 
-struct meta : ea {
+struct ea_meta : ea {
     
     objective<topology> topologies;
     
-    meta(solver &solver) {
+    ea_meta(ea_solver &solver) {
         
         this->topologies.mu = config::ea_2_mu;
         this->topologies.lambda = config::ea_2_lambda;

@@ -88,7 +88,7 @@ void mutate(solution &mutant) {
     
 }
 
-std::vector<solution> crossover(solver &solver) {
+std::vector<solution> crossover(ea_solver &solver) {
       
     solver.variant.isle.cpd();
     
@@ -168,7 +168,7 @@ std::vector<solution> crossover(solver &solver) {
 // accepts an array of floating point numbers of n-dimensions @offsets[param:0]                         |
 // used to calculate the solution fitness.                                                              |
 
-void solution_populate(solver &solver) {
+void solution_populate(ea_solver &solver) {
     
     LOG(6, 0, 0, "rank %d of %d entered solution_populate\r\n", solver.variant.isle.id, solver.variant.islands);
 
@@ -222,7 +222,7 @@ void solution_populate(solver &solver) {
         
         solver.solutions.aggregate.value.fitness += p.fitness;
 
-        //visa v(solver.run.eval.id, p.source, p.source, p.id);
+        //visa v(solver.solutions.run.eval.id, p.source, p.source, p.id);
 
         //multi.variant.isle.visas.push_back(v);
 
@@ -235,8 +235,8 @@ void solution_populate(solver &solver) {
     LOG(4, solver.variant.isle.id, 0, "SOLVER initialized objective %d population with size %lu, total fitness = %f\r\n", solver.solutions.id, solver.solutions.population.size(), solver.solutions.aggregate.value.fitness);
     LOG(6, 0, 0, "SOLVER ISLAND %d initialized objective %d local population with size %lu ...\r\n", solver.variant.isle.id, solver.solutions.id, solver.solutions.population.size());
 
-    if(solver.run.eval.stats.global_best_fitness == 0.0) {
-        solver.run.eval.stats.global_best_fitness = solver.solutions.population.data()[0].fitness;
+    if(solver.solutions.run.eval.stats.global_best_fitness == 0.0) {
+        solver.solutions.run.eval.stats.global_best_fitness = solver.solutions.population.data()[0].fitness;
     }
     
     LOG(6, 0, 0, "rank %d leaving solution_populate\r\n", solver.variant.isle.id);
@@ -249,7 +249,7 @@ void solution_populate(solver &solver) {
 
 // separate the single full population from the root process to subpopulations across all processes ...
 
-void solution_scatter(solver &solver) {
+void solution_scatter(ea_solver &solver) {
     
     LOG(6, 0, 0, "rank %d entered solution_scatter\r\n", solver.variant.isle.id);
 
@@ -274,9 +274,9 @@ void solution_scatter(solver &solver) {
 
     LOG(4, 0, 0, "\r\nISLAND %d of %d SCATTER END: received %lu solutions average fitness %f\r\n", solver.variant.isle.id, solver.variant.islands, solver.variant.isle.population.size(), solver.variant.isle.metrics.value.average_fitness);
 
-    MPI_Reduce(&scatter_time, &solver.run.eval.stats.total_scatter_time, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
+    MPI_Reduce(&scatter_time, &solver.solutions.run.eval.stats.total_scatter_time, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
 
-    solver.run.eval.stats.total_scatter_time += scatter_time;
+    solver.solutions.run.eval.stats.total_scatter_time += scatter_time;
 
     LOG(6, 0, 0, "RETURN: rank %d leaving solution_scatter\r\n", solver.variant.isle.id);
     
@@ -284,7 +284,7 @@ void solution_scatter(solver &solver) {
 
 #pragma mark FUNCTION: solution_eval()
 
-void solutions_evolve(solver &solver, meta &meta, topology &t) {
+void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
     
     LOG(6, 0, 0, "ISLAND %d ENTER objective<solution> evolution cycle %d, topology %d, eval %d\r\n", solver.variant.isle.id, solver.solutions.run.eval.id, t.id, solver.solutions.run.eval.id);
     LOG(8, solver.variant.isle.id, 0, "calculating island %d cpd, topology %d, eval %d\r\n", solver.variant.isle.id, t.id, solver.solutions.run.eval.id);
@@ -320,7 +320,7 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
         
         LOG(8, 0, 0, "migrate start = %3.10f, migrate end = %3.10f, migrate time = %3.10f\r\n", migrate_start, migrate_end, migrate_time);
         
-        solver.run.eval.stats.total_migrate_time += migrate_time;
+        solver.solutions.run.eval.stats.total_migrate_time += migrate_time;
      
         // aggregate the migration time from each island into the topology fitness ...
         
@@ -360,7 +360,7 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
         double gather_end = MPI_Wtime();
         double gather_time = gather_end - gather_start;
         
-        solver.run.eval.stats.total_gather_time += gather_time;
+        solver.solutions.run.eval.stats.total_gather_time += gather_time;
         
         LOG(4, 0, 0, "\r\nISLAND %d of %d GATHER END: %lu solutions from %d islands = (%d / %d) = island_mu = %d\r\n", solver.variant.isle.id, solver.variant.islands, solver.solutions.population.size(), solver.variant.islands, solver.solutions.mu, solver.variant.islands, config::island_mu);
         
@@ -398,11 +398,16 @@ void solutions_evolve(solver &solver, meta &meta, topology &t) {
 
 }
 
-void solver_begin(meta &meta, solver &solver, topology &t, int runs = config::ea_1_runs, int cycles = config::ea_1_max_evo_cycles) {
+#pragma mark EA::FUNCTION::SOLVER solver_begin()
 
-    // 100 evals per topology
+// TODO: check eval critera ... how many evals do we need?
+// TODO: number of runs is for statistical certainty ---
+
+void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = config::ea_1_runs, int cycles = config::ea_1_max_evo_cycles) {
     
     LOG(6, 0, 0, "BEGIN ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.run.eval.id, meta.topologies.run.id, meta.topologies.run.eval.id);
+    
+    // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 nested iterations ...
     
     for(solver.solutions.run.id = solver.solutions.run.id; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
      
@@ -414,9 +419,6 @@ void solver_begin(meta &meta, solver &solver, topology &t, int runs = config::ea
         solver.solutions.distribute(solver, solution_scatter);
         
         t.apply(solver.variant.isle, t);
-
-        // check eval critera ... how many evals do we need?
-        // number of runs is for statistical certainty ---
         
         for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {
 

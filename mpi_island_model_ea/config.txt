@@ -90,18 +90,18 @@ implementation_name:meta
 ## ---- PARAMETER[ea_𝑛_name]: display name for this ea
 ea_1_name:solver
 
-## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum
-ea_1_runs:5
+## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum (𝑆𝑟𝑚𝑎𝑥)
+ea_1_runs:10
 
 ## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
-ea_1_log_interval:100
+ea_1_log_interval:50
 
 ## ---- PARAMETER[ea_𝑛_population_log_interval]: verbose log every 𝑒 evaluations
 ea_1_population_log_interval:2500
 
 # TODO: merge these parameters into a per-objective multivalued collection
 
-## ---- PARAMETER[ea_1_max_evo_cycles]: terminate run at 𝑒 generations
+## ---- PARAMETER[ea_1_max_evo_cycles]: terminate run at 𝑒 generations (𝑆𝑒𝑚𝑎𝑥)
 ea_1_max_evo_cycles:2500
 
 ## ---- PARAMETER[ea_1_evo_termination]: aribtrary number to use in ea terminiation
@@ -131,12 +131,21 @@ ea_1_mutation_rate:0.08
 ##### BEGIN SUBSECTION: ea 𝑛 = 2 #####
 
 ea_2:topologies
-ea_2_runs:30
+
+#(𝛭𝑟𝑚𝑎𝑥)
+ea_2_runs:10
+
+#(𝛭𝜇)
 ea_2_mu:128
+
+#(𝛭𝜆)
 ea_2_lambda:24
+
+# 𝛭𝑒𝑚𝑎𝑥
+ea_2_max_evo_cycles:100
+
 ea_2_log_interval:500
 ea_2_population_log_interval:500
-ea_2_max_evo_cycles:100
 ea_2_evo_termination:0.05
 
 # for meta ea, the value for max_fit_evals

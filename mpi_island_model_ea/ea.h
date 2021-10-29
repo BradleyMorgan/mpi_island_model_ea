@@ -82,10 +82,10 @@ template<typename genome> genome parent(objective<genome> &o) {
 //    meta.start = MPI_Wtime();
 //    meta.init_start = MPI_Wtime();
 //    meta.variant.start = MPI_Wtime();
-//    meta.run.id = 1;
-//    meta.run.eval.id = 1;
-//    meta.run.stats.init();
-//    meta.run.eval.stats.init();
+//    meta.topologies.run.id = 1;
+//    meta.topologies.run.eval.id = 1;
+//    meta.topologies.run.stats.init();
+//    meta.topologies.run.eval.stats.init();
 //    
 //    meta.topologies.mu = config::ea_2_mu;
 //    meta.topologies.lambda = config::ea_2_lambda;

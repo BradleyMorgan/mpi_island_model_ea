@@ -16,8 +16,8 @@
 #include "config.h"
 #include "utility.h"
 #include "ea.h"
-#include "solver.h"
-#include "meta.h"
+#include "ea_solver.h"
+#include "ea_meta.h"
 
 #pragma mark FUNCTION: main()
 
@@ -35,15 +35,17 @@
 
 int main(int argc, const char * argv[]) {
     
-    solver solver;
-    meta meta(solver);
+    ea_solver solver;
+    ea_meta meta(solver);
     
-    if(config::ea_mode > 0) {
-        meta_begin(meta, solver);
-    } else {
-        benchmark_topology(meta);
-        solver_begin(meta, solver, meta.topologies.population[0]);
-    }
+    ea_begin(meta, solver, config::ea_mode);
+
+    //    if(config::ea_mode > 0) {
+//        meta_begin(meta, solver, 1);
+//    } else {
+//        meta_begin(meta, solver, 0)
+//        solver_begin(meta, solver, meta.topologies.population[0], 30, solver.solutions.max_evo_cycles);
+//    }
     
     solver.ea::end(solver.solutions);
     meta.ea::end(meta.topologies);

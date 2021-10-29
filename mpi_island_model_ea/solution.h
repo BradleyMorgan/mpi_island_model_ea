@@ -259,12 +259,12 @@ void objective<solution>::log_end(objective_run &run, e &solver) {
                  solver.solutions.run.id,
                  solver.solutions.cycle.id,
                  solver.solutions.run.eval.id,
-                 solver.run.eval.stats.global_best_fitness,
-                 solver.run.eval.stats.average_local_best_fitness,
-                 solver.run.eval.stats.average_global_best_fitness,
-                 solver.run.eval.stats.total_scatter_time,
-                 solver.run.eval.stats.total_gather_time,
-                 solver.run.eval.stats.total_migrate_time,
+                 solver.solutions.run.eval.stats.global_best_fitness,
+                 solver.solutions.run.eval.stats.average_local_best_fitness,
+                 solver.solutions.run.eval.stats.average_global_best_fitness,
+                 solver.solutions.run.eval.stats.total_scatter_time,
+                 solver.solutions.run.eval.stats.total_gather_time,
+                 solver.solutions.run.eval.stats.total_migrate_time,
                  solver.solutions.run.stats.run_duration,
                  solver.init_duration,
                  solver.variant.islands,
@@ -343,12 +343,12 @@ void objective<solution>::log_stats(objective_eval &eval, e &solver, m &meta,
 //
 //    LOG(2, solver.variant.isle.id, 0, "   --- BEGIN SOLVER RUN %d ---\r\n", solver.solutions.run.id);
 //
-//    solver.run.eval.id = 1;
-//    solver.run.start = MPI_Wtime();
+//    solver.solutions.run.eval.id = 1;
+//    solver.solutions.run.start = MPI_Wtime();
 //    solver.solutions.population.clear();
 //    solver.variant.isle.population.clear();
 //    solver.variant.isle.population.resize(config::island_mu);
-//    solver.run.eval.stats.init();
+//    solver.solutions.run.eval.stats.init();
 //
 //    LOG(2, solver.variant.isle.id, 0, "\r\n%5s %6s %16s %16s %16s %16s %16s %16s %16s %16s %16s", "r", "e", "avg_fit", "lbest_fit", "gbest_fit", "avg_lbest", "avg_gbest", "avg_scat_t", "avg_gathr_t", "avg_migr", "eval_t");
 //
@@ -361,11 +361,11 @@ void objective<solution>::log_stats(objective_eval &eval, e &solver, m &meta,
 //
 //    double run_end = MPI_Wtime();
 //
-//    solver.run.stats.run_duration = run_end - solver.run.start;
+//    solver.solutions.run.stats.run_duration = run_end - solver.solutions.run.start;
 //
 //    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n   --- END SOLVER RUN %d ---\r\n", solver.solutions.run.id);
 //
-//    std::fprintf(config::run_stats_out, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d\r\n", solver.solutions.run.id, solver.run.eval.stats.global_best_fitness, solver.run.eval.stats.average_local_best_fitness, solver.run.eval.stats.average_global_best_fitness, solver.run.eval.stats.total_scatter_time, solver.run.eval.stats.total_gather_time, solver.run.eval.stats.total_migrate_time, solver.run.stats.run_duration, solver.run.stats.init_duration, solver.variant.islands, solver.variant.island_size);
+//    std::fprintf(config::run_stats_out, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d\r\n", solver.solutions.run.id, solver.solutions.run.eval.stats.global_best_fitness, solver.solutions.run.eval.stats.average_local_best_fitness, solver.solutions.run.eval.stats.average_global_best_fitness, solver.solutions.run.eval.stats.total_scatter_time, solver.solutions.run.eval.stats.total_gather_time, solver.solutions.run.eval.stats.total_migrate_time, solver.solutions.run.stats.run_duration, solver.solutions.run.stats.init_duration, solver.variant.islands, solver.variant.island_size);
 //
 //    fflush(config::run_stats_out);
 //

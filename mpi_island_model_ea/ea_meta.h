@@ -13,7 +13,7 @@
 
 // specialized recombination operator for the @topology{} datatype
 
-std::vector<topology> topology_crossover(meta &meta) {
+std::vector<topology> topology_crossover(ea_meta &meta) {
    
     std::vector<topology> children;
     
@@ -205,7 +205,7 @@ std::vector<topology> topology_crossover(meta &meta) {
 
 #pragma mark FUNCTION: topology_evolve()
 
-void topology_evolve(solver &solver, meta &meta) {
+void topology_evolve(ea_solver &solver, ea_meta &meta) {
        
     std::vector<topology> children;
     
@@ -220,11 +220,7 @@ void topology_evolve(solver &solver, meta &meta) {
             
     } else {
         
-        // ensure that the secondary islands have memory allocated to avoid potential segfault ....
-        
-        children.resize(meta.topologies.lambda);
-        
-        //return;
+        //children.resize(meta.topologies.lambda);
         
     }
 
@@ -234,8 +230,12 @@ void topology_evolve(solver &solver, meta &meta) {
     // with all islands participating using the send\recv channels as defined in the topology
     // and then assign the aggregate time spent in migration as topology fitness ...
     
+    // 𝛭𝜆 iterations ...
+    
     for (std::vector<topology>::iterator it = children.begin(); it != children.end(); ++it) {
 
+        // solver will execute topologies_lambda times, e.g. 32
+        
         LOG(4, meta.variant.isle.id, 0, "ISLAND %d (root) applying child<topology>[%d] for eval\r\n", meta.variant.isle.id, it->id);
 
         // the apply function distributes a topology's send\recv channels to all islands ...
@@ -245,9 +245,11 @@ void topology_evolve(solver &solver, meta &meta) {
         // once the send\recv channels have been established, we perform a user defined number of evolutionary cycles
         // of the solution population ...
         
+        // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin ...
+        
         meta.topologies.begin(meta.topologies.run.eval, meta);
       
-        solver_begin(meta, solver, *it, 1, meta.topologies.max_fit_evals);
+        solver_begin(meta, solver, *it, solver.solutions.max_runs, meta.topologies.max_fit_evals);
                 
         meta.topologies.end(meta.topologies.run.eval, meta);
         
@@ -281,7 +283,7 @@ void topology_evolve(solver &solver, meta &meta) {
 // an island (communication) topology.  accepts a reference to a list of island                         |
 // (process) identifiers from @ea{@meta{@island_ids[param:0}} to use as indices.                        |
 
-void topologies_populate(meta &meta) {
+void topologies_populate(ea_meta &meta) {
     
     meta.topologies.population.clear();
     
@@ -300,7 +302,7 @@ void topologies_populate(meta &meta) {
             topology::create::dynamic(t);
             LOG(6, 0, 0, "dynamic topology %d created\r\n", i);
             meta.topologies.population.push_back(t);
-            meta.run.stats.total_channels += t.channel_count;
+            meta.topologies.run.stats.total_channels += t.channel_count;
         }
         
     }
@@ -311,7 +313,7 @@ void topologies_populate(meta &meta) {
     
 }
 
-void benchmark_topology(meta &meta) {
+void benchmark_topology(ea_meta &meta) {
     
     meta.topologies.population.clear();
     
@@ -344,48 +346,97 @@ void benchmark_topology(meta &meta) {
 
 }
 
-void meta_begin(meta &meta, solver &solver) {
+void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
     
-    ////// number gens and num of offspring
-    
-    ////// solver evals = total toplogy evals * solver_runs * (solver_mu + num_solver_gens * solver_lambda) = mu + lambda * gens
-    ////// total topo evals = topology mu + (topology generations * topology lambda)
+    // MARK: number gens and num of offspring
+    //////// solver evals = total toplogy evals * solver_runs * (solver_mu + num_solver_gens * solver_lambda) = mu + lambda * gens
+    //////// total topo evals = topology mu + (topology generations * topology lambda)
     
     for(meta.topologies.run.id = 1; meta.topologies.run.id <= meta.topologies.max_runs; meta.topologies.run.id++) {
         
-        ////// solver ea n runs ... each time it runs n gens which depends on (for a max_eval limit ...
-        ////// num solver gens = (max_solver_evals - solver_mu) / solver_lambda
-        ////// look at eval vs. fitness solver ea graphs
-        ////// k gens -> fitness
+        //MARK: solver ea n runs ... each time it runs n gens which depends on (for a max_eval limit ...
+        /////// num solver gens = (max_solver_evals - solver_mu) / solver_lambda
+        /////// look at eval vs. fitness solver ea graphs
+        /////// k gens -> fitness
         
         meta.topologies.begin(meta.topologies.run, meta);
         meta.topologies.populate(meta, topologies_populate);
         
-        ////// evaluate initial population by applying each randomly generated
-        //////
-        ////// channels accordingly and return the elapsed time to perform
-        ////// all island migrations as the topology fitness
+        // MARK: evaluate initial population by applying each randomly generated
+        //////// channels accordingly and return the elapsed time to perform
+        //////// all island migrations as the topology fitness
         
-        for(int i=0; i<meta.topologies.mu; i++) {
+        if(mode == 1) {
+       
+            // 𝛭𝜇 iterations ...
+            
+            for(int i=0; i<meta.topologies.mu; i++) {
 
-            meta.topologies.begin(meta.topologies.run.eval, meta);
-            
-            solver_begin(meta, solver, meta.topologies.population[i], 5, meta.topologies.max_fit_evals);
-            
-            meta.topologies.end(meta.topologies.run.eval, meta);
+                // MARK: solver will execute topologies.mu * passed_run_value * topologies_max_fit evals
+                //////// e.g. 30 * 5 * 500 = 75,0000
                 
-        }
-        
-        ////// generations or cycles, what is the termination?  max_evals / num_offspring
-        
-        for(meta.topologies.cycle.id = 1; meta.topologies.cycle.id <= meta.topologies.max_evo_cycles; meta.topologies.cycle.id++) {
+                meta.topologies.begin(meta.topologies.run.eval, meta);
+                
+                // TODO: we want each topology to be evaluated max_fit_evals times
+                //////// a migration is performed each solver cycle, which is a topology evaluation
+                //////// so to get the total number of desired topology evaluations, we need to calculate
+                //////// the number of solver runs needed to execute max_fit_evals migrations
+                //////// since a solver run will execute max_evo_cycles migrations ...
+                //////// solver_runs * max_evo_cycles = total_migrations
+                //////// total_migrations / topology_max_evals
+                ////////int total_solver_cycles = solver.solutions.max_runs * solver.solutions.max_evo_cycles;
+                ////////int total_solver_evals = (total_solver_cycles * solver.solutions.lambda) + solver.solutions.mu;
+                ////////int topo_runs = total_solver_cycles / meta.topologies.max_fit_evals;
+                
+                // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
+                
+                solver_begin(meta, solver, meta.topologies.population[i], 1, meta.topologies.max_fit_evals);
+                
+                meta.topologies.end(meta.topologies.run.eval, meta);
+                    
+            } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
             
-            meta.topologies.begin(meta.topologies.cycle, meta);
+            // TODO: generations or cycles, what is the termination?  max_evals / num_offspring
             
-            meta.topologies.evolve(solver, meta, topology_evolve);
             
-            meta.topologies.end(meta.topologies.cycle, meta);
+            // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
+            
+            for(meta.topologies.cycle.id = 1; meta.topologies.cycle.id <= meta.topologies.max_evo_cycles; meta.topologies.cycle.id++) {
+               
+                // 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in topology_evolve
+                
+                meta.topologies.begin(meta.topologies.cycle, meta);
+                
+                meta.topologies.evolve(solver, meta, topology_evolve);
+                
+                meta.topologies.end(meta.topologies.cycle, meta);
 
+            }  // 𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
+        
+            // (𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) iterations
+            
+        } else {
+            
+            benchmark_topology(meta);
+            
+            // 𝛭𝑒𝑚𝑎𝑥 iterations ...
+            
+            for(meta.topologies.cycle.id = 1; meta.topologies.cycle.id <= meta.topologies.max_evo_cycles; meta.topologies.cycle.id++) {
+             
+                meta.topologies.begin(meta.topologies.cycle, meta);
+                
+                meta.topologies.begin(meta.topologies.run.eval, meta);
+              
+                // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
+                
+                solver_begin(meta, solver, meta.topologies.population[0], solver.solutions.max_runs, meta.topologies.max_fit_evals);
+                        
+                meta.topologies.end(meta.topologies.run.eval, meta);
+                
+                meta.topologies.end(meta.topologies.cycle, meta);
+                
+            }
+            
         }
         
         meta.topologies.end(meta.topologies.run, meta);
