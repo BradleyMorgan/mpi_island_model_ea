@@ -220,7 +220,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
             
     } else {
         
-        //children.resize(meta.topologies.lambda);
+        children.resize(meta.topologies.lambda);
         
     }
 
@@ -249,7 +249,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
         meta.topologies.begin(meta.topologies.run.eval, meta);
       
-        solver_begin(meta, solver, *it, solver.solutions.max_runs, meta.topologies.max_fit_evals);
+        solver_begin(meta, solver, *it, 1, meta.topologies.max_fit_evals);
                 
         meta.topologies.end(meta.topologies.run.eval, meta);
         

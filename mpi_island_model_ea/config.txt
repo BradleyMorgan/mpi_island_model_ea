@@ -91,7 +91,7 @@ implementation_name:meta
 ea_1_name:solver
 
 ## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum (𝑆𝑟𝑚𝑎𝑥)
-ea_1_runs:10
+ea_1_runs:3
 
 ## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
 ea_1_log_interval:50
@@ -133,28 +133,22 @@ ea_1_mutation_rate:0.08
 ea_2:topologies
 
 #(𝛭𝑟𝑚𝑎𝑥)
-ea_2_runs:10
+ea_2_runs:3
 
 #(𝛭𝜇)
-ea_2_mu:128
+ea_2_mu:32
 
 #(𝛭𝜆)
-ea_2_lambda:24
+ea_2_lambda:8
 
 # 𝛭𝑒𝑚𝑎𝑥
 ea_2_max_evo_cycles:100
 
+ea_2_max_fit_evals:500
 ea_2_log_interval:500
 ea_2_population_log_interval:500
 ea_2_evo_termination:0.05
-
-# for meta ea, the value for max_fit_evals
-# should probably be <= obj1_max_evo_cycles,
-# e.g. after 𝑛 (runs) * 𝐶 (cycles)
-
-ea_2_max_fit_evals:500
 ea_2_mutation_rate:0.10
-
 ## ea_2_o1_name:placeholder1
 ## ea_2_o2_name:placeholder2
 

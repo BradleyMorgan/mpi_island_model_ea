@@ -479,9 +479,9 @@ template<> template<typename e> void objective<topology>::log_begin(evolution_cy
     
     if(this->cycle.id == 0) { return; }
     
-    LOG(2, meta.variant.isle.id, 0, "\r\n\r\n --- BEGIN ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  --- \r\n\r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
+    LOG(2, meta.variant.isle.id, 0, " *** BEGIN ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  *** \r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
     
-    LOG(6, 0, 0, "\r\n\r\n --- BEGIN ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  --- \r\n\r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
+    LOG(6, 0, 0, " *** BEGIN ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  *** \r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
     
 }
 
