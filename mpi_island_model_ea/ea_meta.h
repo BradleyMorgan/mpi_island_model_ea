@@ -249,7 +249,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
         meta.topologies.begin(meta.topologies.run.eval, meta);
       
-        solver_begin(meta, solver, *it, 1, meta.topologies.max_fit_evals);
+        solver_begin(meta, solver, *it, solver.solutions.max_runs, meta.topologies.max_fit_evals);
                 
         meta.topologies.end(meta.topologies.run.eval, meta);
         
@@ -352,6 +352,8 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
     //////// solver evals = total toplogy evals * solver_runs * (solver_mu + num_solver_gens * solver_lambda) = mu + lambda * gens
     //////// total topo evals = topology mu + (topology generations * topology lambda)
     
+    // 𝛭𝑟𝑚𝑎𝑥 iterations ...
+    
     for(meta.topologies.run.id = 1; meta.topologies.run.id <= meta.topologies.max_runs; meta.topologies.run.id++) {
         
         //MARK: solver ea n runs ... each time it runs n gens which depends on (for a max_eval limit ...
@@ -390,7 +392,7 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
                 
                 // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
                 
-                solver_begin(meta, solver, meta.topologies.population[i], 1, meta.topologies.max_fit_evals);
+                solver_begin(meta, solver, meta.topologies.population[i], solver.solutions.max_runs, meta.topologies.max_fit_evals);
                 
                 meta.topologies.end(meta.topologies.run.eval, meta);
                     
@@ -442,6 +444,8 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
         meta.topologies.end(meta.topologies.run, meta);
         
     }
+    
+    // 𝛭𝑟𝑚𝑎𝑥 * ((𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥)) iterations
     
 }
 

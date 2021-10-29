@@ -39,13 +39,6 @@ int main(int argc, const char * argv[]) {
     ea_meta meta(solver);
     
     ea_begin(meta, solver, config::ea_mode);
-
-    //    if(config::ea_mode > 0) {
-//        meta_begin(meta, solver, 1);
-//    } else {
-//        meta_begin(meta, solver, 0)
-//        solver_begin(meta, solver, meta.topologies.population[0], 30, solver.solutions.max_evo_cycles);
-//    }
     
     solver.ea::end(solver.solutions);
     meta.ea::end(meta.topologies);
