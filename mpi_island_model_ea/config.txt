@@ -5,46 +5,42 @@
 ##### BEGIN SUBSECTION: solver ea custom parameters #####
 
 # --- PARAMETER[dim]: dimensions of benchmark problem input ---
+
 dim:10
 
 ##### BEGIN SUBSECTION: meta ea custom parameters #####
 
 # --- PARAMETER[sparsity]: maximum percentage of adjacency matrix to populate ---
-sparsity:0.08
-
 # --- PARAMETER[migration_cap]: maximum number of received population individuals per island ---
-migration_cap:2
-
 # --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
+
+sparsity:0.08
+migration_cap:2
 send_cap:2
 
 ##### END SUBSECTION: solver ea custom parameters #####
 
 ##### BEGIN SUBSECTION: parallel parameters #####
-
 # --- PARAMETER[mu_node]: maximum number of individuals sent per island
-# 0: fixed global mu, comm size based island mu, fixed island lambda
-# 1: comm size based global mu, fixed island mu, fixed island lambda
-# 2: comm size based global mu, fixed island mu, percentage island lambda ---
-mu_mode:1
-    
+#     0: fixed global mu, comm size based island mu, fixed island lambda
+#     1: comm size based global mu, fixed island mu, fixed island lambda
+#     2: comm size based global mu, fixed island mu, percentage island lambda ---
 # --- PARAMETER<mu_modes[1,2]>[island_mu]: number of individuals per island (fixed island mu) ---
-island_mu:128
-
 # --- PARAMETER<mu_modes[0,1]>[island_lambda]: number of children created per island evolution cycle (fixed island lambda) ---
+# --- PARAMETER<mu_modes<2>>[island_lambda_pct]: island lambda determined as a percentage of island_mu (proportional island lambda) ---
+# --- PARAMETER[migration_interval]: perform island migrations every 𝑒 generations ---
+
+mu_mode:1
+island_mu:128
 island_lambda:32
-
-# --- PARAMETER<mu_modes<2>[send_cap]: island lambda determined as a percentage of island_mu (proportional island lambda) ---
 island_lambda_pct:0.20
-
-# --- PARAMETER[migration_interval]: perform island migrations every 𝑒 evaluations ---
 migration_interval:1
 
 ##### END SUBSECTION: parallel parameters #####
 
 ##### BEGIN SUBSECTION: experimental parameters #####
-
 # --- PARAMETER[ea_mode]: benchmark vs. experimental mode(s)
+
 ea_mode:1
 
 ##### END SUBSECTION: experimental parameters #####
@@ -57,24 +53,19 @@ ea_mode:1
 ################################
 
 # --- PARAMETER[loglevel]: verbosity of stdout logging [2(standard)..10(massive)] ---
-loglevel:2
-
 # --- PARAMETER[seed]: seed for rng, use 0 to create new seed ---
-seed:0
-
 # --- PARAMETER[config_name]: display name for this configuration ---
-config_name:meta
-
 # --- PARAMETER[log_file]: configuration log file prefix ---
-log_file:meta
-
 # --- PARAMETER[stats_file]: prefix for statistics output files ---
-stats_file:meta
-
 # --- PARAMETER[topo_file]: prefix for second statistics output files ---
-topo_file:meta
-
 # --- PARAMETER[implementation_name]: display name for the ea implementation ---
+
+loglevel:2
+seed:0
+config_name:meta
+log_file:meta
+stats_file:meta
+topo_file:meta
 implementation_name:meta
 
 ####### END SECTION: logging #######
@@ -87,42 +78,31 @@ implementation_name:meta
 
 ##### BEGIN SUBSECTION: ea 𝑛 = 1 #####
 
-## ---- PARAMETER[ea_𝑛_name]: display name for this ea
-ea_1_name:solver
-
-## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum (𝑆𝑟𝑚𝑎𝑥)
-ea_1_runs:3
-
-## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
-ea_1_log_interval:50
-
-## ---- PARAMETER[ea_𝑛_population_log_interval]: verbose log every 𝑒 evaluations
-ea_1_population_log_interval:2500
-
 # TODO: merge these parameters into a per-objective multivalued collection
+# TODO: add termination criteria, etc. for each objective (merge parameters)
 
+## ---- PARAMETER[ea_𝑛_name]: display name for this ea
+## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum (𝑆𝑟𝑚𝑎𝑥)
+## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
+## ---- PARAMETER[ea_𝑛_population_log_interval]: verbose log every 𝑒 evaluations
 ## ---- PARAMETER[ea_1_max_evo_cycles]: terminate run at 𝑒 generations (𝑆𝑒𝑚𝑎𝑥)
-ea_1_max_evo_cycles:2500
-
-## ---- PARAMETER[ea_1_evo_termination]: aribtrary number to use in ea terminiation
-ea_1_evo_termination:0.05
-
+## ---- PARAMETER[ea_1_evo_termination]: aribtrary number to use in ea termination
 ## ---- PARAMETER[ea_1_max_fit_evals]: number of evaluations required for fitness
-ea_1_max_fit_evals:1
-
 ## ---- PARAMETER[ea_𝑛_mu]: population size
-ea_1_mu:1024
-
 ## ---- PARAMETER[ea_𝑛_lambda]: number of offspring created per evolution cycle
-ea_1_lambda:128
-
 ## ---- PARAMETER[ea_𝑛_mutation_rate]: number of offspring created per evolution cycle
-ea_1_mutation_rate:0.08
-
 ## ---- PARAMETER[ea_𝑛_o𝑘_name]:  use ea_𝑛_o𝑘 [0..𝑘] to define multiple objectives within each ea
 
-#TODO: add termination criteria, etc. for each objective (merge above parameters)
-
+ea_1_name:solver
+ea_1_runs:3
+ea_1_log_interval:50
+ea_1_population_log_interval:2500
+ea_1_max_evo_cycles:2500
+ea_1_evo_termination:0.05
+ea_1_max_fit_evals:1
+ea_1_mu:1024
+ea_1_lambda:128
+ea_1_mutation_rate:0.08
 ## ea_1_o1_name:placeholder_o1
 ## ea_1_o1_name:placeholder_o2
 

@@ -446,7 +446,7 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
     }
     
     // 𝛭𝑟𝑚𝑎𝑥 * ((𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥)) iterations
-    
+    // 
 }
 
 

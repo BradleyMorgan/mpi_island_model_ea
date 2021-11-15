@@ -81,6 +81,7 @@ objective<solution>::begin(objective_run &run, e &solver) {
         solver.variant.isle.id, this->id, this->run.id);
 
     this->run.begin();
+    this->cycle.id = 0;
     this->run.eval.id = 1;
     this->population.clear();
     

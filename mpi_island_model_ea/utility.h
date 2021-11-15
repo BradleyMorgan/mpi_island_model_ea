@@ -66,6 +66,8 @@ double offset_rastrigin(std::array<double, DIM> x, std::array<double, DIM> &offs
     // A=10
     // x[i] ∈ [-5.12,5.12]
     
+    // use a simulated benchmark time?
+    
     double sum = 10 * DIM;
     
     for (unsigned int i = 0; i < DIM; i++) {

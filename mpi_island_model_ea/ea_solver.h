@@ -404,7 +404,7 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
 // TODO: number of runs is for statistical certainty ---
 
 void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = config::ea_1_runs, int cycles = config::ea_1_max_evo_cycles) {
-    
+
     LOG(6, 0, 0, "BEGIN ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.run.eval.id, meta.topologies.run.id, meta.topologies.run.eval.id);
     
     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 nested iterations ...

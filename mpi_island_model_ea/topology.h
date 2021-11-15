@@ -371,6 +371,7 @@ void topology::distribute(island &isle) {
 template<> template<typename e> void objective<topology>::begin(objective_run &run, e &meta) {
     
     this->run.begin();
+    this->cycle.id = 0;
     this->run.eval.id = 0;
     this->population.clear();
     this->population.resize(this->mu);
