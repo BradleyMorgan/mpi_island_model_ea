@@ -337,8 +337,8 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         t.rounds++;
         t.total_migration_time += t.round_fitness;
         t.round_fitness = t.round_fitness * -1;
-        t.fitness = (t.total_migration_time / t.rounds) * -1;
-        
+        //t.fitness = (t.total_migration_time / t.rounds) * -1;
+        t.fitness += (MPI_Wtime() - meta.topologies.run.eval.stats.eval_start) * -1;
         meta.topologies.run.eval.stats.topo_migrate_time += t.total_migration_time;
         
     }
@@ -409,6 +409,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 nested iterations ...
     
+    solver.start = MPI_Wtime();
+    
     for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
      
         solver.solutions.begin(solver.solutions.run, solver);
@@ -430,11 +432,13 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
                 
         }
 
-        t.fitness = (t.total_migration_time / t.rounds) * -1;
+        //t.fitness = (t.total_migration_time / t.rounds) * -1;
         
         solver.solutions.end(solver.solutions.run, solver);
         
     }
+    
+    solver.duration = MPI_Wtime() - solver.start;
     
     LOG(6, 0, 0, "END ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
     

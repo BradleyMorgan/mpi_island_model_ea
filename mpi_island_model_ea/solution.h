@@ -106,7 +106,8 @@ void objective<solution>::begin(evolution_cycle &cycle, e &solver) {
     LOG(3, 0, 0, "BEGIN ISLAND %d SOLVER OBJECTIVE %d EVOLUTION CYCLE %d\r\n", \
         solver.variant.isle.id, this->id, this->cycle.id);
     
-    this->run.eval.begin();
+    this->cycle.begin();
+    //this->run.eval.begin();
 
 }
 
@@ -172,7 +173,8 @@ void objective<solution>::end(evolution_cycle &cycle, e &solver) {
     LOG(3, 0, 0, "END ISLAND %d SOLVER OBJECTIVE %d EVOLUTION CYCLE %d -> ",
         solver.variant.isle.id, this->id, this->cycle.id);
     
-    this->run.eval.end();
+    this->cycle.end();
+    //this->run.eval.end();
 
 }
 

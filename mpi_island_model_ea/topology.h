@@ -391,6 +391,8 @@ template<> template<typename e> void objective<topology>::begin(objective_run &r
 
 template<> template<typename e> void objective<topology>::begin(evolution_cycle &cycle, e &meta) {
     
+    this->cycle.begin();
+    
     this->log_begin(cycle, meta);
     
 }
@@ -436,7 +438,9 @@ template<> template<typename e> void objective<topology>::end(objective_run &run
 //
 
 template<> template<typename e> void objective<topology>::end(evolution_cycle &cycle, e &meta) {
-        
+    
+    this->cycle.end();
+    
     this->log_end(cycle, meta);
     
 }
@@ -452,6 +456,8 @@ template<> template<typename e> void objective<topology>::end(objective_eval &ev
     LOG(3, 0, 0, "END ISLAND %d META objective<topology> %d EVAL %d -> ", meta.variant.isle.id, this->id, this->run.eval.id);
     
     this->run.eval.end();
+    
+    log_end(eval, meta);
     
 }
 

@@ -354,6 +354,8 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
     
     // 𝛭𝑟𝑚𝑎𝑥 iterations ...
     
+    meta.start = MPI_Wtime();
+    
     for(meta.topologies.run.id = 1; meta.topologies.run.id <= meta.topologies.max_runs; meta.topologies.run.id++) {
         
         //MARK: solver ea n runs ... each time it runs n gens which depends on (for a max_eval limit ...
@@ -444,6 +446,8 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
         meta.topologies.end(meta.topologies.run, meta);
         
     }
+    
+    meta.duration = MPI_Wtime() - meta.start;
     
     // 𝛭𝑟𝑚𝑎𝑥 * ((𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥)) iterations
     // 

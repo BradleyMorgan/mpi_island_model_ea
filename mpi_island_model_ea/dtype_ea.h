@@ -115,10 +115,10 @@ struct ea {
     ea_run run;
     ea_variant variant;
     
-    double start = 0;
-    double duration = 0;
-    double init_start = 0;
-    double init_duration = 0;
+    double start = 0.0;
+    double duration = 0.0;
+    double init_start = 0.0;
+    double init_duration = 0.0;
     
     // TODO: generalize collection type to store multiple objectives
     

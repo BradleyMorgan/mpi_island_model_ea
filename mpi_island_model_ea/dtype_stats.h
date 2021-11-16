@@ -111,14 +111,13 @@ struct rstats {
 struct ea_eval {
   
     int id;
-    double start;
     estats stats;
   
     ea_eval(): id(0) {};
     
     void begin() {
         LOG(3, 0, 0, "BEGIN EA EVAL %d -> ", this->id+1);
-        this->start = MPI_Wtime();
+        this->stats.eval_start = MPI_Wtime();
     }
     
     void end() {
@@ -138,7 +137,6 @@ struct ea_eval {
 struct ea_run {
     
     int id;
-    double start;
     rstats stats;
     ea_eval eval;
   
@@ -146,13 +144,14 @@ struct ea_run {
     
     void begin() {
         LOG(3, 0, 0, "BEGIN EA RUN %d -> ", this->id);
-        this->start = MPI_Wtime();
+        this->stats.run_duration = 0.0;
+        this->stats.run_start = MPI_Wtime();
     }
     
     void end() {
         LOG(3, 0, 0, "END EA RUN %d\r\n", this->id);
         double run_end = MPI_Wtime();
-        this->stats.run_duration = run_end - this->start;
+        this->stats.run_duration = run_end - this->stats.run_start;
     }
     
 };
@@ -164,20 +163,21 @@ struct ea_run {
 struct objective_eval {
   
     int id = 0;
-    double start;
     estats stats;
     
     objective_eval(): id(0) {};
     
     void begin() {
         LOG(3, 0, 0, "BEGIN OBJECTIVE EVAL %d\r\n", this->id);
-        this->start=MPI_Wtime();
+        //this->stats.init();
+        this->stats.eval_duration = 0.0;
+        this->stats.eval_start = MPI_Wtime();
     }
     
     void end() {
         LOG(3, 0, 0, "END OBJECTIVE EVAL %d\r\n", this->id);
         double eval_end = MPI_Wtime();
-        this->stats.eval_duration = eval_end - this->start;
+        this->stats.eval_duration = eval_end - this->stats.eval_start;
     }
     
 };
@@ -190,23 +190,22 @@ struct objective_run {
     
     int id = 0;
     
-    double start;
     rstats stats;
     objective_eval eval;
 
-    
     objective_run(): id(0) {};
     
     void begin() {
         LOG(3, 0, 0, "BEGIN OBJECTIVE RUN %d -> ", this->id);
-        this->start = MPI_Wtime();
         this->eval.stats.init();
+        this->stats.run_duration = 0.0;
+        this->stats.run_start = MPI_Wtime();
     }
     
     void end() {
         LOG(3, 0, 0, "END OBJECTIVE RUN %d\r\n", this->id);
         double run_end = MPI_Wtime();
-        this->stats.run_duration = run_end - this->start;
+        this->stats.run_duration = run_end - this->stats.run_start;
     }
     
 };
@@ -214,6 +213,21 @@ struct objective_run {
 struct evolution_cycle {
     
     int id = 0;
+    double start = 0.0;
+    double duration = 0.0;
+    
+    void begin() {
+        LOG(3, 0, 0, "BEGIN OBJECTIVE CYCLE %d -> ", this->id);
+        this->duration = 0.0;
+        this->start = MPI_Wtime();
+    }
+    
+    void end() {
+        LOG(3, 0, 0, "END OBJECTIVE CYCLE %d\r\n", this->id);
+        double cycle_end = MPI_Wtime();
+        this->duration = cycle_end - this->start;
+    }
+    
     
 };
 

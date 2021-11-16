@@ -296,13 +296,13 @@ void config::load(const char *input, const int world_size, const int world_rank)
         //sprintf(config::solution_fname, "%s/%s_solution_%d_%ld.txt", config::stats_subpath, config::items["stats_file"].c_str(), world_size, time(0));
         //config::solution_out = fopen(config::solution_fname, "w");
         
-        fprintf(config::sol_stats_out, "run,cycle,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,eval_duration\r\n");
+        fprintf(config::sol_stats_out, "run,cycle,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,ea_elapsed_t,run_elapsed_t,cycle_elapsed_t,eval_elapsed_t\r\n");
         
-        fprintf(config::topo_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
+        fprintf(config::topo_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness, ea_elapsed_t, run_elapsed_t, cycle_elapsed_t, eval_elapsed_t\r\n");
         
-        fprintf(config::topo_run_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness\r\n");
+        fprintf(config::topo_run_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness, ea_elapsed_t, run_elapsed_t, cycle_elapsed_t, eval_elapsed_t\r\n");
         
-        fprintf(config::run_stats_out, "run,cycle,eval,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_gather_time,total_migration_time,run_duration,init_duration,world_size,subpopulation_size\r\n");
+        fprintf(config::run_stats_out, "run,cycle,eval,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_gather_time,total_migration_time,run_duration,init_duration,world_size,subpopulation_size,ea_elapsed_t, run_elapsed_t,cycle_elapsed_t,eval_elapsed_t\r\n\r\n");
         
         fprintf(config::solpop_out, "run,cycle,eval,id,origin,locale,parent1,parent2,pselected,survival,10e5_fit_group,10e5_fit_count,10e4_fit_group,10e4_fit_count,10e3_fit_group,10e3_fit_count,fitness,selection_dist,migration_count,visas,genes\r\n");
         
