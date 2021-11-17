@@ -440,7 +440,7 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             
             solver.solutions.end(solver.solutions.cycle, solver);
                 
-            t.fitness -= solver.solutions.cycle.duration;
+            t.fitness = (MPI_Wtime() - solver.start) * -1;
             t.total_cycle_time += solver.solutions.cycle.duration;
             t.avg_cycle_time = t.total_cycle_time / meta.topologies.cycle.id;
             
@@ -454,7 +454,7 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     solver.duration = MPI_Wtime() - solver.start;
     
-    t.fitness = t.aggregate_run_fitness / runs;
+    t.fitness = solver.duration * -1;
     
     meta.topologies.log_stats(meta.topologies.run.eval, solver, meta, t);
     
