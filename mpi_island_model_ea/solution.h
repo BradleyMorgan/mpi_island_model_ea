@@ -213,10 +213,10 @@ void objective<solution>::log_begin(objective_run &run, e &solver) {
     
     if(solver.variant.isle.id != 0 || this->run.id == 0) { return; }
     
-    LOG(2, solver.variant.isle.id, 0, "%5s %6s %6s %16s %16s %16s %16s %16s %16s"
+    LOG(2, solver.variant.isle.id, 0, "%5s %6s %6s %16s %16s %16s %16s %16s %16s %16s %16s %16s"
         "%16s %16s %16s\r\n", "r", "c", "e", "avg_fit", "lbest_fit", "gbest_fit",
         "avg_lbest", "avg_gbest", "avg_scat_t", "avg_gathr_t", "avg_migr",
-        "eval_t");
+        "ea_t", "run_t", "cycle_t", "eval_t");
     
 }
 
