@@ -96,7 +96,7 @@ implementation_name:meta
 ea_1_name:solver
 ea_1_runs:3
 ea_1_log_interval:50
-ea_1_population_log_interval:2500
+ea_1_population_log_interval:500
 ea_1_max_evo_cycles:2500
 ea_1_evo_termination:0.05
 ea_1_max_fit_evals:1

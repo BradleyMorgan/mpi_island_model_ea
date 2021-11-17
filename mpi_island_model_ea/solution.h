@@ -148,9 +148,9 @@ void objective<solution>::end(objective_run &run, e &solver) {
     LOG(3, 0, 0, "END ISLAND %d SOLVER OBJECTIVE %d RUN %d\r\n\r\n", \
         solver.variant.isle.id, this->id, this->run.id);
     
-    this->log_end(run, solver);
-    
     this->run.end();
+    
+    this->log_end(run, solver);
 
     if(solver.variant.isle.id == 0) {
         solver.offsets = generate_offsets(-2.5, 2.5, .5);
@@ -213,10 +213,7 @@ void objective<solution>::log_begin(objective_run &run, e &solver) {
     
     if(solver.variant.isle.id != 0 || this->run.id == 0) { return; }
     
-    LOG(2, solver.variant.isle.id, 0, "%5s %6s %6s %16s %16s %16s %16s %16s %16s %16s %16s %16s"
-        "%16s %16s %16s\r\n", "r", "c", "e", "avg_fit", "lbest_fit", "gbest_fit",
-        "avg_lbest", "avg_gbest", "avg_scat_t", "avg_gathr_t", "avg_migr",
-        "ea_t", "run_t", "cycle_t", "eval_t");
+    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n%5s %6s %6s %16s %16s %16s %16s %16s %7s %16s %7s %16s %16s %16s %16s %16s %16s %16s %16s", "r", "c", "e", "avg_fit", "lbest_fit", "gbest_fit", "avg_lbest", "avg_gbest", "topo_id", "topo_fit", "topo_sz", "avg_scat_t", "avg_gathr_t", "avg_migr", "ea_t", "run_t", "cycle_t", "avg_cycle_t", "eval_t");
     
 }
 
@@ -257,8 +254,11 @@ void objective<solution>::log_end(objective_run &run, e &solver) {
 
     if(solver.variant.isle.id != 0 || this->run.id == 0) { return; }
 
+    double ea_elapsed = MPI_Wtime() - solver.start;
+    double avg_cycle_time = solver.solutions.run.stats.run_duration / solver.solutions.cycle.id;
+    
     std::fprintf(config::run_stats_out, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,"
-        "%d,%f,%f,%f,%f\r\n",
+        "%d,%f,%f,%f,%f,%f\r\n",
                  solver.solutions.run.id,
                  solver.solutions.cycle.id,
                  solver.solutions.run.eval.id,
@@ -272,10 +272,11 @@ void objective<solution>::log_end(objective_run &run, e &solver) {
                  solver.init_duration,
                  solver.variant.islands,
                  solver.variant.island_size,
-                 solver.duration,
-                 solver.run.stats.run_duration,
+                 ea_elapsed,
+                 solver.solutions.run.stats.run_duration,
                  solver.solutions.cycle.duration,
-                 solver.run.eval.stats.eval_duration);
+                 avg_cycle_time,
+                 solver.solutions.run.eval.stats.eval_duration);
 
     fflush(config::run_stats_out);
 

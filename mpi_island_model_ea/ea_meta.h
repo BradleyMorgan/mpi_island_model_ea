@@ -374,6 +374,10 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
        
             // 𝛭𝜇 iterations ...
             
+            // priming run to mitigate observed dominance of the initial evaluation
+            
+            solver_prime(meta, solver, meta.topologies.population[0], config::ea_2_max_fit_runs, config::ea_1_log_interval - 1);
+            
             for(int i=0; i<meta.topologies.mu; i++) {
 
                 // MARK: solver will execute topologies.mu * passed_run_value * topologies_max_fit evals

@@ -75,8 +75,13 @@ struct topology {
     
     double fitness = 0.0;
     double round_fitness = 0.0;
+    double avg_cycle_time = 0.0;
+    double total_cycle_time = 0.0;
+    //double avg_migration_time = 0.0;
     double total_migration_time = 0.0;
     double selection_distribution = 0.0;
+    double aggregate_run_fitness = 0.0;
+    
     
     // an array of @channel{} describing the full context MPI_Send() and MPI_Recv()
     // operations forms the mpi-suitable topology representation

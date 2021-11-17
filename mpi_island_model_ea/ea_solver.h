@@ -274,6 +274,8 @@ void solution_scatter(ea_solver &solver) {
 
     LOG(4, 0, 0, "\r\nISLAND %d of %d SCATTER END: received %lu solutions average fitness %f\r\n", solver.variant.isle.id, solver.variant.islands, solver.variant.isle.population.size(), solver.variant.isle.metrics.value.average_fitness);
 
+    // consider a reduce a gather operation to make measurements more course
+    
     MPI_Reduce(&scatter_time, &solver.solutions.run.eval.stats.total_scatter_time, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
 
     solver.solutions.run.eval.stats.total_scatter_time += scatter_time;
@@ -320,11 +322,12 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         
         LOG(8, 0, 0, "migrate start = %3.10f, migrate end = %3.10f, migrate time = %3.10f\r\n", migrate_start, migrate_end, migrate_time);
         
-        solver.solutions.run.eval.stats.total_migrate_time += migrate_time;
-     
         // aggregate the migration time from each island into the topology fitness ...
         
         MPI_Reduce(&migrate_time, &t.round_fitness, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
+        
+        solver.solutions.run.eval.stats.total_migrate_time += t.round_fitness;
+        t.total_migration_time += t.round_fitness;
         
     }
 
@@ -335,15 +338,14 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
     if(solver.variant.isle.id == 0) {
         
         t.rounds++;
-        t.total_migration_time += t.round_fitness;
         t.round_fitness = t.round_fitness * -1;
+        
         //t.fitness = (t.total_migration_time / t.rounds) * -1;
         //t.fitness += (MPI_Wtime() - meta.topologies.run.eval.stats.eval_start) * -1;
-        meta.topologies.run.eval.stats.topo_migrate_time += t.total_migration_time;
         
     }
     
-    LOG(8, solver.variant.isle.id, 0, "rounds=%d, total_time=%013.10f, round_fit=%013.10f, fit=%013.10f\r\n", t.rounds, t.total_migration_time, t.round_fitness, t.fitness);
+    LOG(8, solver.variant.isle.id, 0, "rounds=%d, total_time=%013.10f, round_fit=%013.10f, fit=%013.10f\r\n", t.rounds, solver.solutions.run.eval.stats.total_migrate_time, t.round_fitness, t.fitness);
     
     // output for various intervals ...
     
@@ -360,7 +362,11 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         double gather_end = MPI_Wtime();
         double gather_time = gather_end - gather_start;
         
-        solver.solutions.run.eval.stats.total_gather_time += gather_time;
+        //solver.solutions.run.eval.stats.total_gather_time += gather_time;
+        
+        // aggregate the gather time from each island into the topology fitness ...
+        
+        MPI_Reduce(&gather_time, &solver.solutions.run.eval.stats.total_gather_time, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
         
         LOG(4, 0, 0, "\r\nISLAND %d of %d GATHER END: %lu solutions from %d islands = (%d / %d) = island_mu = %d\r\n", solver.variant.isle.id, solver.variant.islands, solver.solutions.population.size(), solver.variant.islands, solver.solutions.mu, solver.variant.islands, config::island_mu);
         
@@ -379,16 +385,18 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         
     }
     
-    if(solver.solutions.cycle.id%config::ea_2_log_interval == 0) {
-        
-        LOG(5, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
-        
-        if(solver.variant.isle.id == 0) {
-            //log_fn_topology_stats(solver, meta, t);
-            meta.topologies.log_stats(meta.topologies.run.eval, solver, meta, t);
-        }
-        
-    }
+//    if(solver.solutions.cycle.id%config::ea_2_log_interval == 0) {
+//
+//        LOG(5, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);
+//
+//        if(solver.variant.isle.id == 0) {
+//            //log_fn_topology_stats(solver, meta, t);
+//            t.aggregate_run_fitness += t.fitness;
+//            t.fitness = t.aggregate_run_fitness / solver.solutions.run.id;
+//            meta.topologies.log_stats(meta.topologies.run.eval, solver, meta, t);
+//        }
+//
+//    }
     
     if(solver.solutions.cycle.id%config::ea_1_population_log_interval == 0) {
         
@@ -420,6 +428,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
         solver.solutions.populate(solver, solution_populate);
         solver.solutions.distribute(solver, solution_scatter);
         
+        t.fitness = 0.0;
+        
         t.apply(solver.variant.isle, t);
         
         for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {
@@ -431,18 +441,47 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             solver.solutions.end(solver.solutions.cycle, solver);
                 
             t.fitness -= solver.solutions.cycle.duration;
+            t.total_cycle_time += solver.solutions.cycle.duration;
+            t.avg_cycle_time = t.total_cycle_time / meta.topologies.cycle.id;
             
         }
 
+        t.aggregate_run_fitness += t.fitness;
+        
         solver.solutions.end(solver.solutions.run, solver);
         
     }
     
     solver.duration = MPI_Wtime() - solver.start;
     
+    t.fitness = t.aggregate_run_fitness / runs;
+    
+    meta.topologies.log_stats(meta.topologies.run.eval, solver, meta, t);
+    
     LOG(6, 0, 0, "END ISLAND %d objective<solutions> EVOLUTION (objective<topology> %d) AT SOLVER[%d,%d] META[%d,%d]\r\n", solver.variant.isle.id, t.id, solver.solutions.run.id, solver.solutions.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
     
 }
 
+
+void solver_prime(ea_meta &meta, ea_solver &solver, topology &t, int runs = config::ea_1_runs, int cycles = config::ea_1_max_evo_cycles) {
+    
+    for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
+     
+        solver.solutions.populate(solver, solution_populate);
+        solver.solutions.distribute(solver, solution_scatter);
+        
+        t.apply(solver.variant.isle, t);
+        
+        for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {
+
+            solver.solutions.evolve(solver, meta, t, solutions_evolve);
+            
+        }
+        
+    }
+    
+    t.rounds = 0;
+    
+}
 
 #endif /* solver_h */
