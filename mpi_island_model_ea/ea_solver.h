@@ -430,6 +430,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
         
         t.fitness = 0.0;
         
+        double topo_start = MPI_Wtime();
+        
         t.apply(solver.variant.isle, t);
         
         for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {
@@ -440,7 +442,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             
             solver.solutions.end(solver.solutions.cycle, solver);
                 
-            t.fitness = (MPI_Wtime() - solver.start) * -1;
+            t.fitness -= MPI_Wtime() - topo_start;
+            
             t.total_cycle_time += solver.solutions.cycle.duration;
             t.avg_cycle_time = t.total_cycle_time / meta.topologies.cycle.id;
             
@@ -451,10 +454,6 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
         solver.solutions.end(solver.solutions.run, solver);
         
     }
-    
-    solver.duration = MPI_Wtime() - solver.start;
-    
-    t.fitness = solver.duration * -1;
     
     meta.topologies.log_stats(meta.topologies.run.eval, solver, meta, t);
     
