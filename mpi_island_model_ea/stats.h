@@ -198,7 +198,7 @@ void log_fn_topology_stats(ea_solver &solver, ea_meta &meta, topology &t) {
     
     std::fprintf(config::topo_stats_out, "%d," "%d," "%d," "%3.10f," "%d," "%d," "%d," "%3.10f," "%3.10f," "%3.10f," "%3.10f,"     "%3.10f," , meta.topologies.run.id, meta.topologies.cycle.id, meta.topologies.run.eval.id, average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, meta.topologies.run.eval.stats.local_best_topo_fitness,  meta.topologies.run.eval.stats.global_best_topo_fitness, meta.topologies.run.eval.stats.average_local_best_topo_fitness);
 
-    t.total_cycle_time = solver.duration;
+    //t.total_cycle_time = solver.duration;
     t.avg_cycle_time = t.total_cycle_time / (meta.topologies.cycle.id + 1);
     
     double avg_migration_time = solver.solutions.run.eval.stats.total_migrate_time / solver.solutions.cycle.id + 1;
