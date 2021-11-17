@@ -61,6 +61,7 @@ namespace config {
     int ea_2_mu = 0;
     int ea_2_lambda = 0;
     int ea_2_max_evo_cycles = 0;
+    int ea_2_max_fit_runs = 0;
     int ea_2_max_fit_evals = 0;
     int ea_2_log_interval = 0;
     int ea_2_population_log_interval = 0;
@@ -143,6 +144,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::ea_2_mutation_rate = stod(config::items["ea_2_mutation_rate"]);
     config::ea_2_max_evo_cycles = stoi(config::items["ea_2_max_evo_cycles"]);
     config::ea_2_max_fit_evals = stoi(config::items["ea_2_max_fit_evals"]);
+    config::ea_2_max_fit_runs = stoi(config::items["ea_2_max_fit_runs"]);
     config::ea_2_log_interval = stoi(config::items["ea_2_log_interval"]);
     config::ea_2_population_log_interval = stoi(config::items["ea_2_population_log_interval"]);
     
@@ -298,9 +300,9 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         fprintf(config::sol_stats_out, "run,cycle,eval,average_fitness,local_best_fitness,global_best_fitness,average_local_best_fitness,average_global_best_fitness,average_scatter_time,average_gather_time,average_migrate_time,init_duration,ea_elapsed_t,run_elapsed_t,cycle_elapsed_t,eval_elapsed_t\r\n");
         
-        fprintf(config::topo_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness, ea_elapsed_t, run_elapsed_t, cycle_elapsed_t, eval_elapsed_t\r\n");
+        fprintf(config::topo_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness, ea_elapsed_t, run_elapsed_t, cycle_elapsed_t, eval_elapsed_t, migration_t\r\n");
         
-        fprintf(config::topo_run_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness, ea_elapsed_t, run_elapsed_t, cycle_elapsed_t, eval_elapsed_t\r\n");
+        fprintf(config::topo_run_stats_out, "run, cycle, eval, average_topo_fitness, global_best_topo_id, global_best_topo_rounds, global_best_topo_channels, global_best_topo_round_fitness, global_best_topo_fitness1, local_best_topo_fitness, global_best_topo_fitness2, average_local_best_topo_fitness, average_global_best_topo_fitness, t_id, t_rounds, t_channels, t_fitness, ea_elapsed_t, run_elapsed_t, cycle_elapsed_t, eval_elapsed_t, migration_t\r\n");
         
         fprintf(config::run_stats_out, "run,cycle,eval,global_best_fitness,average_local_best_fitness,average_global_best_fitness,total_scatter_time,total_gather_time,total_migration_time,run_duration,init_duration,world_size,subpopulation_size,ea_elapsed_t, run_elapsed_t,cycle_elapsed_t,eval_elapsed_t\r\n\r\n");
         

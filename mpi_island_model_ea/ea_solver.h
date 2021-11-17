@@ -338,7 +338,7 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         t.total_migration_time += t.round_fitness;
         t.round_fitness = t.round_fitness * -1;
         //t.fitness = (t.total_migration_time / t.rounds) * -1;
-        t.fitness += (MPI_Wtime() - meta.topologies.run.eval.stats.eval_start) * -1;
+        //t.fitness += (MPI_Wtime() - meta.topologies.run.eval.stats.eval_start) * -1;
         meta.topologies.run.eval.stats.topo_migrate_time += t.total_migration_time;
         
     }
@@ -430,10 +430,10 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             
             solver.solutions.end(solver.solutions.cycle, solver);
                 
+            t.fitness -= solver.solutions.cycle.duration;
+            
         }
 
-        //t.fitness = (t.total_migration_time / t.rounds) * -1;
-        
         solver.solutions.end(solver.solutions.run, solver);
         
     }

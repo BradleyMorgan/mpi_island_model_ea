@@ -148,17 +148,19 @@ void log_fn_topology_stats(ea_solver &solver, ea_meta &meta, topology &t) {
     double cycle_elapsed = meta.topologies.cycle.start == 0.0 ? 0.0 : MPI_Wtime() - meta.topologies.cycle.start;
     double eval_elapsed = MPI_Wtime() - meta.topologies.run.eval.stats.eval_start;
     
+    int max_rounds = config::ea_2_max_fit_runs * config::ea_2_max_fit_evals;
+    
     char msg[24];
     
     sprintf(msg, config::ea_mode > 0 ? "EXPERIMENTAL" : "BENCHMARK");
     
-    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n    --- META GENOME %d (%s) EVALUATION %d of %d AT RUN %d CYCLE %d (SOLVER[%d,%d]) migrations = %d | duration = %f | ", t.id, msg, t.rounds, meta.topologies.max_fit_evals, meta.topologies.run.id, meta.topologies.cycle.id, solver.solutions.run.id, solver.solutions.run.eval.id, t.rounds, meta.topologies.run.eval.stats.eval_duration);
+    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n    --- META GENOME %d (%s) EVALUATION %d of %d AT RUN %d CYCLE %d (SOLVER[%d,%d]) migrations = %d | duration = %f | ", t.id, msg, t.rounds, max_rounds, meta.topologies.run.id, meta.topologies.cycle.id, solver.solutions.run.id, solver.solutions.run.eval.id, t.rounds, eval_elapsed);
     
     LOG(3, 0, 0, "TOPOLOGY INTERVAL STATS (run %d, cycle %d, eval %d): topologies size %lu, mem[0] fit = %f \r\n", meta.topologies.run.id, meta.topologies.cycle.id, meta.topologies.run.eval.id, meta.topologies.population.size(), meta.topologies.population[0].fitness);
     
     std::vector<topology> filtered_top;
     
-    std::copy_if( meta.topologies.population.begin(), meta.topologies.population.end(), std::back_inserter(filtered_top), [](const topology &item) { return item.fitness != 0.00000000000 && item.rounds >= config::ea_2_max_fit_evals; });
+    std::copy_if( meta.topologies.population.begin(), meta.topologies.population.end(), std::back_inserter(filtered_top), [&](const topology &item) { return item.fitness != 0.00000000000 && item.rounds >= max_rounds; });
     std::sort(filtered_top.begin(), filtered_top.end(), compare_fitness<topology>);
     std::reverse(filtered_top.begin(), filtered_top.end());
     
@@ -196,8 +198,8 @@ void log_fn_topology_stats(ea_solver &solver, ea_meta &meta, topology &t) {
     
     std::fprintf(config::topo_stats_out, "%d," "%d," "%d," "%3.10f," "%d," "%d," "%d," "%3.10f," "%3.10f," "%3.10f," "%3.10f,"     "%3.10f," , meta.topologies.run.id, meta.topologies.cycle.id, meta.topologies.run.eval.id, average_topo_fitness, filtered_top[0].id,  filtered_top[0].rounds, filtered_top[0].channel_count,  filtered_top[0].round_fitness,  filtered_top[0].fitness, meta.topologies.run.eval.stats.local_best_topo_fitness,  meta.topologies.run.eval.stats.global_best_topo_fitness, meta.topologies.run.eval.stats.average_local_best_topo_fitness);
 
-    std::fprintf(config::topo_stats_out, "%3.10f," "%d," "%d," "%d," "%3.10f," "%3.10f," "%3.10f," "%3.10f," "%3.10f\r\n",
-                 meta.topologies.run.eval.stats.average_global_best_topo_fitness, t.id, t.rounds, t.channel_count, t.fitness, ea_elapsed, run_elapsed, cycle_elapsed, eval_elapsed);
+    std::fprintf(config::topo_stats_out, "%3.10f," "%d," "%d," "%d," "%3.10f," "%3.10f," "%3.10f," "%3.10f," "%3.10f," "%3.10f\r\n",
+                 meta.topologies.run.eval.stats.average_global_best_topo_fitness, t.id, t.rounds, t.channel_count, t.fitness, ea_elapsed, run_elapsed, cycle_elapsed, eval_elapsed, t.total_migration_time);
         
     std::fflush(config::topo_stats_out);
                  
@@ -216,7 +218,7 @@ void log_fn_topology_stats(ea_solver &solver, ea_meta &meta, topology &t) {
     LOG(3, 0, 0, "%s"   "%3.10f,"                           "%s,"  "%3.10f,"                                    "%3.10f,"                                   "%s",
                  BLU, meta.topologies.run.eval.stats.global_best_topo_fitness, YEL, meta.topologies.run.eval.stats.average_local_best_topo_fitness, meta.topologies.run.eval.stats.average_global_best_topo_fitness, RESET);
     
-    LOG(2, 0, 0, "\r\n\r\n *** TOPOLOGY %d INTERVAL STATS RUNT=%16.11f, CYCLET=%16.11f, EVALT=%16.11f, RUNET=%16.11f, CYCLEET=%16.11f, EVALET=%16.11f *** \r\n\r\n", t.id, meta.topologies.run.stats.run_duration, meta.topologies.cycle.duration, meta.topologies.run.eval.stats.eval_duration, run_elapsed,  cycle_elapsed, eval_elapsed);
+    LOG(3, 0, 0, "\r\n\r\n *** TOPOLOGY %d INTERVAL STATS RUNT=%16.11f, CYCLET=%16.11f, EVALT=%16.11f, RUNET=%16.11f, CYCLEET=%16.11f, EVALET=%16.11f *** \r\n\r\n", t.id, meta.topologies.run.stats.run_duration, meta.topologies.cycle.duration, meta.topologies.run.eval.stats.eval_duration, run_elapsed,  cycle_elapsed, eval_elapsed);
     
 }
 
@@ -279,7 +281,7 @@ void log_fn_cycle_stats(ea_solver &solver, ea_meta &meta, topology &t) {
     
     LOG(2, 0, 0, "\r\n%5d," "%6d," "%6d," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f,""%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f", solver.solutions.run.id, solver.solutions.cycle.id, solver.solutions.run.eval.id, average_fitness, solver.solutions.run.eval.stats.local_best_fitness, solver.solutions.run.eval.stats.global_best_fitness, solver.solutions.run.eval.stats.average_local_best_fitness, solver.solutions.run.eval.stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, solver.duration, solver.solutions.run.stats.run_duration, solver.solutions.cycle.duration, solver.solutions.run.eval.stats.eval_duration);
     
-    LOG(2, 0, 0, "\r\n\r\n *** CYCLE %d STATS: RUNT=%f, CYCLET=%f, EVALT=%f, RUNET=%f, CYCLET=%f *** \r\n\r\n", solver.solutions.cycle.id, solver.solutions.run.stats.run_duration, solver.solutions.cycle.duration, solver.solutions.run.eval.stats.eval_duration, run_elapsed, cycle_elapsed);
+    LOG(3, 0, 0, "\r\n\r\n *** CYCLE %d STATS: RUNT=%f, CYCLET=%f, EVALT=%f, RUNET=%f, CYCLET=%f *** \r\n\r\n", solver.solutions.cycle.id, solver.solutions.run.stats.run_duration, solver.solutions.cycle.duration, solver.solutions.run.eval.stats.eval_duration, run_elapsed, cycle_elapsed);
     
 }
 

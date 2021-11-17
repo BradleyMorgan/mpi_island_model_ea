@@ -124,6 +124,7 @@ ea_2_lambda:8
 # 𝛭𝑒𝑚𝑎𝑥
 ea_2_max_evo_cycles:100
 
+ea_2_max_fit_runs:3
 ea_2_max_fit_evals:500
 ea_2_log_interval:500
 ea_2_population_log_interval:500

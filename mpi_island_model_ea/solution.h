@@ -258,7 +258,7 @@ void objective<solution>::log_end(objective_run &run, e &solver) {
     if(solver.variant.isle.id != 0 || this->run.id == 0) { return; }
 
     std::fprintf(config::run_stats_out, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,"
-        "%d\r\n",
+        "%d,%f,%f,%f,%f\r\n",
                  solver.solutions.run.id,
                  solver.solutions.cycle.id,
                  solver.solutions.run.eval.id,
@@ -271,7 +271,11 @@ void objective<solution>::log_end(objective_run &run, e &solver) {
                  solver.solutions.run.stats.run_duration,
                  solver.init_duration,
                  solver.variant.islands,
-                 solver.variant.island_size);
+                 solver.variant.island_size,
+                 solver.duration,
+                 solver.run.stats.run_duration,
+                 solver.solutions.cycle.duration,
+                 solver.run.eval.stats.eval_duration);
 
     fflush(config::run_stats_out);
 
