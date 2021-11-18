@@ -418,7 +418,7 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 nested iterations ...
     
-    if(t.id != 1) { t.fitness = 0.0; }
+    if(t.id != 1 || config::ea_mode == 0) { t.fitness = 0.0; }
     
     t.apply(solver.variant.isle, t);
     
