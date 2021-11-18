@@ -442,6 +442,12 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
                 
             t.fitness -= MPI_Wtime() - topo_start;
             
+            double sum_topo_fitness = 0.0;
+            
+            MPI_Reduce(&t.fitness, &sum_topo_fitness, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
+            
+            t.fitness = sum_topo_fitness;
+            
             t.total_cycle_time += solver.solutions.cycle.duration;
             t.avg_cycle_time = t.total_cycle_time / meta.topologies.cycle.id;
             

@@ -10,11 +10,11 @@ dim:10
 
 ##### BEGIN SUBSECTION: meta ea custom parameters #####
 
-# --- PARAMETER[sparsity]: maximum percentage of adjacency matrix to populate ---
+# --- PARAMETER[sparsity]: probability that a gene will be populated ---
 # --- PARAMETER[migration_cap]: maximum number of received population individuals per island ---
 # --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
 
-sparsity:0.07
+sparsity:0.09
 migration_cap:3
 send_cap:3
 
@@ -95,13 +95,13 @@ implementation_name:meta
 
 ea_1_name:solver
 ea_1_runs:3
-ea_1_log_interval:50
+ea_1_log_interval:100
 ea_1_population_log_interval:500
 ea_1_max_evo_cycles:2500
 ea_1_evo_termination:0.05
 ea_1_max_fit_evals:1
-ea_1_mu:1024
-ea_1_lambda:128
+ea_1_mu:512
+ea_1_lambda:64
 ea_1_mutation_rate:0.08
 ## ea_1_o1_name:placeholder_o1
 ## ea_1_o1_name:placeholder_o2
@@ -116,20 +116,20 @@ ea_2:topologies
 ea_2_runs:3
 
 #(𝛭𝜇)
-ea_2_mu:32
+ea_2_mu:16
 
 #(𝛭𝜆)
-ea_2_lambda:8
+ea_2_lambda:4
 
 # 𝛭𝑒𝑚𝑎𝑥
-ea_2_max_evo_cycles:100
+ea_2_max_evo_cycles:40
 
 ea_2_max_fit_runs:3
-ea_2_max_fit_evals:500
+ea_2_max_fit_evals:200
 ea_2_log_interval:500
 ea_2_population_log_interval:500
 ea_2_evo_termination:0.05
-ea_2_mutation_rate:0.10
+ea_2_mutation_rate:0.20
 ## ea_2_o1_name:placeholder1
 ## ea_2_o2_name:placeholder2
 
