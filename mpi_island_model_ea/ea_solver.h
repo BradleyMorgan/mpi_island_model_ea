@@ -372,6 +372,7 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         
     }
     
+    
     if(solver.solutions.cycle.id%config::ea_1_log_interval == 0 && solver.variant.isle.id == 0) {
         
         LOG(5, 0, 0, "population size %lu, member = %2.10f\r\n", solver.variant.isle.population.size(), solver.variant.isle.population[0].fitness);

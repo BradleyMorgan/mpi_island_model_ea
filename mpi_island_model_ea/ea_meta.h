@@ -279,7 +279,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
         meta.topologies.begin(meta.topologies.run.eval, meta);
       
-        solver_begin(meta, solver, *it, solver.solutions.max_runs, meta.topologies.max_fit_evals);
+        solver_begin(meta, solver, *it, config::ea_2_max_fit_runs, meta.topologies.max_fit_evals);
                 
         meta.topologies.end(meta.topologies.run.eval, meta);
         
