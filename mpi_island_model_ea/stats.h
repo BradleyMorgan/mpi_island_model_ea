@@ -208,7 +208,7 @@ void log_fn_topology_stats(ea_solver &solver, ea_meta &meta, topology &t) {
         
     std::fflush(config::topo_stats_out);
                  
-    LOG(2, 0, 0, "fitness=%f | channels=%d | migr_time=%f || global best=%d | channels=%d | fitness=%f\r\n\r\n", t.fitness, t.channel_count, solver.solutions.run.eval.stats.total_migrate_time, filtered_top[0].id, filtered_top[0].channel_count, filtered_top[0].fitness);
+    LOG(2, 0, 0, "fitness=%f | channels=%d | migr_time=%f | avg_fit=%f || global best=%d | channels=%d | fitness=%f\r\n\r\n", t.fitness, t.channel_count, solver.solutions.run.eval.stats.total_migrate_time, average_topo_fitness, filtered_top[0].id, filtered_top[0].channel_count, filtered_top[0].fitness);
     
     LOG(3, 0, 0, "\r\n\r\n%5s %9s %10s %13s %13s %13s", "t_id", "t_evals", "t_channels", "t_fitness", "t_mig_time", "sum_mig_time");
     

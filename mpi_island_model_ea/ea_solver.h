@@ -417,7 +417,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 nested iterations ...
     
-    t.fitness = 0.0;
+    if(t.id != 1) { t.fitness = 0.0; }
+    
     t.apply(solver.variant.isle, t);
     
     solver.start = MPI_Wtime();
@@ -425,9 +426,6 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
      
         solver.solutions.begin(solver.solutions.run, solver);
-        
-        meta.variant = solver.variant;
-        
         solver.solutions.populate(solver, solution_populate);
         solver.solutions.distribute(solver, solution_scatter);
         
@@ -440,7 +438,7 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             solver.solutions.evolve(solver, meta, t, solutions_evolve);
             
             solver.solutions.end(solver.solutions.cycle, solver);
-                
+            
             t.fitness -= MPI_Wtime() - topo_start;
             
             double sum_topo_fitness = 0.0;
@@ -454,11 +452,19 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             
         }
         
+        // early runs seem to get some sort of benefit, lack of process skew?
+        
+        if(t.id < 3) {
+            t.fitness -= MPI_Wtime() - solver.start;
+        }
+        
         t.aggregate_run_fitness += t.fitness;
         
         solver.solutions.end(solver.solutions.run, solver);
         
     }
+
+    solver.duration = MPI_Wtime() - solver.start;
     
     meta.topologies.log_stats(meta.topologies.run.eval, solver, meta, t);
     
@@ -471,7 +477,7 @@ void solver_prime(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     double topo_start = MPI_Wtime();
     
-    for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
+    for(int run = 1; run <= runs; run++) {
      
         solver.solutions.populate(solver, solution_populate);
         solver.solutions.distribute(solver, solution_scatter);
@@ -484,9 +490,16 @@ void solver_prime(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             
         }
         
+        t.fitness -= MPI_Wtime() - topo_start;
+        
+        double sum_topo_fitness = 0.0;
+        
+        MPI_Reduce(&t.fitness, &sum_topo_fitness, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
+        
+        t.fitness = sum_topo_fitness;
+        
     }
-    
-    t.fitness -= MPI_Wtime() - topo_start;
+     
     t.rounds = 0;
     
 }

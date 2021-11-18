@@ -15,8 +15,8 @@ dim:10
 # --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
 
 sparsity:0.09
-migration_cap:60
-send_cap:60
+migration_cap:40
+send_cap:20
 
 ##### END SUBSECTION: solver ea custom parameters #####
 
@@ -96,7 +96,7 @@ implementation_name:meta
 ea_1_name:solver
 ea_1_runs:3
 ea_1_log_interval:100
-ea_1_population_log_interval:500
+ea_1_population_log_interval:1000
 ea_1_max_evo_cycles:2500
 ea_1_evo_termination:0.05
 ea_1_max_fit_evals:1
@@ -124,10 +124,10 @@ ea_2_lambda:4
 # 𝛭𝑒𝑚𝑎𝑥
 ea_2_max_evo_cycles:40
 
-ea_2_max_fit_runs:3
-ea_2_max_fit_evals:200
-ea_2_log_interval:500
-ea_2_population_log_interval:500
+ea_2_max_fit_runs:2
+ea_2_max_fit_evals:500
+ea_2_log_interval:1000
+ea_2_population_log_interval:4000
 ea_2_evo_termination:0.05
 ea_2_mutation_rate:0.20
 ## ea_2_o1_name:placeholder1

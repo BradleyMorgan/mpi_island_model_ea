@@ -24,6 +24,8 @@ struct ea_meta : ea {
         this->variant = solver.variant;
         this->init_duration += (MPI_Wtime() - this->start);
         
+        this->variant = solver.variant;
+        
     }
     
     //void end(objective<topology> &obj) { obj.end(*this); }

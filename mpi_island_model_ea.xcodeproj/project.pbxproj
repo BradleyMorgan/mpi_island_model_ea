@@ -40,7 +40,6 @@
 		9A8A0AC324113D5300DBB5DB /* config.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.txt; sourceTree = "<group>"; };
 		9A9F8D112717DF3900B6CE5F /* dtype_stats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_stats.h; sourceTree = "<group>"; };
 		9A9F8D122717E23700B6CE5F /* dtype_ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_ea.h; sourceTree = "<group>"; };
-		9AA0392726A1D870003435AF /* csv2xlsx.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = csv2xlsx.py; sourceTree = "<group>"; };
 		9AA41B3226AA241B00312BB5 /* dtype_topology.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_topology.h; sourceTree = "<group>"; };
 		9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_heirarchy.h; sourceTree = "<group>"; };
 		9AA41B3426AA253200312BB5 /* dtype_solution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_solution.h; sourceTree = "<group>"; };
@@ -50,6 +49,7 @@
 		9AA7AC62271D1294004C20BD /* ea_solver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea_solver.h; sourceTree = "<group>"; };
 		9AA7AC63271D12A2004C20BD /* ea_meta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea_meta.h; sourceTree = "<group>"; };
 		9AB2C2DB27469B1D00CDE074 /* process_logs.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = process_logs.sh; path = scripts/process_logs.sh; sourceTree = "<group>"; };
+		9AB2C2DC2746A46000CDE074 /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
 		9AB97848261CA06B0099EB0B /* ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea.h; sourceTree = "<group>"; };
 		9AEEAED02432987B001DF574 /* stats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stats.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -86,7 +86,7 @@
 		9A6508952406B3C100C7A63D /* mpi_island_model_ea */ = {
 			isa = PBXGroup;
 			children = (
-				9AA0392726A1D870003435AF /* csv2xlsx.py */,
+				9AB2C2DC2746A46000CDE074 /* scripts */,
 				9A6508962406B3C100C7A63D /* main.cpp */,
 				9A6508A02406B4A400C7A63D /* mpi_island_model_ea.entitlements */,
 				9A6508A12407590500C7A63D /* evolution.h */,

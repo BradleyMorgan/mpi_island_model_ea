@@ -27,6 +27,9 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         
     meta.topologies.cpd();
     
+    int total_channels = 0;
+    std::vector<int> channel_counts;
+    
     for(int n = 0; n < meta.topologies.lambda; n++) { // loop lambda
 
         int child_id = meta.topologies.mu + (meta.topologies.lambda * meta.topologies.cycle.id + n + 1);
@@ -201,9 +204,29 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
 
         children.push_back(child);
 
+        total_channels += child.channel_count;
+        channel_counts.push_back(child.channel_count);
+        
         LOG(3, 0, 0, "child<topology> %d created by rank %d from matrix with %lu senders and %lu receivers\r\n", child.id, meta.variant.isle.id, child.channels[n].senders.size(), child.channels[n].receivers.size());
 
     } // loop lambda
+    
+    if(meta.variant.isle.id == 0) {
+    
+        double mean = total_channels / children.size();
+        double variance = 0;
+        
+        for(int n = 0; n<meta.topologies.lambda; n++) {
+          variance += (channel_counts[n] - mean) * (channel_counts[n] - mean);
+        }
+        
+        variance /= meta.topologies.lambda;
+        
+        double std_dev = sqrt(variance);
+        
+        LOG(3, 0, 0, "topology generation %d size=%lu | channels: mean=%f variance=%f standard_deviation=%f\r\n", meta.topologies.cycle.id, children.size(), mean, variance, std_dev);
+            
+    }
     
     return children;
     
@@ -246,6 +269,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
 
         // the apply function distributes a topology's send\recv channels to all islands ...
 
+        it->fitness = 0.0;
         it->apply(meta.variant.isle, *it);
 
         // once the send\recv channels have been established, we perform a user defined number of evolutionary cycles
@@ -295,6 +319,8 @@ void topologies_populate(ea_meta &meta) {
     
     LOG(6, meta.variant.isle.id, 0, "ISLAND %d OBJECTIVE %d (root) initializing topology population ... \r\n", meta.variant.isle.id, meta.topologies.id);
 
+    std::vector<int> channel_counts;
+    
     for(int i=1; i <= meta.topologies.mu; i++) {
         
         topology t;
@@ -306,16 +332,34 @@ void topologies_populate(ea_meta &meta) {
         } else {
             LOG(8, 0, 0, "island %d (root) topology %d\r\n", meta.variant.isle.id, i);
             topology::create::dynamic(t);
-            LOG(6, 0, 0, "dynamic topology %d created\r\n", i);
+            LOG(2, 0, 0, "dynamic topology %d created with %d channels\r\n", i, t.channel_count);
             meta.topologies.population.push_back(t);
             meta.topologies.run.stats.total_channels += t.channel_count;
+            channel_counts.push_back(t.channel_count);
         }
         
     }
     
+    if(meta.variant.isle.id == 0) {
+    
+        double mean = meta.topologies.run.stats.total_channels / meta.topologies.mu;
+        double variance = 0;
+        
+        for(int n = 0; n<meta.topologies.mu; n++) {
+          variance += (channel_counts[n] - mean) * (channel_counts[n] - mean);
+        }
+        
+        variance /= meta.topologies.mu;
+        
+        double std_dev = sqrt(variance);
+        
+        LOG(2, 0, 0, "topology population size=%lu | channels: mean=%f variance=%f standard_deviation=%f\r\n", meta.topologies.population.size(), mean, variance, std_dev);
+            
+    }
+    
     // we have our initial topology population, *NOT* evaluated for fitness
     
-    LOG(2, meta.variant.isle.id, 0, "initialized objective (topology) population size %lu, \r\n", meta.topologies.population.size());
+    LOG(3, meta.variant.isle.id, 0, "initialized objective (topology) population size %lu \r\n", meta.topologies.population.size());
     
 }
 
