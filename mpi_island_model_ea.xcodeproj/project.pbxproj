@@ -49,6 +49,7 @@
 		9AA7AC61271D059E004C20BD /* dtype_meta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dtype_meta.h; sourceTree = "<group>"; };
 		9AA7AC62271D1294004C20BD /* ea_solver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea_solver.h; sourceTree = "<group>"; };
 		9AA7AC63271D12A2004C20BD /* ea_meta.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea_meta.h; sourceTree = "<group>"; };
+		9AB2C2DB27469B1D00CDE074 /* process_logs.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = process_logs.sh; path = scripts/process_logs.sh; sourceTree = "<group>"; };
 		9AB97848261CA06B0099EB0B /* ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ea.h; sourceTree = "<group>"; };
 		9AEEAED02432987B001DF574 /* stats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stats.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -108,6 +109,7 @@
 				9AA7AC63271D12A2004C20BD /* ea_meta.h */,
 				9AA41B3326AA24C700312BB5 /* dtype_heirarchy.h */,
 				9AA41B3526AA256D00312BB5 /* dtype_island.h */,
+				9AB2C2DB27469B1D00CDE074 /* process_logs.sh */,
 			);
 			path = mpi_island_model_ea;
 			sourceTree = "<group>";

@@ -67,6 +67,8 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         child_matrix.resize(meta.variant.islands);
 
         int comm_count = 0;
+        int send_max = meta.variant.islands * ((config::send_cap * 1.0) / 100.0);
+        int recv_max = meta.variant.islands * ((config::migration_cap * 1.0) / 100.0);
         int rec_count[meta.variant.islands];
         int snd_count[meta.variant.islands];
 
@@ -90,12 +92,14 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
 
                 for(int j=0; j<m2.size(); j++) { // child matrix column
 
-                    if(rec_count[j] >= config::migration_cap) {
+                    //if(rec_count[j] >= config::migration_cap) {
+                    if(rec_count[j] >= recv_max) {
                         LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
                         continue;
                     }
 
-                    if(snd_count[i] >= config::send_cap) {
+                    //if(snd_count[i] >= config::send_cap) {
+                    if(snd_count[i] >= send_max) {
                         LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
                         continue;
                     }
@@ -151,12 +155,14 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
 
             for(int j=0; j<child_matrix[i].size(); j++) {  // matrix col
 
-                if(rec_count[j] >= config::migration_cap) {
+                //if(rec_count[j] >= config::migration_cap) {
+                if(rec_count[j] >= recv_max) {
                     LOG(6, 0, 0, "migration cap limit reached for process %d\r\n", i);
                     continue;
                 }
 
-                if(snd_count[i] >= config::send_cap) {
+                //if(snd_count[i] >= config::send_cap) {
+                if(snd_count[i] >= send_max) {
                     LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
                     continue;
                 }

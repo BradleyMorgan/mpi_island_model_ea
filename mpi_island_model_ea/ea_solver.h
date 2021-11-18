@@ -417,6 +417,7 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 nested iterations ...
     
+    t.fitness = 0.0;
     t.apply(solver.variant.isle, t);
     
     solver.start = MPI_Wtime();
@@ -429,7 +430,7 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
         
         solver.solutions.populate(solver, solution_populate);
         solver.solutions.distribute(solver, solution_scatter);
-
+        
         double topo_start = MPI_Wtime();
         
         for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {

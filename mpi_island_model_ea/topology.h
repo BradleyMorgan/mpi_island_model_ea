@@ -132,7 +132,8 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
     matrix.resize(world_size);
     
     int comm_count = 0;
-   
+    int send_max = world_size * ((config::send_cap * 1.0) / 100.0);
+    int recv_max = world_size * ((config::migration_cap * 1.0) / 100.0);
     int rec_count[world_size];
     int snd_count[world_size];
     
@@ -157,12 +158,14 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
                     
                 // check @config.txt[dim] max send\recv ...
                 
-                if(rec_count[j] >= config::migration_cap) {
+                //if(rec_count[j] >= config::migration_cap) {
+                if(rec_count[j] >= recv_max) {
                     LOG(6, 0, 0, "receive cap limit reached for process %d\r\n", i);
                     continue;
                 }
                 
-                if(snd_count[i] >= config::send_cap) {
+                //if(snd_count[i] >= config::send_cap) {
+                if(snd_count[i] >= send_max) {
                     LOG(6, 0, 0, "send cap limit reached for process %d\r\n", i);
                     continue;
                 }
