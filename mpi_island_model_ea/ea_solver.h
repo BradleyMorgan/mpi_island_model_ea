@@ -417,6 +417,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 nested iterations ...
     
+    t.apply(solver.variant.isle, t);
+    
     solver.start = MPI_Wtime();
     
     for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
@@ -427,12 +429,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
         
         solver.solutions.populate(solver, solution_populate);
         solver.solutions.distribute(solver, solution_scatter);
-        
-        t.fitness = 0.0;
-        
+
         double topo_start = MPI_Wtime();
-        
-        t.apply(solver.variant.isle, t);
         
         for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {
 
@@ -448,7 +446,7 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
             t.avg_cycle_time = t.total_cycle_time / meta.topologies.cycle.id;
             
         }
-
+        
         t.aggregate_run_fitness += t.fitness;
         
         solver.solutions.end(solver.solutions.run, solver);
@@ -463,6 +461,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
 
 
 void solver_prime(ea_meta &meta, ea_solver &solver, topology &t, int runs = config::ea_1_runs, int cycles = config::ea_1_max_evo_cycles) {
+    
+    double topo_start = MPI_Wtime();
     
     for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; solver.solutions.run.id++) {
      
@@ -479,6 +479,7 @@ void solver_prime(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
         
     }
     
+    t.fitness -= MPI_Wtime() - topo_start;
     t.rounds = 0;
     
 }

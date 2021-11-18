@@ -35,7 +35,6 @@ namespace config {
     FILE *solution_out;
     FILE *topo_out;
     FILE *solpop_out;
-    FILE *ref_out;
 
     int dim;
     int world_size;
@@ -83,7 +82,6 @@ namespace config {
     char stats_subpath[100];
     char topos_subpath[100];
     char solpop_subpath[100];
-    char ref_fname[64];
 
     char mu_msg[64];
     char lambda_msg[64];
@@ -226,15 +224,11 @@ void config::load(const char *input, const int world_size, const int world_rank)
         //sprintf(sub4, "%s/%s", sub3, mumode);
         //mkdir(sub4,0740);
         
-        //sprintf(config::logs_subpath, "%s/%s_%03d", sub3, config::items["config_name"].c_str(), fn);
-        
-        std::ifstream ifile;
-        //ifile.open(config::logs_subpath);
-        
         int fn = 1;
         bool found = true;
         while(found) {
             sprintf(config::logs_subpath, "%s/%s_%03d", sub3, config::items["config_name"].c_str(), fn);
+            std::ifstream ifile;
             ifile.open(config::logs_subpath);
             if(ifile) {
                 fn++;
@@ -242,7 +236,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
                 found = false;
             }
         }
-
+        
         mkdir(config::logs_subpath, 0740);
         
         sprintf(config::stats_subpath, "%s/stats", logs_subpath);
@@ -252,13 +246,6 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         sprintf(config::log_fname, "%s/%s_%d_%s.txt", config::logs_subpath, config::items["log_file"].c_str(), world_size, mode);
         config::log_out = fopen(config::log_fname, "w");
-        
-        sprintf(config::ref_fname, "prev_%s_%d.sh", mode, world_size);
-        config::ref_out = fopen(config::ref_fname, "w");
-        
-        fprintf(config::ref_out, "%s", config::logs_subpath);
-        fflush(config::ref_out);
-        fclose(config::ref_out);
         
     }
     
