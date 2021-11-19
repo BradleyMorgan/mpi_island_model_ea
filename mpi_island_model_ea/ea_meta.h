@@ -315,6 +315,12 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
 
 void topologies_populate(ea_meta &meta) {
     
+    int send_max = meta.variant.islands * ((config::send_cap * 1.0) / 100.0);
+    int recv_max = meta.variant.islands * ((config::migration_cap * 1.0) / 100.0);
+    int matrix_size = meta.variant.islands * meta.variant.islands;
+    
+    LOG(2, 0, meta.variant.isle.id, "sparsity=%f send_max=%d recv_max=%d prob=%f\r\n", config::sparsity, send_max, recv_max, config::sparsity * matrix_size);
+    
     meta.topologies.population.clear();
     
     LOG(6, meta.variant.isle.id, 0, "ISLAND %d OBJECTIVE %d (root) initializing topology population ... \r\n", meta.variant.isle.id, meta.topologies.id);
@@ -353,8 +359,8 @@ void topologies_populate(ea_meta &meta) {
         
         double std_dev = sqrt(variance);
         
-        LOG(2, 0, 0, "topology population size=%lu | channels: mean=%f variance=%f standard_deviation=%f\r\n", meta.topologies.population.size(), mean, variance, std_dev);
-            
+        LOG(2, 0, 0, "created %lu topologies | channels: mean=%f var=%f stdev=%f\r\n", meta.topologies.population.size(), mean, variance, std_dev);
+        
     }
     
     // we have our initial topology population, *NOT* evaluated for fitness
