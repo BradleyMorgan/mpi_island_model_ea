@@ -487,9 +487,11 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
               
                 // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
                 
-                solver_begin(meta, solver, meta.topologies.population[0], solver.solutions.max_runs, meta.topologies.max_fit_evals);
+                solver_begin(meta, solver, meta.topologies.population[0], config::ea_2_max_fit_runs, meta.topologies.max_fit_evals);
                         
                 meta.topologies.end(meta.topologies.run.eval, meta);
+                
+                meta.topologies.population[0].rounds = 0;
                 
                 meta.topologies.end(meta.topologies.cycle, meta);
                 
