@@ -14,9 +14,9 @@ dim:10
 # --- PARAMETER[migration_cap]: maximum number of received population individuals per island ---
 # --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
 
-sparsity:0.031
-migration_cap:06
-send_cap:06
+sparsity:0.20
+migration_cap:60
+send_cap:60
 
 ##### END SUBSECTION: solver ea custom parameters #####
 

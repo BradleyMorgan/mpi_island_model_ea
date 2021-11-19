@@ -403,40 +403,18 @@ void benchmark_topology(ea_meta &meta) {
 }
 
 void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
-    
-    // MARK: number gens and num of offspring
-    //////// solver evals = total toplogy evals * solver_runs * (solver_mu + num_solver_gens * solver_lambda) = mu + lambda * gens
-    //////// total topo evals = topology mu + (topology generations * topology lambda)
-    
-    // TODO: we want each topology to be evaluated max_fit_evals times
-    //////// a migration is performed each solver cycle, which is a topology evaluation
-    //////// so to get the total number of desired topology evaluations, we need to calculate
-    //////// the number of solver runs needed to execute max_fit_evals migrations
-    //////// since a solver run will execute max_evo_cycles migrations ...
-    //////// solver_runs * max_evo_cycles = total_migrations
-    //////// total_migrations / topology_max_evals
-    ////////int total_solver_cycles = solver.solutions.max_runs * solver.solutions.max_evo_cycles;
-    ////////int total_solver_evals = (total_solver_cycles * solver.solutions.lambda) + solver.solutions.mu;
-    ////////int topo_runs = total_solver_cycles / meta.topologies.max_fit_evals;
-    
-    // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
+        
+    meta.start = MPI_Wtime();
     
     // 𝛭𝑟𝑚𝑎𝑥 iterations ...
     
-    meta.start = MPI_Wtime();
-    
     for(meta.topologies.run.id = 1; meta.topologies.run.id <= meta.topologies.max_runs; meta.topologies.run.id++) {
-        
-        //MARK: solver ea n runs ... each time it runs n gens which depends on (for a max_eval limit ...
-        /////// num solver gens = (max_solver_evals - solver_mu) / solver_lambda
-        /////// look at eval vs. fitness solver ea graphs
-        /////// k gens -> fitness
         
         meta.topologies.begin(meta.topologies.run, meta);
         
-        // MARK: evaluate initial population by applying each randomly generated
-        //////// channels accordingly and return the elapsed time to perform
-        //////// all island migrations as the topology fitness
+        // evaluate initial population by applying each randomly generated
+        // channels accordingly and return the elapsed time to perform
+        // all island migrations as the topology fitness
         
         if(mode == 1) {
        
@@ -446,12 +424,11 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
             
             // priming run to mitigate observed dominance of the initial evaluation
             
-            solver_prime(meta, solver, meta.topologies.population[0], config::ea_2_max_fit_runs, config::ea_1_log_interval - 1);
+            //solver_prime(meta, solver, meta.topologies.population[0], config::ea_2_max_fit_runs, config::ea_1_log_interval - 1);
             
             for(int i=0; i<meta.topologies.mu; i++) {
-
-                // MARK: solver will execute topologies.mu * topologies_max_runs * topologies_max_fit evals
-                //////// e.g. 30 * 5 * 500 = 75,0000
+                
+                // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
                 
                 meta.topologies.begin(meta.topologies.run.eval, meta);
                 
@@ -460,9 +437,6 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
                 meta.topologies.end(meta.topologies.run.eval, meta);
                     
             } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
-            
-            // TODO: generations or cycles, what is the termination?  max_evals / num_offspring
-            
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
@@ -495,11 +469,11 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
                 // between the benchmark and experimental output
                 
                 for(int i=0; i<meta.topologies.lambda; i++) {
-                                    
-                    meta.topologies.begin(meta.topologies.run.eval, meta);
                   
                     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
                     
+                    meta.topologies.begin(meta.topologies.run.eval, meta);
+                   
                     solver_begin(meta, solver, meta.topologies.population[0], config::ea_2_max_fit_runs, meta.topologies.max_fit_evals);
                             
                     meta.topologies.end(meta.topologies.run.eval, meta);
@@ -521,7 +495,7 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
     meta.duration = MPI_Wtime() - meta.start;
     
     // 𝛭𝑟𝑚𝑎𝑥 * ((𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥)) iterations
-    // 
+    
 }
 
 

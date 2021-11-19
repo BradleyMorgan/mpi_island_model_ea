@@ -154,7 +154,9 @@ void log_fn_topology_stats(ea_solver &solver, ea_meta &meta, topology &t) {
     
     sprintf(msg, config::ea_mode > 0 ? "EXPERIMENTAL" : "BENCHMARK");
     
-    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n    --- META GENOME %d (%s) EVALUATION %d of %d AT RUN %d CYCLE %d (SOLVER[%d,%d]) migrations = %d | duration = %f | ", t.id, msg, t.rounds, max_rounds, meta.topologies.run.id, meta.topologies.cycle.id, solver.solutions.run.id, solver.solutions.run.eval.id, t.rounds, eval_elapsed);
+    LOG(2, solver.variant.isle.id, 0, "\r\n\r\n --- META GENOME %d (%s) EVALUATION %d of %d AT RUN %d CYCLE %d (SOLVER[%d,%d]) ---\r\n\r\n", t.id, msg, t.rounds, max_rounds, meta.topologies.run.id, meta.topologies.cycle.id, solver.solutions.run.id, solver.solutions.run.eval.id);
+        
+    LOG(2,solver.variant.isle.id, 0, "   elapsed_eval_t = %f | ", eval_elapsed);
     
     LOG(3, 0, 0, "TOPOLOGY INTERVAL STATS (run %d, cycle %d, eval %d): topologies size %lu, mem[0] fit = %f \r\n", meta.topologies.run.id, meta.topologies.cycle.id, meta.topologies.run.eval.id, meta.topologies.population.size(), meta.topologies.population[0].fitness);
     
@@ -285,7 +287,9 @@ void log_fn_cycle_stats(ea_solver &solver, ea_meta &meta, topology &t) {
     
 //    LOG(2, 0, 0, "\r\n%5d," "%6d,"  "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f,""%16.11f," "%16.11f", solver.solutions.run.id, solver.solutions.run.eval.id, average_fitness, solver.solutions.run.eval.stats.local_best_fitness, solver.solutions.run.eval.stats.global_best_fitness, solver.solutions.run.eval.stats.average_local_best_fitness, solver.solutions.run.eval.stats.average_global_best_fitness, average_scatter_time, average_gather_time, average_migrate_time, solver.solutions.run.eval.stats.eval_duration);
     
-    LOG(2, 0, 0, "\r\n%5d," "%6d," "%6d," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%7d," "%16.11f," "%7d," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f" "%16.11f", solver.solutions.run.id, solver.solutions.cycle.id, solver.solutions.run.eval.id, average_fitness, solver.solutions.run.eval.stats.local_best_fitness, solver.solutions.run.eval.stats.global_best_fitness, solver.solutions.run.eval.stats.average_local_best_fitness, solver.solutions.run.eval.stats.average_global_best_fitness, t.id, t.fitness, t.channel_count, average_scatter_time, average_gather_time, average_migrate_time, ea_elapsed, run_elapsed, cycle_elapsed, avg_cycle_time, solver.solutions.run.eval.stats.eval_duration);
+    LOG(2, 0, 0, "\r\n%5d," "%6d," "%6d," "%16.11f," "%16.11f," "%7d," "%16.11f," "%7d," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f" "%16.11f", solver.solutions.run.id, solver.solutions.cycle.id, solver.solutions.run.eval.id, average_fitness,  solver.solutions.run.eval.stats.global_best_fitness, t.id, t.fitness, t.channel_count, average_migrate_time, ea_elapsed, run_elapsed, cycle_elapsed, avg_cycle_time, solver.solutions.run.eval.stats.eval_duration);
+    
+    LOG(4, 0, 0, "\r\n%5d," "%6d," "%6d," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%7d," "%16.11f," "%7d," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f," "%16.11f" "%16.11f", solver.solutions.run.id, solver.solutions.cycle.id, solver.solutions.run.eval.id, average_fitness, solver.solutions.run.eval.stats.local_best_fitness, solver.solutions.run.eval.stats.global_best_fitness, solver.solutions.run.eval.stats.average_local_best_fitness, solver.solutions.run.eval.stats.average_global_best_fitness, t.id, t.fitness, t.channel_count, average_scatter_time, average_gather_time, average_migrate_time, ea_elapsed, run_elapsed, cycle_elapsed, avg_cycle_time, solver.solutions.run.eval.stats.eval_duration);
     
     LOG(3, 0, 0, "\r\n\r\n *** CYCLE %d STATS: RUNT=%f, CYCLET=%f, EVALT=%f, RUNET=%f, CYCLET=%f *** \r\n\r\n", solver.solutions.cycle.id, solver.solutions.run.stats.run_duration, solver.solutions.cycle.duration, solver.solutions.run.eval.stats.eval_duration, run_elapsed, cycle_elapsed);
     

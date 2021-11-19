@@ -20,6 +20,7 @@ COSCRIPT="${WORK}/sub_${MODE}_${SLURM_NTASKS}.sh"
 echo "#!/bin/bash" > $COSCRIPT
 echo "#SBATCH -n $SLURM_NTASKS" >> $COSCRIPT
 echo "#SBATCH --exclude node052" >> $COSCRIPT
+echo "#SBATCH --chdir=$WORK" >> $COSCRIPT
 echo "#SBATCH --nodelist $SLURM_NODELIST" >> $COSCRIPT
 echo "cd $WORK" >> $COSCRIPT
 echo "sed -i 's/^ea_mode:1/ea_mode:0/' ${WORK}/config.txt" >> $COSCRIPT

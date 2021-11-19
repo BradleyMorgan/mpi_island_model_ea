@@ -430,24 +430,15 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
         solver.solutions.populate(solver, solution_populate);
         solver.solutions.distribute(solver, solution_scatter);
         
-        double topo_start = MPI_Wtime();
-        
         for(solver.solutions.cycle.id = 1; solver.solutions.cycle.id <= cycles; solver.solutions.cycle.id++) {
-
+            
             solver.solutions.begin(solver.solutions.cycle, solver);
             
             solver.solutions.evolve(solver, meta, t, solutions_evolve);
             
             solver.solutions.end(solver.solutions.cycle, solver);
             
-            t.fitness -= MPI_Wtime() - topo_start;
-            
-            double sum_topo_fitness = 0.0;
-            
-            MPI_Reduce(&t.fitness, &sum_topo_fitness, 1, MPI_DOUBLE, MPI_SUM, 0, solver.variant.tcomm);
-            
-            t.fitness = sum_topo_fitness;
-            
+            t.fitness -= MPI_Wtime() - solver.solutions.cycle.start;            
             t.total_cycle_time += solver.solutions.cycle.duration;
             t.avg_cycle_time = t.total_cycle_time / meta.topologies.cycle.id;
             
