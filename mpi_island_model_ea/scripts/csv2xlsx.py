@@ -6,7 +6,8 @@ import shutil
 import re
 import openpyxl
 
-head = os.getcwd()
+head = os.path.join(os.getcwd(), '../results'))
+
 extensions = ('.csv')
 
 pd.set_option('display.max_colwidth', 90)
