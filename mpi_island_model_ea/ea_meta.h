@@ -427,7 +427,6 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
         /////// k gens -> fitness
         
         meta.topologies.begin(meta.topologies.run, meta);
-        meta.topologies.populate(meta, topologies_populate);
         
         // MARK: evaluate initial population by applying each randomly generated
         //////// channels accordingly and return the elapsed time to perform
@@ -435,6 +434,8 @@ void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
         
         if(mode == 1) {
        
+            meta.topologies.populate(meta, topologies_populate);
+            
             // 𝛭𝜇 iterations ...
             
             // priming run to mitigate observed dominance of the initial evaluation
