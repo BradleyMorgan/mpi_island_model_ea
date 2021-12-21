@@ -154,7 +154,7 @@ struct ea_model {
 
     unsigned long start;
 
-    char name[128] = "";
+    char name[128];
     
     int island_size;
     int root = 0;
@@ -220,7 +220,7 @@ struct ea {
     
     // TODO: generalize collection type to store multiple objectives
     
-    ea() { };
+    ea();
     
     void begin() {
         

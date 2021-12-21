@@ -40,6 +40,7 @@ struct solution {
 template<typename i> void solution::measure(i &interval) { }
  
 int solution::numeric_id() {
-    return (int)std::strtol(this->id, nullptr, 10); }
+    return (int)std::strtol(this->id, nullptr, 10);
+}
 
 #endif /* dtype_solution_h */
