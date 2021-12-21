@@ -31,4 +31,4 @@ fi
 
 sed -i "s/^sparsity:.*/sparsity:$2/g" config.txt | grep "sparsity:"
 sed -i "s/^send_cap:.*/send_cap:$3/g" config.txt | grep "send_cap:"
-sed -i "s/^migration_cap:.*/migration_cap:$4/g" config.txt | grep "migration_cap:"
+sed -i "s/^recv_cap:.*/recv_cap:$4/g" config.txt | grep "recv_cap:"

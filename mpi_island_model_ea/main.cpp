@@ -38,9 +38,6 @@ int main(int argc, const char * argv[]) {
     ea_solver solver;
     ea_meta meta(solver);
     
-    ea_begin(meta, solver, config::ea_mode);
-    
-    solver.ea::end(solver.solutions);
-    meta.ea::end(meta.topologies);
+    meta.begin(solver);
     
 }

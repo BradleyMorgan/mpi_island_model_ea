@@ -11,9 +11,105 @@
 
 #include "solution.h"
 
+struct ea_stats: time_stats, parallel_stats, fitness_stats {
+    
+    void init() {
+        
+        LOG(5, 0, 0, "\r\n--- INIT EA STATS ---\r\n");
+        
+        this->start = 0.0;
+        this->duration = 0.0;
+        this->init_duration = 0.0;
+        
+    }
+    
+};
+
+#pragma mark DATATYPE: @ea_eval{}
+
+// track eval stats, etc. per island
+
+struct ea_eval {
+  
+    int id = 0;
+    int max = 0;
+    int log_interval = 0;
+    
+    eval_stats stats;
+  
+    ea_eval(): id(0) {};
+    
+    void begin() {
+        LOG(3, 0, 0, "\r\n--- BEGIN EA EVAL %d OF %d ---\r\n", this->id, this->max);
+        this->stats.start = MPI_Wtime();
+    }
+
+    void end() {
+        double eval_end = MPI_Wtime();
+        this->stats.duration = eval_end - this->stats.start;
+        LOG(3, 0, 0, "\r\n--- END EA EVAL %d OF %d ---\r\n", this->id, this->max);
+    }
+
+};
+
+struct ea_cycle {
+    
+    int id = 0;
+    int max = 0;
+    int log_interval = 0;
+    
+    ea_eval eval;
+    
+    cycle_stats stats;
+    
+    void begin() {
+        LOG(5, 0, 0, "\r\n--- BEGIN EA CYCLE %d OF %d ---\r\n", this->id, this->max);
+        this->stats.duration = 0.0;
+        this->stats.start = MPI_Wtime();
+    }
+    
+    void end() {
+        LOG(5, 0, 0, "\r\n--- END EA CYCLE %d OF %d ---\r\n", this->id, this->max);
+        double cycle_end = MPI_Wtime();
+        this->stats.duration = cycle_end - this->stats.start;
+    }
+    
+    
+};
+
+#pragma mark EA::DATATYPE: @ea_run{}
+
+// track run stats, etc. per island
+
+struct ea_run {
+    
+    int id = 0;
+    int max = 0;
+    int log_interval = 0;
+    
+    ea_cycle cycle;
+    run_stats stats;
+  
+    ea_run(): id(0) {};
+    
+    void begin() {
+        this->id++;
+        LOG(4, 0, 0, "\r\n--- BEGIN EA RUN %d OF %d ---\r\n", this->id, this->max);
+        this->stats.duration = 0.0;
+        this->stats.start = MPI_Wtime();
+    }
+    
+    void end() {
+        LOG(4, 0, 0, "\r\n--- END EA RUN %d OF %d ---\r\n", this->id, this->max);
+        double run_end = MPI_Wtime();
+        this->stats.duration = run_end - this->stats.start;
+    }
+    
+};
+
 // ----- start mpi derived datatypes...
 
-template<typename e> void parallel_types(e &pea) {
+template<typename m> void parallel_types(m &model) {
     
     MPI_Datatype ptype;
 
@@ -37,16 +133,16 @@ template<typename e> void parallel_types(e &pea) {
 
     int sol_lengths[11] = { 64, DIM, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-    MPI_Type_create_struct(11, sol_lengths, sol_offsets, sol_types, &pea.variant.solution_type);
-    MPI_Type_commit(&pea.variant.solution_type);
+    MPI_Type_create_struct(11, sol_lengths, sol_offsets, sol_types, &model.solution_type);
+    MPI_Type_commit(&model.solution_type);
 
     MPI_Datatype visa_types[4] = { MPI_INT, MPI_INT, MPI_INT, MPI_CHAR };
     MPI_Aint visa_offsets[4] = { 0, sizeof(int), sizeof(int)*2, sizeof(int)*3 };
 
     int visa_lengths[4] = { 1, 1, 1, 64 };
 
-    MPI_Type_create_struct(4, visa_lengths, visa_offsets, visa_types, &pea.variant.visa_type);
-    MPI_Type_commit(&pea.variant.visa_type);
+    MPI_Type_create_struct(4, visa_lengths, visa_offsets, visa_types, &model.visa_type);
+    MPI_Type_commit(&model.visa_type);
 
 }
 
@@ -54,11 +150,12 @@ template<typename e> void parallel_types(e &pea) {
 
 // describes the properties needed for parallel (island model) EA
 
-struct ea_variant {
+struct ea_model {
 
     unsigned long start;
 
-    int islands;
+    char name[128] = "";
+    
     int island_size;
     int root = 0;
 
@@ -72,35 +169,25 @@ struct ea_variant {
     
     // TODO: maintaining a list of island_ids doesn't seem necessary
     
-    std::vector<int> island_ids;
-    
     MPI_Datatype solution_type;
     MPI_Datatype visa_type;
     
     MPI_Comm tcomm;
     
-    template<typename e> void init(e &pea) {
+    void init() {
 
-        pea.variant.start = MPI_Wtime();
-        
-        // initialize MPI environment ...
-        
-        MPI_Init(NULL, NULL);
-        MPI_Comm_size(MPI_COMM_WORLD, &pea.variant.islands);
-        MPI_Comm_rank(MPI_COMM_WORLD, &pea.variant.isle.id);
+        this->start = MPI_Wtime();
 
         // load configuration items ...
 
-        config::load("config.txt", pea.variant.islands, pea.variant.isle.id);
+        config::load("config.txt", mpi.size, mpi.id);
 
-        for(int i=0; i < pea.variant.islands; i++) { pea.variant.island_ids.push_back(i); }
-
-        pea.variant.tcomm = MPI_COMM_WORLD;
-        pea.variant.island_size = config::island_mu;
+        this->tcomm = MPI_COMM_WORLD;
+        this->island_size = config::mu_sub;
         
-        parallel_types(pea);
+        parallel_types(*this);
         
-        pea.variant.isle.init();
+        this->isle.init();
         
     }
     
@@ -109,60 +196,102 @@ struct ea_variant {
 #pragma mark EA::DATATYPE: @ea{}
 
 // wrapper type to serve as the trunk for ea properties
+//
+//  +----heirarchy---+----context-----+-----termination-----+---scope---+
+//  | EA𝑛            | ea𝑛 logic      | all objective runs  | O₁₋𝑛,r,c,e |
+//  |  ↳RUN𝑛         | ea𝑛 execution  | ea runtime          | O₁₋𝑛,c,e   |
+//  |   ↳CYCLE𝑛      | ea𝑛 evolution  | max int, fitness    | O₁₋𝑛,e     |
+//  |    ↳EVAL𝑛      | ea𝑛 population | fitness result      | O₁₋𝑛       |
+//  |  ↳OBJECTIVE𝑛   | o𝑛 logic       | obj termination     | O𝑛,r,c,e   |
+//  |    ↳RUN𝑛       | o𝑛 execution   | obj runtime         | O𝑛,c,e     |
+//  |      ↳CYCLE𝑛   | o𝑛 evolution   | max int, fitness    | O𝑛,e       |
+//  |        ↳EVAL𝑛  | O𝑛 population  | fit calc [1..n|max] | O𝑛         |
+//  +----------------+----------------+---------------------+-----------+
+//
 
+template<class variant>
 struct ea {
     
-    ea_run run;
-    ea_variant variant;
+    char name[128] = "";
     
-    double start = 0.0;
-    double duration = 0.0;
-    double init_start = 0.0;
-    double init_duration = 0.0;
+    ea_run run;
+    ea_model model;
+    ea_stats stats;
     
     // TODO: generalize collection type to store multiple objectives
     
-    ea() {
+    ea() { };
+    
+    void begin() {
         
-//        this->start = MPI_Wtime();
-//        this->init_start = MPI_Wtime();
-//        this->run.id = 0;
-//        this->run.eval.id = 0;
-//        this->run.stats.init();
-//        this->run.eval.stats.init();
+        LOG(4, 0, 0, "\r\n--- BEGIN %s EA ---\r\n", this->name);
         
-    };
+        this->model.isle.population.clear();
+        this->model.isle.population.resize(config::mu_sub);
+        this->stats.start = MPI_Wtime();
+        
+    }
+    
+    void end() {
+        
+        LOG(4, 0, 0, "\r\n--- END %s EA ---\r\n", this->name);
+        
+        double ea_end = MPI_Wtime();
+        
+        this->stats.local_t.value = ea_end - this->stats.start;
+        this->stats.local_t.island = mpi.id;
+        
+        MPI_Reduce(&this->stats.local_t, &this->stats.min_t, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, this->model.tcomm);
+        MPI_Reduce(&this->stats.local_t, &this->stats.max_t, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, this->model.tcomm);
+        MPI_Reduce(&this->stats.local_t, &this->stats.sum_t, 1, MPI_DOUBLE, MPI_SUM, 0, this->model.tcomm);
+        
+        this->stats.avg_t = this->stats.sum_t / mpi.size;
+        
+    }
     
     #pragma mark EA::DATATYPE::FUNCTION::TEMPLATES
     
-    template<typename o> void begin(ea_run &run, objective<o> &obj) { run.begin(); obj.begin(obj.run, *this); }
-    template<typename o> void begin(ea_eval &eval, objective<o> &obj) { eval.begin(); obj.begin(obj.run.eval, *this); }
-    
-    //template<typename o> void begin(ea_run &run, objective<o> &obj, o &genome) { run.begin(); obj.run.begin(); obj.begin(obj.run, *this); }
-    //template<typename o> void begin(ea_eval &eval, objective<o> &obj, o &genome) { eval.begin(); obj.begin(obj.run.eval, *this); }
-    
-    template<typename o> void end(ea_run &run, objective<o> &obj) { run.end(); obj.end(obj.run, *this); }
-    template<typename o> void end(ea_eval &eval, objective<o> &obj) { eval.end(); obj.end(obj.run.eval, *this); }
-    
-//    template<typename o> void end(ea_run &run, objective<o> &obj, o &genome) { run.end(); }
-//    template<typename o> void end(ea_eval &eval, objective<o> &obj, o &genome) { eval.end(); }
-    
-//    template<typename o, typename g> void log(ea_run &run, objective<o> &obj, ea &meta, g &genome) { log(run, obj, *this, meta, genome); }
-//    template<typename o, typename g> void log(ea_eval &eval, objective<o> &obj, ea &meta, g &genome) { log(eval, obj, *this, meta, genome); }
-//    
-//    template<typename o, typename g> void log(objective_run &run, objective<o> &obj, ea &meta, g &genome) { obj.log(run, obj, *this, meta, genome); }
-//    template<typename o, typename g> void log(objective_eval &eval, objective<o> &obj, ea &meta, g &genome) { obj.log(eval, obj, *this, meta, genome); }
-    
     template<typename f, typename o> void populate(objective<o> &obj, f function) { obj.populate(*this, function); }
-    
     template<typename f, typename o, typename g> void evaluate(objective<o> &obj, g &individual, f function) { obj.evaluate(*this, individual, function); }
-    
     template<typename f, typename o, typename m> void evolve(objective<o> &obj, m &meta, f function) { obj.evolve(*this, meta, function); }
     template<typename f, typename o, typename m, typename g> void evolve(objective<o> &obj, m &meta, g &individual, f function) { obj.evolve(*this, meta, individual, function); }
     
-    template<typename o> void end(objective<o> &obj) { obj.end(*this); }
-    template<typename o> void end(ea &ea, objective<o> &obj) { ea_end(*this, obj); }
+    template<typename e> void begin(ea<e> &target);
+    template<typename genome> void begin(objective<genome> &obj, genome *current = NULL);
+    template<typename genome> void end(objective<genome> &obj, genome *current = NULL);
+    template<typename genome, typename i> void begin(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
+    template<typename genome, typename i> void end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
     
 };
+
+template<typename variant> template<typename genome> void ea<variant>::begin(objective<genome> &obj, genome *current) {
+    
+    this->begin();
+    
+    obj.init();
+    
+    this->begin(obj, obj.run, current);
+    
+}
+
+template<typename variant> template<typename genome> void ea<variant>::end(objective<genome> &obj, genome *current) {
+    
+    this->end(obj, obj.run, obj.run.local);
+    
+}
+
+template<typename variant> template<typename genome, typename i> void ea<variant>::begin(objective<genome> &obj, i &interval, genome *current) {
+
+    obj.begin(interval, current);
+
+    LOG(3, mpi.id, 0, "(%d,%d,%d,%d,%d) ea::%s::begin(%d,%d,%lu)\r\n", mpi.id, obj.id, obj.run.id, obj.run.cycle.id, obj.run.cycle.eval.id, this->name, obj.id, interval.id, sizeof(current));
+    
+}
+
+template<typename variant> template<typename genome, typename i> void ea<variant>::end(objective<genome> &obj, i &interval, genome *current) {
+    
+    obj.end(interval, interval.local);
+    
+}
 
 #endif /* dtype_ea_h */

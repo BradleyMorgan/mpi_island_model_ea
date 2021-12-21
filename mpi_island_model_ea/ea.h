@@ -43,88 +43,32 @@ template<typename genome> genome parent(objective<genome> &o) {
         
 }
 
-//void solver_init(ea &solver) {
-//
-//    solver.solutions.mu = config::ea_1_mu;
-//    solver.solutions.lambda = config::ea_1_lambda;
-//    solver.solutions.max_runs = config::ea_1_runs;
-//    solver.solutions.mutation_rate = config::ea_1_mutation_rate;
-//    solver.solutions.max_evo_evals = config::ea_1_max_evo_evals;
-//    solver.solutions.max_fit_evals = config::ea_1_max_fit_evals;
+//template<typename variant> void ea_end(ea<variant> &solver, objective<solution> &obj) {
 //    
-//    if(solver.variant.isle.id == 0) {
-//        solver.offsets = generate_offsets(-2.5, 2.5, .5);
+//    LOG(5, 0, 0, "\r\n--- (%d) END EA ---\r\n", mpi.id);
+//    
+//}
+//
+//template<typename variant> void ea_end(ea<variant> &meta, objective<topology> &obj) {
+//
+//    LOG(5, 0, 0, "\r\n--- (%d) END EA ---\r\n", mpi.id);
+//
+//    if(mpi.id == 0) {
+//
+//        char canary[128];
+//
+//        sprintf(canary, "%s/end.txt", config::logs_subpath);
+//        FILE *eaend = fopen(canary, "w");
+//
+//        fprintf(eaend, "ended at %lu", time(0));
+//
+//        fclose(eaend);
+//
 //    }
-//    
-//    MPI_Bcast(&solver.offsets, DIM, MPI_DOUBLE, 0, solver.variant.tcomm);
-//    
-//    // collect the time consumed by all islands in this initialization ...
 //
-//    // TODO: the init time gather segfaults on higher core count runs, so may need to debug at some point, but currently the init duration is somewhat insigificant
-//    // MPI_Gather(&local_init_duration, 1, MPI_DOUBLE, &multi.run.stats.init_duration, 1, MPI_DOUBLE, 0, multi.meta.isle.tcomm);
-//    
-//    LOG(2, solver.variant.isle.id, 0, "world size: %d\r\n", solver.variant.islands);
-//    LOG(2, solver.variant.isle.id, 0, "mu mode: %d\r\n", config::mu_mode);
-//    LOG(2, solver.variant.isle.id, 0, "global mu %s %d\r\n", config::mu_msg, config::ea_1_mu);
-//    LOG(2, solver.variant.isle.id, 0, "island mu %s %d\r\n", config::subpop_msg, config::island_mu);
-//    LOG(2, solver.variant.isle.id, 0, "island lambda %s %d\r\n\r\n\r\n", config::lambda_msg, stoi(config::items["island_lambda"]));
-//    
-//    double init_end = MPI_Wtime();
-//    
-//    solver.init_duration = (init_end - solver.init_start);
-//    
+//    MPI_Finalize();
+//   
 //}
-//
-//void meta_init(ea &meta, ea &solver) {
-//    
-//    meta.variant = solver.variant;
-//    
-//    meta.start = MPI_Wtime();
-//    meta.init_start = MPI_Wtime();
-//    meta.variant.start = MPI_Wtime();
-//    meta.topologies.run.id = 1;
-//    meta.topologies.run.eval.id = 1;
-//    meta.topologies.run.stats.init();
-//    meta.topologies.run.eval.stats.init();
-//    
-//    meta.topologies.mu = config::ea_2_mu;
-//    meta.topologies.lambda = config::ea_2_lambda;
-//    meta.topologies.max_runs = config::ea_2_runs;
-//    meta.topologies.mutation_rate = config::ea_2_mutation_rate;
-//    meta.topologies.max_evo_evals = config::ea_2_max_evo_evals;
-//    meta.topologies.max_fit_evals = config::ea_2_max_fit_evals;
-//    meta.topologies.islands = meta.variant.islands;
-//    
-//    meta.init_duration += (MPI_Wtime() - meta.init_start);
-//    
-//}
-
-void ea_end(ea &solver, objective<solution> &obj) {
-    
-    LOG(5, 0, 0, "--- END EA (island %d)\r\n", solver.variant.isle.id);
-    
-}
-
-void ea_end(ea &meta, objective<topology> &obj) {
-
-    LOG(5, 0, 0, "--- END EA (island %d)\r\n", meta.variant.isle.id);
-
-    if(meta.variant.isle.id == 0) {
-
-        char canary[128];
-
-        sprintf(canary, "%s/end.txt", config::logs_subpath);
-        FILE *eaend = fopen(canary, "w");
-
-        fprintf(eaend, "ended at %lu", time(0));
-
-        fclose(eaend);
-
-    }
-
-    MPI_Finalize();
-   
-}
 
 
 #endif /* ea_h */

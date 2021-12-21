@@ -20,216 +20,128 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
-struct estats {
+struct mpi_local {
+    double value;
+    int island = mpi.id;
     
-    int topo_best_count = 0;
+    void init() { mpi_local(); }
+    mpi_local() { value=0.0; island=mpi.id; }
+};
+
+struct time_stats {
+    
+    double start = 0.0;
+    double duration = 0.0;
+    double init_duration = 0.0;
+    
+    mpi_local local_t;
+    mpi_local min_t;
+    mpi_local max_t;
+    mpi_local sum_t;
+    double avg_t = 0.0;
+    
+};
+
+struct parallel_stats {
+    
+    mpi_local local_migration_t;
+    mpi_local min_migration_t;
+    mpi_local max_migration_t;
+    mpi_local sum_migration_t;
+    
+    double avg_migration_t = 0.0;
+    
+    mpi_local local_gather_t;
+    mpi_local min_gather_t;
+    mpi_local max_gather_t;
+    mpi_local sum_gather_t;
+   
+    double avg_gather_t = 0.0;
+    
+    mpi_local local_scatter_t;
+    mpi_local min_scatter_t;
+    mpi_local max_scatter_t;
+    mpi_local sum_scatter_t;
+    
+    double avg_scatter_t = 0.0;
+    
+};
+
+struct fitness_stats {
+    
+    std::vector<double> best;
+    
+    double total_fitness = 0.0;
+    double avg_fitness = 0.0;
+    double min_fitness = 0.0;
+    double max_fitness = 0.0;
+    double sum_fitness = 0.0;
+    
+    double best_fitness = 0.0;
+    double avg_best_fitness = 0.0;
+    
+};
+
+struct eval_stats: time_stats, fitness_stats {
     
     double init_duration = 0.0;
-    double eval_start = 0.0;
-    double eval_duration = 0.0;
-    double cycle_duration = 0.0;
-    double total_scatter_time = 0.0;
-    double total_gather_time = 0.0;
-    double total_migrate_time = 0.0;
-    double topo_migrate_time = 0.0;
-    double local_best_fitness = 0.0;
-    double global_best_fitness = 0.0;
-    double average_local_best_fitness = 0.0;
-    double average_global_best_fitness = 0.0;
-    
-    double local_best_topo_fitness = 0.0;
-    double global_best_topo_fitness = 0.0;
-    double average_local_best_topo_fitness = 0.0;
-    double average_global_best_topo_fitness = 0.0;
-    
-    topology best_topology;
-    
-    std::vector<double> average_local_best_fitnesses;
-    std::vector<double> average_global_best_fitnesses;
-    std::vector<double> average_local_best_topo_fitnesses;
-    std::vector<double> average_global_best_topo_fitnesses;
-    
-    solution *sol;
-    
-    void init() {
-        
-        LOG(3, 0, 0, "INIT EA STATS\r\n");
-        
-        this->init_duration = 0.0;
-        this->eval_start = 0.0;
-        this->eval_duration = 0.0;
-        this->total_scatter_time = 0.0;
-        this->total_gather_time = 0.0;
-        this->total_migrate_time = 0.0;
-        this->topo_migrate_time = 0.0;
-        this->local_best_fitness = 0.0;
-        this->global_best_fitness = 0.0;
-        this->average_local_best_fitness = 0.0;
-        this->average_global_best_fitness = 0.0;
-        this->local_best_topo_fitness = 0.0;
-        this->average_local_best_topo_fitness = 0.0;
-        this->average_local_best_fitnesses.clear();
-        this->average_local_best_fitnesses.resize(0);
-        this->average_local_best_topo_fitnesses.clear();
-        this->average_local_best_topo_fitnesses.resize(0);
-        
-    }
-    
-//    template<typename f, typename e, typename o, typename genome> void log(e &ea, e &meta, o &obj, genome &g, f function) { function(ea, meta, g); }
-//
-//    template<typename f, typename e, typename o> void log(e &ea, o &obj, f function) { function(ea, obj, *this); }
-    
-};
-
-struct rstats {
-
-    double run_start;
-    double run_duration;
-    double init_duration;
-    
-    int total_channels;
-    
-    void init() {
-        
-        LOG(3, 0, 0, "INIT RUN STATS\r\n");
-        
-        this->run_start = 0.0;
-        this->run_duration = 0.0;
-        this->init_duration = 0.0;
-        this->total_channels = 0;
-        
-    }
-    
-    //template<typename f, typename o, typename e> void log(e &ea, o &obj, f function) { function(ea, obj); }
-    
-};
-
-#pragma mark DATATYPE: @ea_eval{}
-
-// track eval stats, etc. per island
-
-struct ea_eval {
-  
-    int id;
-    estats stats;
-  
-    ea_eval(): id(0) {};
-    
-    void begin() {
-        LOG(3, 0, 0, "BEGIN EA EVAL %d -> ", this->id+1);
-        this->stats.eval_start = MPI_Wtime();
-    }
-    
-    void end() {
-        double eval_end = MPI_Wtime();
-        this->stats.eval_duration = eval_end - this->stats.eval_start;
-        LOG(3, 0, 0, "END EA EVAL %d\r\n", this->id);
-    }
-    
-    //template<typename e> void log(e &ea) { }
-    
-};
-
-#pragma mark EA::DATATYPE: @ea_run{}
-
-// track run stats, etc. per island
-
-struct ea_run {
-    
-    int id;
-    rstats stats;
-    ea_eval eval;
-  
-    ea_run(): id(0) {};
-    
-    void begin() {
-        LOG(3, 0, 0, "BEGIN EA RUN %d -> ", this->id);
-        this->stats.run_duration = 0.0;
-        this->stats.run_start = MPI_Wtime();
-    }
-    
-    void end() {
-        LOG(3, 0, 0, "END EA RUN %d\r\n", this->id);
-        double run_end = MPI_Wtime();
-        this->stats.run_duration = run_end - this->stats.run_start;
-    }
-    
-};
-
-#pragma mark EA::OBJECTIVE::DATATYPE: @objective_eval{}
-
-// track eval stats, etc. per island
-
-struct objective_eval {
-  
-    int id = 0;
-    estats stats;
-    
-    objective_eval(): id(0) {};
-    
-    void begin() {
-        LOG(3, 0, 0, "BEGIN OBJECTIVE EVAL %d\r\n", this->id);
-        //this->stats.init();
-        this->stats.eval_duration = 0.0;
-        this->stats.eval_start = MPI_Wtime();
-    }
-    
-    void end() {
-        LOG(3, 0, 0, "END OBJECTIVE EVAL %d\r\n", this->id);
-        double eval_end = MPI_Wtime();
-        this->stats.eval_duration = eval_end - this->stats.eval_start;
-    }
-    
-};
-
-#pragma mark EA::OBJECTIVE::DATATYPE: @objective_run{}
-
-// track run stats, etc. per island
-
-struct objective_run {
-    
-    int id = 0;
-    
-    rstats stats;
-    objective_eval eval;
-
-    objective_run(): id(0) {};
-    
-    void begin() {
-        LOG(3, 0, 0, "BEGIN OBJECTIVE RUN %d -> ", this->id);
-        this->eval.stats.init();
-        this->stats.run_duration = 0.0;
-        this->stats.run_start = MPI_Wtime();
-    }
-    
-    void end() {
-        LOG(3, 0, 0, "END OBJECTIVE RUN %d\r\n", this->id);
-        double run_end = MPI_Wtime();
-        this->stats.run_duration = run_end - this->stats.run_start;
-    }
-    
-};
-
-struct evolution_cycle {
-    
-    int id = 0;
     double start = 0.0;
     double duration = 0.0;
     
-    void begin() {
-        LOG(3, 0, 0, "BEGIN OBJECTIVE CYCLE %d -> ", this->id);
+    void init() {
+        
+        LOG(5, 0, 0, "INIT EA STATS ");
+        
+        this->min_t.value = 0.0;
+        this->max_t.value = 0.0;
+        this->sum_t.value = 0.0;
+        this->avg_t = 0.0;
+        
+        this->init_duration = 0.0;
+        this->start = 0.0;
         this->duration = 0.0;
-        this->start = MPI_Wtime();
+        
     }
-    
-    void end() {
-        LOG(3, 0, 0, "END OBJECTIVE CYCLE %d\r\n", this->id);
-        double cycle_end = MPI_Wtime();
-        this->duration = cycle_end - this->start;
-    }
-    
     
 };
+
+struct cycle_stats : time_stats, parallel_stats, fitness_stats {
+
+    std::vector<double> best;
+    
+    double best_fitness = 0.0;
+    double avg_best_fitness = 0.0;
+    
+    void init() {
+        
+        LOG(5, 0, 0, "INIT CYCLE STATS ");
+        
+        this->start = 0.0;
+        this->duration = 0.0;
+        
+    }
+    
+};
+
+struct run_stats : time_stats, parallel_stats, fitness_stats {
+    
+    std::vector<double> best;
+    
+    double best_fitness = 0.0;
+    double avg_best_fitness = 0.0;
+    
+    void init() {
+        
+        LOG(5, 0, 0, "INIT RUN STATS ");
+        
+        this->start = 0.0;
+        this->duration = 0.0;
+        this->init_duration = 0.0;
+        
+    }
+    
+};
+
 
 #endif /* dtype_stats_h */
 

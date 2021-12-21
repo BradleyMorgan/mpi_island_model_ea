@@ -11,29 +11,32 @@ dim:10
 ##### BEGIN SUBSECTION: meta ea custom parameters #####
 
 # --- PARAMETER[sparsity]: probability that a gene will be populated ---
-# --- PARAMETER[migration_cap]: maximum number of received population individuals per island ---
+# --- PARAMETER[mrecv_cap]: maximum number of received population individuals per island ---
 # --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
 
 sparsity:0.20
-migration_cap:60
+recv_cap:60
 send_cap:60
 
 ##### END SUBSECTION: solver ea custom parameters #####
 
 ##### BEGIN SUBSECTION: parallel parameters #####
-# --- PARAMETER[mu_node]: maximum number of individuals sent per island
+# --- PARAMETER[mu_mode]: maximum number of individuals sent per island
 #     0: fixed global mu, comm size based island mu, fixed island lambda
 #     1: comm size based global mu, fixed island mu, fixed island lambda
 #     2: comm size based global mu, fixed island mu, percentage island lambda ---
-# --- PARAMETER<mu_modes[1,2]>[island_mu]: number of individuals per island (fixed island mu) ---
-# --- PARAMETER<mu_modes[0,1]>[island_lambda]: number of children created per island evolution cycle (fixed island lambda) ---
-# --- PARAMETER<mu_modes<2>>[island_lambda_pct]: island lambda determined as a percentage of island_mu (proportional island lambda) ---
+# --- PARAMETER<mu_mode[1,2]>[mu_sub]: number of individuals per island (fixed island mu) ---
+# --- PARAMETER<mu_mode[0,1]>[int::lambda_sub]: number of children created per island evolution cycle (fixed island lambda) ---
+# --- PARAMETER<mu_modes<2>>[double::lambda_sub] island lambda determined as a percentage of island_mu (proportional island lambda) ---
 # --- PARAMETER[migration_interval]: perform island migrations every 𝑒 generations ---
 
 mu_mode:1
-island_mu:128
-island_lambda:32
-island_lambda_pct:0.20
+mu_sub:128
+lambda_sub:32
+
+## use real number value for lambda sizing proportional to subpopulation mu
+## lambda_sub:0.20
+
 migration_interval:1
 
 ##### END SUBSECTION: parallel parameters #####
@@ -42,6 +45,7 @@ migration_interval:1
 # --- PARAMETER[ea_mode]: benchmark vs. experimental mode(s)
 
 ea_mode:1
+seed:0
 
 ##### END SUBSECTION: experimental parameters #####
 
@@ -57,16 +61,14 @@ ea_mode:1
 # --- PARAMETER[config_name]: display name for this configuration ---
 # --- PARAMETER[log_file]: configuration log file prefix ---
 # --- PARAMETER[stats_file]: prefix for statistics output files ---
-# --- PARAMETER[topo_file]: prefix for second statistics output files ---
-# --- PARAMETER[implementation_name]: display name for the ea implementation ---
+# --- PARAMETER[algorithm_name]: display name for the ea implementation ---
 
 loglevel:2
-seed:0
+
+algorithm_name:meta
 config_name:meta
 log_file:meta
 stats_file:meta
-topo_file:meta
-implementation_name:meta
 
 ####### END SECTION: logging #######
 
@@ -93,16 +95,44 @@ implementation_name:meta
 ## ---- PARAMETER[ea_𝑛_mutation_rate]: number of offspring created per evolution cycle
 ## ---- PARAMETER[ea_𝑛_o𝑘_name]:  use ea_𝑛_o𝑘 [0..𝑘] to define multiple objectives within each ea
 
-ea_1_name:solver
-ea_1_runs:3
-ea_1_log_interval:100
-ea_1_population_log_interval:1000
-ea_1_max_evo_cycles:2500
-ea_1_evo_termination:0.05
-ea_1_max_fit_evals:1
+# 𝑆
+ea_1_name:SOLVER
+# 𝑆𝜇
 ea_1_mu:512
+# 𝑆𝜆
 ea_1_lambda:64
+# 𝑆𝑟𝑚𝑎𝑥
+ea_1_max_runs:30
+# 𝑆c𝑚𝑎𝑥
+ea_1_max_cycles:10000
+# 𝑆e𝑚𝑎𝑥
+ea_1_max_evals:0
+# 𝑆ₘₜ
 ea_1_mutation_rate:0.08
+
+ea_1_log_run_interval:1
+ea_1_log_cycle_interval:100
+ea_1_log_eval_interval:1000
+ea_1_log_population_interval:250
+
+# 𝑆₁
+ea_1_o1_name:BENCHMARK
+
+# 𝑆r𝑚𝑎𝑥₁
+ea_1_o1_max_runs:2
+# 𝑆c𝑚𝑎𝑥₁
+ea_1_o1_max_cycles:500
+# 𝑆e𝑚𝑎𝑥₁
+ea_1_o1_max_evals:0
+# 𝑆f𝑚𝑎𝑥₁
+ea_1_o1_max_fitness_evals:1
+
+ea_1_o1_log_run_interval:1
+ea_1_o1_log_cycle_interval:50
+ea_1_o1_log_eval_interval:100000
+ea_1_o1_log_population_interval:250
+
+## ea_1_evo_termination:0.05
 ## ea_1_o1_name:placeholder_o1
 ## ea_1_o1_name:placeholder_o2
 
@@ -110,28 +140,44 @@ ea_1_mutation_rate:0.08
 
 ##### BEGIN SUBSECTION: ea 𝑛 = 2 #####
 
-ea_2:topologies
-
-#(𝛭𝑟𝑚𝑎𝑥)
-ea_2_runs:3
-
-#(𝛭𝜇)
+# 𝛭
+ea_2_name:META
+# 𝛭𝜇
 ea_2_mu:16
-
-#(𝛭𝜆)
+# 𝛭𝜆
 ea_2_lambda:4
-
-# 𝛭𝑒𝑚𝑎𝑥
-ea_2_max_evo_cycles:40
-
-ea_2_max_fit_runs:2
-ea_2_max_fit_evals:500
-ea_2_log_interval:1000
-ea_2_population_log_interval:1000
+# 𝛭𝑟𝑚𝑎𝑥
+ea_2_max_runs:3
+# 𝛭c𝑚𝑎𝑥
+ea_2_max_cycles:40
+# 𝛭e𝑚𝑎𝑥
+ea_2_max_evals:0
+# 𝛭eₓ
 ea_2_evo_termination:0.05
+# 𝛭ₘₜ
 ea_2_mutation_rate:0.20
-## ea_2_o1_name:placeholder1
-## ea_2_o2_name:placeholder2
+
+ea_2_log_run_interval:1
+ea_2_log_cycle_interval:1
+ea_2_log_eval_interval:2
+ea_2_log_population_interval:250
+ea_2_population_log_interval:1000
+
+# 𝛭₁
+ea_2_o1_name:TOPOLOGY
+# 𝛭r𝑚𝑎𝑥₁
+ea_2_o1_max_runs:2
+# 𝛭c𝑚𝑎𝑥₁
+ea_2_o1_max_cycles:500
+# 𝛭e𝑚𝑎𝑥₁
+ea_2_o1_max_evals:2
+# 𝛭f𝑚𝑎𝑥₁
+ea_2_o1_max_fitness_evals:2
+
+ea_2_o1_log_run_interval:1
+ea_2_o1_log_cycle_interval:1
+ea_2_o1_log_eval_interval:1
+ea_2_o1_log_population_interval:250
 
 ##### END SUBSECTION: ea 𝑛 = 2 #####
 

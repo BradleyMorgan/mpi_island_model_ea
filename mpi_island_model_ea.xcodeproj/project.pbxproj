@@ -10,6 +10,7 @@
 		9A6508972406B3C100C7A63D /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A6508962406B3C100C7A63D /* main.cpp */; };
 		9A65089F2406B40D00C7A63D /* libmpi.40.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A65089E2406B40D00C7A63D /* libmpi.40.dylib */; };
 		9A8A0AC42411425400DBB5DB /* config.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 9A8A0AC324113D5300DBB5DB /* config.txt */; };
+		9AE756EF276F190B0085CC8D /* scripts in CopyFiles */ = {isa = PBXBuildFile; fileRef = 9AB2C2DC2746A46000CDE074 /* scripts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -19,6 +20,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
+				9AE756EF276F190B0085CC8D /* scripts in CopyFiles */,
 				9A8A0AC42411425400DBB5DB /* config.txt in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

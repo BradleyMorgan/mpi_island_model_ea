@@ -13,6 +13,18 @@
 #include <cpuid.h>
 #include <array>
 
+int log_system () {
+
+    char command[255];
+    
+    sprintf(command, "./scripts/sysinfo.sh >> %s", config::system_log_out);
+    
+    system(command);
+    
+    return 0;
+    
+}
+
 #pragma mark FUNCTION prob_true() --------
 
 // utility function to find arbitrary event probability

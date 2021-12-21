@@ -28,9 +28,18 @@ struct solution {
     int survival = 0;
     
     std::array<char[64], 2> parents;
+
+    int numeric_id();
+    
+    template<typename i> void measure(i &interval);
     
     solution() { strcpy(id, uniqid(sinstances++)); }
 
 };
+
+template<typename i> void solution::measure(i &interval) { }
+ 
+int solution::numeric_id() {
+    return (int)std::strtol(this->id, nullptr, 10); }
 
 #endif /* dtype_solution_h */

@@ -82,18 +82,16 @@ std::vector<std::vector<int>> topology::create::matrix(const topology &t) {
     // the passed vector comm should contain world_size group objects,
     // tracking the senders and receivers for each island
     
-    LOG(3, 0, 0, "MATRIX: creating adjacency matrix for topology %d: ", t.id);
+    LOG(5, 0, 0, "MATRIX: creating adjacency matrix for topology %d: ", t.id);
     
     std::vector<std::vector<int>> matrix;
     matrix.resize(t.world_size);
-
-    LOG(3, 0, 0, "size=%lu ", matrix.size());
     
     for(int i=0; i<t.world_size; i++) { // matrix row, sized with world_size indices
 
         matrix[i].resize(t.world_size);
         
-        LOG(3, 0, 0, "size[%d]=%lu, ", i, matrix[i].size());
+        LOG(9, 0, 0, "size[%d]=%lu, ", i, matrix[i].size());
         
         for(int j=0; j<t.world_size; j++) { // matrix column [0..world size]
             
@@ -109,11 +107,11 @@ std::vector<std::vector<int>> topology::create::matrix(const topology &t) {
                 matrix[i][j] = 0;
             }
             
-            LOG(3, 0, 0, "[%d] ", matrix[i][j]);
+            LOG(9, 0, 0, "[%d] ", matrix[i][j]);
             
         }
         
-        LOG(3, 0, 0, "\r\n");
+        LOG(9, 0, 0, "\r\n");
         
     }
     
@@ -133,7 +131,7 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
     
     int comm_count = 0;
     int send_max = world_size * ((config::send_cap * 1.0) / 100.0);
-    int recv_max = world_size * ((config::migration_cap * 1.0) / 100.0);
+    int recv_max = world_size * ((config::recv_cap * 1.0) / 100.0);
     int rec_count[world_size];
     int snd_count[world_size];
     
@@ -222,11 +220,11 @@ void topology::apply(island &isle, topology &t) {
     // rank authoritative source parses and queues the distribution of
     // island-specific migration channels to be assigned
     
-    LOG(6, isle.id, 0, "applying topology %d ...\r\n", t.id);
+    LOG(6, mpi.id, 0, "applying topology %d ...\r\n", t.id);
     
-    if(isle.id == 0) {
+    if(mpi.id == 0) {
         
-        LOG(6, isle.id, 0, "distributing topology %d\r\n", t.id);
+        LOG(6, mpi.id, 0, "distributing topology %d\r\n", t.id);
     
         t.distribute(isle);
     
@@ -241,13 +239,13 @@ void topology::apply(island &isle, topology &t) {
     
     // initiate MPI_Recv calls.
     
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound channel size from topology %d\r\n", isle.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound channel size from topology %d\r\n", mpi.id, t.world_size, t.id);
     
     // complete the MPI_Send of queue size for island export
     
-    MPI_Recv(&send_size, 1, MPI_INT, 0, (isle.id*10)+1, isle.tcomm, MPI_STATUS_IGNORE);
+    MPI_Recv(&send_size, 1, MPI_INT, 0, (mpi.id*10)+1, isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %d inbound channels from topology %d\r\n", isle.id, t.world_size, send_size, t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %d inbound channels from topology %d\r\n", mpi.id, t.world_size, send_size, t.id);
 
     // initialize the set of process send channels
 
@@ -256,11 +254,11 @@ void topology::apply(island &isle, topology &t) {
 
     // complete the MPI_Send of island ids to which this island will send ...
     
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound island ids from topology %d\r\n", isle.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound island ids from topology %d\r\n", mpi.id, t.world_size, t.id);
     
-    MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, (isle.id*10)+2, isle.tcomm, MPI_STATUS_IGNORE);
+    MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, (mpi.id*10)+2, isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu inbound island ids from topology %d\r\n", isle.id, t.world_size, isle.senders.size(), t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu inbound island ids from topology %d\r\n", mpi.id, t.world_size, isle.senders.size(), t.id);
     
     if(isle.senders.empty()) {
         LOG(6, 0, 0, "[X]\r\n");
@@ -271,11 +269,11 @@ void topology::apply(island &isle, topology &t) {
 
     // complete the MPI_Send of queue size for island import
     
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound channel size from topology %d\r\n", isle.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound channel size from topology %d\r\n", mpi.id, t.world_size, t.id);
 
-    MPI_Recv(&rec_size, 1, MPI_INT, 0, (isle.id*10)+3, isle.tcomm, MPI_STATUS_IGNORE);
+    MPI_Recv(&rec_size, 1, MPI_INT, 0, (mpi.id*10)+3, isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound channels from topology %d\r\n", isle.id, t.world_size, isle.senders.size(), t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound channels from topology %d\r\n", mpi.id, t.world_size, isle.senders.size(), t.id);
 
     // initialize the set of process receive channels
 
@@ -284,13 +282,13 @@ void topology::apply(island &isle, topology &t) {
 
     // complete the MPI_Send of island ids from which this island will receive ...
 
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound island ids from topology %d\r\n", isle.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound island ids from topology %d\r\n", mpi.id, t.world_size, t.id);
     
-    MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, (isle.id*10)+4, isle.tcomm, MPI_STATUS_IGNORE);
+    MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, (mpi.id*10)+4, isle.tcomm, MPI_STATUS_IGNORE);
     
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound island ids from topology %d\r\n", isle.id, t.world_size, isle.senders.size(), t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound island ids from topology %d\r\n", mpi.id, t.world_size, isle.senders.size(), t.id);
 
-    LOG(7, 0, 0, "topology %d: island %d got %lu exports to ->   ", t.id, isle.id, isle.receivers.size());
+    LOG(7, 0, 0, "topology %d: island %d got %lu exports to ->   ", t.id, mpi.id, isle.receivers.size());
     if(isle.receivers.empty()) {
         LOG(6, 0, 0, "[X]\r\n");
     } else {
@@ -330,7 +328,7 @@ void topology::distribute(island &isle) {
     // get number of mpi processes and the current process rank, and check to make sure
     // only rank 0 performs the topology distribution ...
     
-    if(isle.id != 0) { return; }
+    if(mpi.id != 0) { return; }
     
     // issue an MPI_Send of the required i\o sockets for the provided corresponding process (island) ...
     
@@ -339,360 +337,22 @@ void topology::distribute(island &isle) {
         int send_size = (int)this->channels[i].senders.size();
         int rec_size = (int)this->channels[i].receivers.size();
         
-        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d send channels to %d of %d from topology %d\r\n", isle.id, send_size, i, this->world_size, this->id);
+        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d send channels to %d of %d from topology %d\r\n", mpi.id, send_size, i, this->world_size, this->id);
         
         MPI_Send(&send_size, 1, MPI_INT, i, (i*10)+1, isle.tcomm); // needed to size target senders vector
         MPI_Send(&this->channels[i].senders[0], send_size, MPI_INT, i, (i*10)+2, isle.tcomm);
         
-        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d send channels to %d of %d from topology %d\r\n", isle.id, send_size, i, this->world_size, this->id);
+        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d send channels to %d of %d from topology %d\r\n", mpi.id, send_size, i, this->world_size, this->id);
         
-        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d receive channels to %d of %d from topology %d\r\n", isle.id, rec_size, i, this->world_size, this->id);
+        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d receive channels to %d of %d from topology %d\r\n", mpi.id, rec_size, i, this->world_size, this->id);
         
         MPI_Send(&rec_size, 1, MPI_INT, i, (i*10)+3, isle.tcomm); // needed to size target receivers vector
         MPI_Send(&this->channels[i].receivers[0], rec_size, MPI_INT, i, (i*10)+4, isle.tcomm);
         
-        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d receive channels to %d of %d from topology %d\r\n", isle.id, rec_size, i, this->world_size, this->id);
+        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d receive channels to %d of %d from topology %d\r\n", mpi.id, rec_size, i, this->world_size, this->id);
         
     }
     
 }
-
-#pragma mark EA::FUNCTION::TEMPLATES:INITIALIZATION: <topology>
-
-// specialization of generic @objective{} methods for performing pre and post interval
-// initialization and cleanup
-
-#pragma mark EA::OBJECTIVE::RUN <topology>::begin()
-
-// call at the start of an experimental run, usually after
-// incrementing the run count near the beginning of a loop
-//
-// a new run marks the beginning of an experiment, so perform
-// appropriate initializations for restarting the algorithm
-// (e.g. populations and per-run metrics)
-
-template<> template<typename e> void objective<topology>::begin(objective_run &run, e &meta) {
-    
-    this->run.begin();
-    this->cycle.id = 0;
-    this->run.eval.id = 0;
-    this->population.clear();
-    this->population.resize(this->mu);
-    
-    this->log_begin(run, meta);
-    
-}
-
-#pragma mark EA::OBJECTIVE::CYCLE <topology>::begin()
-
-// call at start of evolution cycle (generation)
-//
-// evolution cycle performs parent selection, crossover,
-// child evaluation (if needed) and survival selection
-// perform pre-evolution operations
-//
-
-template<> template<typename e> void objective<topology>::begin(evolution_cycle &cycle, e &meta) {
-    
-    this->cycle.begin();
-    
-    this->log_begin(cycle, meta);
-    
-}
-
-#pragma mark EA::OBJECTIVE::EVAL <topology>::begin()
-
-// call before evaluating an individual, usually after incrementing
-// the evaluation count, near the beginning of a loop
-//
-// an evaluation encompasses all tasks necessary to evaluate individual fitness
-// use eval.begin() to gather statistics, perform measurements, logging, etc.
-
-template<> template<typename e> void objective<topology>::begin(objective_eval &eval, e &meta) {
-    
-    this->run.eval.begin();
-    this->run.eval.id++;
-    this->log_begin(eval, meta);
-    
-}
-
-#pragma mark EA::OBJECTIVE::RUN <topology>::end()
-
-// call at the end of an experimental run, usually before
-// incrementing the run count, near the end of a loop
-// a new run marks the beginning of an experiment, so perform
-// appropriate initializations for restarting the algorithm
-
-template<> template<typename e> void objective<topology>::end(objective_run &run, e &meta) {
-        
-    this->run.end();
-    
-    this->log_end(this->run, meta);
-    
-}
-
-#pragma mark EA::OBJECTIVE::CYCLE <topology>::end()
-
-// call at end of evolution cycle (generation)
-//
-// evolution cycle performs parent selection, crossover,
-// child evaluation (if needed) and survival selection
-// perform post-evolution operations
-//
-
-template<> template<typename e> void objective<topology>::end(evolution_cycle &cycle, e &meta) {
-    
-    this->cycle.end();
-    
-    this->log_end(cycle, meta);
-    
-}
-
-#pragma mark EA::OBJECTIVE::EVAL <topology>::end()
-
-// call before evaluating an individual, usually after incrementing the evaluation count, near the beginning of a loop
-// an evaluation encompasses all tasks necessary to evaluate individual fitness
-// use eval.begin() to gather statistics, perform measurements, logging, etc.
-
-template<> template<typename e> void objective<topology>::end(objective_eval &eval, e &meta) {
-    
-    LOG(3, 0, 0, "END ISLAND %d META objective<topology> %d EVAL %d -> ", meta.variant.isle.id, this->id, this->run.eval.id);
-    
-    this->run.eval.end();
-    
-    log_end(eval, meta);
-    
-}
-
-#pragma mark EA::FUNCTION::TEMPLATES:LOGGING: <topology>
-
-// specialization of generic @objective{} methods for
-// file and standard output
-
-#pragma mark EA::OBJECTIVE::RUN <topology>::log_begin()
-
-// log anything of interest at the start of an experimental run
-
-template<> template<typename e> void objective<topology>::log_begin(objective_run &run, e &meta) {
-    
-    if(meta.variant.isle.id != 0 || this->run.id == 0) { return; }
-    
-    LOG(3, 0, 0, "BEGIN META OBJECTIVE %d RUN %d\r\n", this->id, this->run.id);
-    
-}
-
-#pragma mark EA::OBJECTIVE::CYCLE <topology>::log_begin()
-
-// log anything of interest at the start of an evolution cycle
-
-template<> template<typename e> void objective<topology>::log_begin(evolution_cycle &cycle, e &meta) {
-    
-    if(this->cycle.id == 0) { return; }
-    
-    LOG(2, meta.variant.isle.id, 0, " *** BEGIN ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  *** \r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
-    
-    LOG(6, 0, 0, " *** BEGIN ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  *** \r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
-    
-}
-
-#pragma mark EA::OBJECTIVE::EVAL <topology>::log_begin()
-
-// log anything of interest before evaluating an individual
-
-template<> template<typename e> void objective<topology>::log_begin(objective_eval &eval, e &meta) {
-    
-    if(meta.variant.isle.id != 0) { return; }
-    
-    LOG(3, 0, 0, "END META OBJECTIVE %d EVAL %d\r\n", this->id, this->run.eval.id);
-    
-}
-
-#pragma mark EA::OBJECTIVE::RUN <topology>::log_end()
-
-// log anything of interest at the end of an experimental run
-
-template<> template<typename e> void objective<topology>::log_end(objective_run &run, e &meta) {
-
-    if(meta.variant.isle.id != 0 || this->run.id == 0) { return; }
-
-    LOG(2, meta.variant.isle.id, 0, "END META OBJECTIVE %d RUN %d\r\n", this->id, this->run.id);
-
-    std::fprintf(config::topo_run_stats_out, "%d,%d,%d,%f,%f,%d,%f,%d,%f,%f,%f,%d,%f,%f,%f,%f", meta.topologies.run.id, meta.topologies.cycle.id, meta.topologies.run.eval.id, meta.topologies.run.eval.stats.average_local_best_topo_fitness, meta.topologies.run.eval.stats.average_global_best_topo_fitness, meta.topologies.run.eval.stats.best_topology.id, meta.topologies.run.eval.stats.best_topology.fitness, meta.topologies.run.eval.stats.best_topology.channel_count, meta.topologies.run.eval.stats.best_topology.total_migration_time, meta.topologies.run.eval.stats.global_best_topo_fitness, meta.topologies.run.eval.stats.total_migrate_time, meta.topologies.run.stats.total_channels, meta.topologies.run.stats.run_duration, meta.topologies.cycle.duration, meta.topologies.run.eval.stats.eval_duration, meta.topologies.run.eval.stats.total_migrate_time);
-
-    fflush(config::topo_run_stats_out);
-
-}
-
-#pragma mark EA::OBJECTIVE::CYCLE <topology>::log_end()
-
-// log anything of interest at the end of an evolution cycle
-
-template<> template<typename e> void objective<topology>::log_end(evolution_cycle &cycle, e &meta) {
-    
-    if(this->cycle.id == 0) { return; }
-    
-    LOG(2, meta.variant.isle.id, 0, "\r\n\r\n --- END ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  --- \r\n\r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
-    
-    LOG(6, 0, 0, "\r\n\r\n --- END ISLAND %d META EVOLUTION GENERATION %d RUN %d EVAL %d  --- \r\n\r\n", meta.variant.isle.id, meta.topologies.cycle.id, meta.topologies.run.id, meta.topologies.run.eval.id);
-    
-}
-
-
-#pragma mark EA::OBJECTIVE::EVAL <topology>::log_end()
-
-// log anything of interest at the end of an evaluation
-
-template<> template<typename e> void objective<topology>::log_end(objective_eval &eval, e &meta) {
-    
-    if(meta.variant.isle.id != 0) { return; }
-    
-    LOG(3, 0, 0, "LOG META OBJECTIVE %d EVAL %d END\r\n", this->id, this->run.eval.id);
-    
-}
-
-#pragma mark EA::OBJECTIVE::EVAL <topology>::log_stats))
-
-// catchall function for custom logging
-    
-template<> template<typename e, typename m, typename g> void objective<topology>::log_stats(objective_eval &eval, e &solver, m &meta, g &genome) {
-    
-    LOG(3, 0, 0, "STATS META OBJECTIVE %d EVAL %d\r\n", this->id, this->run.eval.id);
-    
-    if(meta.variant.isle.id != 0) { return; }
-    
-    log_fn_topology_stats(solver, meta, genome);
-    
-}
-
-
-
-
-
-
-// **********************************************************************************************
-
-
-//template<> template<typename e> void objective<topology>::end(e &solver) {
-//    
-//    ea_end(solver, *this);
-//    
-//}
-//
-//
-//#pragma mark FUNCTION: topology_validate()
-//
-//// sanity check to check topology distribution accuracy.
-//
-//// TODO: incomplete implementation, needs work
-//// TODO: this implementation isn't ideal, because it performs a similar distribution
-//// TODO: find a more authoritative way to reference the topology data source
-//
-//void topology::validate(island &isle) {
-//
-//    bool result = true;
-//
-//    // create new vectors to store migration data from the topology data source
-//    // for comparison ...
-//
-//    std::vector<int> s;
-//    std::vector<int> r;
-//
-//    int send_size;
-//    int recv_size;
-//
-//    if(isle.id == 0) {
-//
-//        // the root process is the authoritative source for populations, but we cannot access
-//        // its data context directly from the other nodes, so the current method is to send
-//        // the migration data again, to separate storage ...
-//
-//        for(int i=1; i<this->world_size; i++) {
-//
-//            send_size = (int)this->channels[i].senders.size();
-//            recv_size = (int)this->channels[i].receivers.size();
-//
-//            s = this->channels[i].senders;
-//            r = this->channels[i].receivers;
-//
-//            MPI_Send(&send_size, 1, MPI_INT, i, i, isle.tcomm);
-//            MPI_Send(&s[0], send_size, MPI_INT, i, i*(this->world_size), isle.tcomm);
-//
-//            MPI_Send(&recv_size, 1, MPI_INT, i, i*(this->world_size*2), isle.tcomm);
-//            MPI_Send(&r[0], recv_size, MPI_INT, i, i*(this->world_size*3), isle.tcomm);
-//
-//        }
-//
-//        // store the process 0 (root) send and recv vectors
-//
-//        s.resize(this->channels[0].senders.size());
-//        r.resize(this->channels[0].receivers.size());
-//
-//        s = this->channels[0].senders;
-//        r = this->channels[0].receivers;
-//
-//    } else {
-//
-//        // gather the assigned senders and receivers for each non-root process
-//
-//        MPI_Recv(&send_size, 1, MPI_INT, 0, isle.id, isle.tcomm, MPI_STATUS_IGNORE);
-//        s.resize(send_size);
-//        MPI_Recv(&s[0], send_size, MPI_INT, 0, isle.id*(this->world_size), isle.tcomm, MPI_STATUS_IGNORE);
-//
-//        MPI_Recv(&recv_size, 1, MPI_INT, 0, isle.id*(this->world_size*2), isle.tcomm, MPI_STATUS_IGNORE);
-//        r.resize(recv_size);
-//        MPI_Recv(&r[0], recv_size, MPI_INT, 0, isle.id*(this->world_size*3), isle.tcomm, MPI_STATUS_IGNORE);
-//
-//    }
-//
-//    // check size of this island's receive operations against what we got from the topology source ...
-//
-//    if(s.size() != isle.senders.size()) {
-//        result = false;
-//        LOG(3, 0, 0, "VALIDATION: topology %d failed: island %d sender count (%lu) does not match source (%lu).\r\n", this->id, isle.id, isle.senders.size(), s.size());
-//    }
-//
-//    // for island imports, check to ensure there is a matching receive operation on the destination island ...
-//
-//    for(int i=0; i<isle.senders.size(); i++) {
-//
-//        int recv_from = isle.senders[i];
-//
-//        if(std::find(s.begin(), s.end(), isle.id) != s.end()) {
-//            result = false;
-//            LOG(3, 0, 0, "VALIDATION: topology %d failed: island %d no matching send op found from %d\r\n", this->id, isle.id, recv_from);
-//        } else {
-//            LOG(5, 0, 0, "topology %d matching send op found [%d] -> [%d]\r\n", this->id, recv_from, isle.id)
-//        }
-//    }
-//
-//    // check size of this island's send operations against what we got from the topology source ...
-//
-//    if(r.size() != isle.receivers.size()) {
-//        result = false;
-//        LOG(3, 0, 0, "VALIDATION: topology %d failed: island %d receiver count (%lu) does not match source (%lu).\r\n", this->id, isle.id, isle.receivers.size(), r.size());
-//    }
-//
-//    // for island exports, check to ensure there is a matching receive operation on the destination island ...
-//
-//    for(int i=0; i<isle.receivers.size(); i++) {
-//
-//        int send_to = isle.receivers[i];
-//
-//        if(std::find(r.begin(), r.end(), isle.id) != r.end()) {
-//            result = false;
-//            LOG(3, 0, 0, "VALIDATION: topology %d failed: island %d no matching recv op found to %d\r\n", this->id, isle.id, send_to);
-//        } else {
-//            LOG(5, 0, 0, "topology %d matching rcv op found [%d] -> [%d]\r\n", this->id, isle.id, send_to)
-//        }
-//
-//    }
-//
-//    // return success if we passed all checks ...
-//
-//    if(result == true) {
-//        LOG(3, 0, 0, " *** topology %d: island %d send receive operations VALIDATED ***\r\n", this->id, isle.id);
-//    }
-//
-//}
 
 #endif /* topology_h */

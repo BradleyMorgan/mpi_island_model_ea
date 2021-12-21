@@ -11,8 +11,8 @@
 
 #include "dtype_solution.h"
 #include "dtype_island.h"
-#include "dtype_topology.h"
 #include "dtype_stats.h"
+#include "dtype_topology.h"
 #include "dtype_objective.h"
 #include "dtype_ea.h"
 

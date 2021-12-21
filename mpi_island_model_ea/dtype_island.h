@@ -31,7 +31,7 @@ struct visa {
 
 struct island {
     
-    int id = 0;
+    int id = mpi.id;
     
     std::vector<solution> population;
     
@@ -81,14 +81,16 @@ struct island {
         LOG(6, 0, 0, "ISLAND %d entered initialization\r\n", this->id);
         
         this->population.clear();
-        this->population.resize(config::island_mu);
+        this->population.resize(config::mu_sub);
         this->tcomm = MPI_COMM_WORLD;
         this->senders.clear();
         this->receivers.clear();
 
-        LOG(4, 0, 0, "ISLAND %d initalized with empty population [0,n] => [%f,%f] sized %lu \r\n", this->id, this->population[0].fitness, this->population[config::island_mu-1].fitness, this->population.size());
+        LOG(4, 0, 0, "ISLAND %d initalized with empty population [0,n] => [%f,%f] sized %lu \r\n", this->id, this->population[0].fitness, this->population[config::mu_sub-1].fitness, this->population.size());
         
     }
+    
+    island() : id(mpi.id) {};
     
     metric metrics;
     

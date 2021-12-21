@@ -20,7 +20,7 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
     // return an empty vector to any non-root rank as a
     // placeholder for future use
     
-    if(meta.variant.isle.id != 0) {
+    if(mpi.id != 0) {
         children.resize(meta.topologies.lambda);
         return children;
     }
@@ -32,24 +32,23 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
     
     for(int n = 0; n < meta.topologies.lambda; n++) { // loop lambda
 
-        int child_id = meta.topologies.mu + (meta.topologies.lambda * meta.topologies.cycle.id + n + 1);
+        int child_id = meta.topologies.mu + (meta.topologies.lambda * meta.topologies.run.cycle.id + n + 1);
         
-        LOG(6, meta.variant.isle.id, 0, "%d * %d + %d + 1 = %d\r\n", meta.topologies.mu, meta.topologies.cycle.id, n, child_id);
+        LOG(6, mpi.id, 0, "%d * %d + %d + 1 = %d\r\n", meta.topologies.mu, meta.topologies.run.cycle.id, n, child_id);
        
         // create child skeleton ...
         
         topology child;
         
         child.id = child_id;
-        child.world_size = meta.variant.islands;
+        child.world_size = mpi.size;
         child.fitness = 0.0;
         child.channel_count = 0;
-        child.round_fitness = 0.0;
         child.selection_distribution = 0.0;
-        child.channels.resize(meta.variant.islands);
+        child.channels.resize(mpi.size);
         child.channels.clear();
         
-        LOG(3, meta.variant.isle.id, 0, "creating topo kids\r\n");
+        LOG(5, mpi.id, 0, "creating topo kids\r\n");
 
         topology t1 = meta.topologies.select(parent<topology>);
         topology t2 = meta.topologies.select(parent<topology>);
@@ -57,41 +56,41 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         // calculate an adjacency matrix for each parent's associated topology for use in
         // generating child topology ...
 
-        LOG(3, meta.variant.isle.id, 0, "parents<topology> t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
+        LOG(5, mpi.id, 0, "parents<topology> t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
 
         std::vector<std::vector<int>> m1 = topology::create::matrix(t1);
         std::vector<std::vector<int>> m2 = topology::create::matrix(t2);
 
         // recombine the parent adjacency matrices, initialize ...
 
-        LOG(3, meta.variant.isle.id, 0, "recombining topology %d <-> %d ...\r\n", t1.id, t2.id);
+        LOG(5, mpi.id, 0, "recombining topology %d <-> %d ...\r\n", t1.id, t2.id);
 
         std::vector<std::vector<int>> child_matrix;
-        child_matrix.resize(meta.variant.islands);
+        child_matrix.resize(mpi.size);
 
         int comm_count = 0;
-        int send_max = meta.variant.islands * ((config::send_cap * 1.0) / 100.0);
-        int recv_max = meta.variant.islands * ((config::migration_cap * 1.0) / 100.0);
-        int rec_count[meta.variant.islands];
-        int snd_count[meta.variant.islands];
+        int send_max = mpi.size * ((config::send_cap * 1.0) / 100.0);
+        int recv_max = mpi.size * ((config::recv_cap * 1.0) / 100.0);
+        int rec_count[mpi.size];
+        int snd_count[mpi.size];
 
-        for(int i=0; i<meta.variant.islands; i++) {
+        for(int i=0; i<mpi.size; i++) {
             rec_count[i] = 0;
             snd_count[i] = 0;
         }
 
-        LOG(3, meta.variant.isle.id, 0, "child<topology> %d initialized \r\n", child.id);
+        LOG(5, mpi.id, 0, "child<topology> %d initialized \r\n", child.id);
 
         // iterate row->column for each x,y element in the child matrix, and for each
         // gene and randomly choose a parent from which to assign the value ...
 
-        LOG(3, meta.variant.isle.id, 0, "performing child<topology> %d matrix crossover ...\r\n", child.id);
+        LOG(5, mpi.id, 0, "performing child<topology> %d matrix crossover ...\r\n", child.id);
 
         while(comm_count == 0) { // failsafe to prevent empty matrix
 
             for(int i=0; i<m1.size(); i++) {  // child matrix row
 
-                child_matrix[i].resize(meta.variant.islands);
+                child_matrix[i].resize(mpi.size);
 
                 for(int j=0; j<m2.size(); j++) { // child matrix column
 
@@ -172,7 +171,7 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
 
                 if(rand()/(RAND_MAX+1.0) < meta.topologies.mutation_rate) {
 
-                    LOG(3, meta.variant.isle.id, 0, "mutating child<topology> %d ...\r\n", child.id);
+                    LOG(5, mpi.id, 0, "mutating child<topology> %d ...\r\n", child.id);
 
                     if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
 
@@ -200,18 +199,18 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
     
         topology::create::channels(child, child_matrix);
 
-        LOG(3, meta.variant.isle.id, 0, "child<topology> %d born!\r\n", child.id);
+        LOG(5, mpi.id, 0, "child<topology> %d born!\r\n", child.id);
 
         children.push_back(child);
 
         total_channels += child.channel_count;
         channel_counts.push_back(child.channel_count);
         
-        LOG(3, 0, 0, "child<topology> %d created by rank %d from matrix with %lu senders and %lu receivers\r\n", child.id, meta.variant.isle.id, child.channels[n].senders.size(), child.channels[n].receivers.size());
+        LOG(5, 0, 0, "child<topology> %d created by rank %d from matrix with %lu senders and %lu receivers\r\n", child.id, mpi.id, child.channels[n].senders.size(), child.channels[n].receivers.size());
 
     } // loop lambda
     
-    if(meta.variant.isle.id == 0) {
+    if(mpi.id == 0) {
     
         double mean = total_channels / children.size();
         double variance = 0;
@@ -224,7 +223,7 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         
         double std_dev = sqrt(variance);
         
-        LOG(3, 0, 0, "topology generation %d size=%lu | channels: mean=%f variance=%f standard_deviation=%f\r\n", meta.topologies.cycle.id, children.size(), mean, variance, std_dev);
+        LOG(5, 0, 0, "topology generation %d size=%lu | channels: mean=%f variance=%f standard_deviation=%f\r\n", meta.topologies.run.cycle.id, children.size(), mean, variance, std_dev);
             
     }
     
@@ -238,14 +237,14 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
        
     std::vector<topology> children;
     
-    if(meta.variant.isle.id == 0) {
+    if(mpi.id == 0) {
         
         // the root island holds the only valid, authoritative topology population,
         // we only need to perform parent selection and recombination on that process ...
         
         children = topology_crossover(meta);
         
-        LOG(6, 0, 0, "island %d topology survival, population before: %lu, fitness before: %f, best fit: %f\r\n", meta.variant.isle.id, meta.topologies.population.size(), meta.topologies.aggregate.value.fitness, meta.topologies.population[0].fitness);
+        LOG(6, 0, 0, "island %d topology survival, population before: %lu, fitness before: %f, best fit: %f\r\n", mpi.id, meta.topologies.population.size(), meta.topologies.aggregate.value.fitness, meta.topologies.population[0].fitness);
             
     } else {
         
@@ -253,7 +252,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
     }
 
-    LOG(6, 0, 0, "island %d <topology> survival, population after: %lu, fitness after: %f, best fit: %f\r\n", meta.variant.isle.id, meta.topologies.population.size(), meta.topologies.aggregate.value.fitness, meta.topologies.population[0].fitness);
+    LOG(6, 0, 0, "island %d <topology> survival, population after: %lu, fitness after: %f, best fit: %f\r\n", mpi.id, meta.topologies.population.size(), meta.topologies.aggregate.value.fitness, meta.topologies.population[0].fitness);
 
     // in order to determine a topoology fitness, perform evolutionary cycles of the solver population,
     // with all islands participating using the send\recv channels as defined in the topology
@@ -265,23 +264,23 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
 
         // solver will execute topologies_lambda times, e.g. 32
         
-        LOG(4, meta.variant.isle.id, 0, "ISLAND %d (root) applying child<topology>[%d] for eval\r\n", meta.variant.isle.id, it->id);
+        LOG(4, mpi.id, 0, "ISLAND %d (root) applying child<topology>[%d] for eval\r\n", mpi.id, it->id);
 
         // the apply function distributes a topology's send\recv channels to all islands ...
 
         it->fitness = 0.0;
-        it->apply(meta.variant.isle, *it);
+        it->apply(meta.model.isle, *it);
 
         // once the send\recv channels have been established, we perform a user defined number of evolutionary cycles
         // of the solution population ...
         
         // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin ...
         
-        meta.topologies.begin(meta.topologies.run.eval, meta);
+        meta.ea::begin(meta.topologies, meta.topologies.run.cycle.eval, &(*it));
       
-        solver_begin(meta, solver, *it, config::ea_2_max_fit_runs, meta.topologies.max_fit_evals);
+        solver_begin(meta, solver, *it, config::ea_2_o1_max_runs, config::ea_2_o1_max_cycles);
                 
-        meta.topologies.end(meta.topologies.run.eval, meta);
+        meta.ea::end(meta.topologies, meta.topologies.run.cycle.eval, &(*it));
         
         meta.topologies.population.push_back(*it);
 
@@ -289,7 +288,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
     
     // children evaluated for fitness, perform survival selection ...
     
-    if(meta.variant.isle.id == 0) {
+    if(mpi.id == 0) {
     
         // similar to crossover, we only need to perform survival selection on the root island,
         // so only truncate the the worst individuals in the root island population ...
@@ -306,7 +305,6 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
     
 }
 
-
 #pragma mark FUNCTION: topology_populate()
 
 // returns a collection of randomly generated adjaceny matrices, representing                           |
@@ -315,15 +313,15 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
 
 void topologies_populate(ea_meta &meta) {
     
-    int send_max = meta.variant.islands * ((config::send_cap * 1.0) / 100.0);
-    int recv_max = meta.variant.islands * ((config::migration_cap * 1.0) / 100.0);
-    int matrix_size = meta.variant.islands * meta.variant.islands;
+    int send_max = mpi.size * ((config::send_cap * 1.0) / 100.0);
+    int recv_max = mpi.size * ((config::recv_cap * 1.0) / 100.0);
+    int matrix_size = mpi.size * mpi.size;
     
-    LOG(2, 0, meta.variant.isle.id, "sparsity=%f send_max=%d recv_max=%d prob=%f\r\n", config::sparsity, send_max, recv_max, config::sparsity * matrix_size);
+    LOG(2, 0, mpi.id, "sparsity=%f send_max=%d recv_max=%d prob=%f\r\n", config::sparsity, send_max, recv_max, config::sparsity * matrix_size);
     
     meta.topologies.population.clear();
     
-    LOG(6, meta.variant.isle.id, 0, "ISLAND %d OBJECTIVE %d (root) initializing topology population ... \r\n", meta.variant.isle.id, meta.topologies.id);
+    LOG(6, mpi.id, 0, "ISLAND %d OBJECTIVE %d (root) initializing topology population ... \r\n", mpi.id, meta.topologies.id);
 
     std::vector<int> channel_counts;
     
@@ -332,11 +330,11 @@ void topologies_populate(ea_meta &meta) {
         topology t;
         t.id = i;
         
-        if(meta.variant.isle.id != 0) {
-            LOG(8, 0, 0, "island %d (leaf) adding topology stub %d, returning ... \r\n", meta.variant.isle.id, i);
+        if(mpi.id != 0) {
+            LOG(8, 0, 0, "island %d (leaf) adding topology stub %d, returning ... \r\n", mpi.id, i);
             meta.topologies.population.push_back(t);
         } else {
-            LOG(8, 0, 0, "island %d (root) topology %d\r\n", meta.variant.isle.id, i);
+            LOG(8, 0, 0, "island %d (root) topology %d\r\n", mpi.id, i);
             topology::create::dynamic(t);
             LOG(2, 0, 0, "dynamic topology %d created with %d channels\r\n", i, t.channel_count);
             meta.topologies.population.push_back(t);
@@ -346,7 +344,7 @@ void topologies_populate(ea_meta &meta) {
         
     }
     
-    if(meta.variant.isle.id == 0) {
+    if(mpi.id == 0) {
     
         double mean = meta.topologies.run.stats.total_channels / meta.topologies.mu;
         double variance = 0;
@@ -365,7 +363,7 @@ void topologies_populate(ea_meta &meta) {
     
     // we have our initial topology population, *NOT* evaluated for fitness
     
-    LOG(3, meta.variant.isle.id, 0, "initialized objective (topology) population size %lu \r\n", meta.topologies.population.size());
+    LOG(5, mpi.id, 0, "initialized objective (topology) population size %lu \r\n", meta.topologies.population.size());
     
 }
 
@@ -375,21 +373,21 @@ void benchmark_topology(ea_meta &meta) {
     
     topology t;
     
-    t.rounds = 0;
-    t.world_size = meta.variant.islands;
+    t.stats = {};
+    t.evaluations = 0;
+    t.world_size = mpi.size;
     t.fitness = 0.0;
-    t.round_fitness = 0.0;
     t.selection_distribution = 0.0;
     t.channels = {};
-    t.channels.resize(meta.variant.islands);
+    t.channels.resize(mpi.size);
     
-    for(int i=0; i<meta.variant.islands; i++) {
+    for(int i=0; i<mpi.size; i++) {
         
         t.channels[i].senders = {};
         t.channels[i].receivers = {};
         
-        int next = i+1 < meta.variant.islands ? i+1 : 0;
-        int prev = i-1 < 0 ? (int)meta.variant.islands-1 : i-1;
+        int next = i+1 < mpi.size ? i+1 : 0;
+        int prev = i-1 < 0 ? (int)mpi.size-1 : i-1;
 
         t.channels[i].senders.push_back(prev);
         t.channels[i].receivers.push_back(next);
@@ -402,97 +400,99 @@ void benchmark_topology(ea_meta &meta) {
 
 }
 
-void ea_begin(ea_meta &meta, ea_solver &solver, int mode = 1) {
-        
-    meta.start = MPI_Wtime();
+template<> template<typename i> void objective<topology>::end(i &interval, topology *current) {
+    
+    interval.end(current);
+    
+    this->log_end(interval);
+    
+}
+
+template<typename e> void ea_meta::begin(e &target) {
     
     // 𝛭𝑟𝑚𝑎𝑥 iterations ...
     
-    for(meta.topologies.run.id = 1; meta.topologies.run.id <= meta.topologies.max_runs; meta.topologies.run.id++) {
-        
-        meta.topologies.begin(meta.topologies.run, meta);
+    for(this->topologies.run.id = 1; this->topologies.run.id <= this->topologies.run.max; this->topologies.run.id++) {
+    
+        this->ea::begin(this->topologies, &this->topologies.population[0]);
         
         // evaluate initial population by applying each randomly generated
         // channels accordingly and return the elapsed time to perform
         // all island migrations as the topology fitness
         
-        if(mode == 1) {
+        if(config::ea_mode == 1) {
        
-            meta.topologies.populate(meta, topologies_populate);
+            this->topologies.populate(*this, topologies_populate);
             
             // 𝛭𝜇 iterations ...
             
-            // priming run to mitigate observed dominance of the initial evaluation
-            
-            //solver_prime(meta, solver, meta.topologies.population[0], config::ea_2_max_fit_runs, config::ea_1_log_interval - 1);
-            
-            for(int i=0; i<meta.topologies.mu; i++) {
+            for(int i=0; i<this->topologies.mu; i++) {
                 
                 // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
                 
-                meta.topologies.begin(meta.topologies.run.eval, meta);
+                this->ea::begin(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[i]);
                 
-                solver_begin(meta, solver, meta.topologies.population[i], config::ea_2_max_fit_runs, meta.topologies.max_fit_evals);
+                solver_begin(*this, target, this->topologies.population[i], config::ea_2_o1_max_runs, config::ea_2_o1_max_cycles);
                 
-                meta.topologies.end(meta.topologies.run.eval, meta);
-                    
+                this->topologies.end(this->topologies.run.cycle.eval, target.solutions.run, this->topologies.run.cycle.eval.local);
+                //this->ea::end(this->topologies, this->topologies.run.cycle.eval, this->topologies.run.cycle.eval.local);
+            
             } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
-            for(meta.topologies.cycle.id = 1; meta.topologies.cycle.id <= meta.topologies.max_evo_cycles; meta.topologies.cycle.id++) {
+            for(this->topologies.run.cycle.id = 1; this->topologies.run.cycle.id <= this->topologies.run.cycle.max; this->topologies.run.cycle.id++) {
                
                 // 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in topology_evolve
                 
-                meta.topologies.begin(meta.topologies.cycle, meta);
+                this->ea::begin(this->topologies, this->topologies.run.cycle, this->topologies.run.local);
                 
-                meta.topologies.evolve(solver, meta, topology_evolve);
+                this->topologies.evolve(target, *this, topology_evolve);
                 
-                meta.topologies.end(meta.topologies.cycle, meta);
+                this->ea::end(this->topologies, this->topologies.run.cycle, this->topologies.run.local);
+                
 
             }  // 𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
         
             // (𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) iterations
             
+            this->ea::end(this->topologies, this->topologies.run, this->topologies.run.local);
+            
         } else {
             
-            benchmark_topology(meta);
+            benchmark_topology(*this);
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations ...
             
-            for(meta.topologies.cycle.id = 1; meta.topologies.cycle.id <= meta.topologies.max_evo_cycles; meta.topologies.cycle.id++) {
+            for(this->topologies.run.cycle.id = 1; this->topologies.run.cycle.id <= this->topologies.run.cycle.max; this->topologies.run.cycle.id++) {
              
-                meta.topologies.begin(meta.topologies.cycle, meta);
+                this->ea::begin(this->topologies, this->topologies.run.cycle, this->topologies.run.cycle.local);
                 
                 // we don't need to evolve since the benchmark uses a static topology (id=1)
                 // but, simulate the same iteration logic so that logging is more consistent
                 // between the benchmark and experimental output
                 
-                for(int i=0; i<meta.topologies.lambda; i++) {
+                for(int i=0; i<this->topologies.lambda; i++) {
                   
                     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
                     
-                    meta.topologies.begin(meta.topologies.run.eval, meta);
+                    this->ea::begin(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[0]);
                    
-                    solver_begin(meta, solver, meta.topologies.population[0], config::ea_2_max_fit_runs, meta.topologies.max_fit_evals);
+                    solver_begin(*this, target, this->topologies.population[0], config::ea_2_o1_max_runs, config::ea_2_o1_max_cycles);
                             
-                    meta.topologies.end(meta.topologies.run.eval, meta);
+                    this->ea::end(this->topologies, this->topologies.run.cycle.eval, this->topologies.run.cycle.eval.local);
                 
-                    meta.topologies.population[0].rounds = 0;
-                    
                 }
                 
-                meta.topologies.end(meta.topologies.cycle, meta);
+                this->ea::end(this->topologies, this->topologies.run.cycle, this->topologies.run.cycle.local);
                 
             }
             
         }
         
-        meta.topologies.end(meta.topologies.run, meta);
+        this->ea::end(this->topologies);
         
     }
-    
-    meta.duration = MPI_Wtime() - meta.start;
     
     // 𝛭𝑟𝑚𝑎𝑥 * ((𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥)) iterations
     
