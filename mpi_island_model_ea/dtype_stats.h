@@ -21,11 +21,13 @@
 #define RESET "\x1B[0m"
 
 struct mpi_local {
+    
     double value;
     int island = mpi.id;
     
     void init() { mpi_local(); }
     mpi_local() { value=0.0; island=mpi.id; }
+    
 };
 
 struct time_stats {
@@ -38,6 +40,7 @@ struct time_stats {
     mpi_local min_t;
     mpi_local max_t;
     mpi_local sum_t;
+    
     double avg_t = 0.0;
     
 };
@@ -70,6 +73,7 @@ struct parallel_stats {
 struct fitness_stats {
     
     std::vector<double> best;
+    std::vector<double> min;
     
     double total_fitness = 0.0;
     double avg_fitness = 0.0;
@@ -106,8 +110,6 @@ struct eval_stats: time_stats, fitness_stats {
 };
 
 struct cycle_stats : time_stats, parallel_stats, fitness_stats {
-
-    std::vector<double> best;
     
     double best_fitness = 0.0;
     double avg_best_fitness = 0.0;
@@ -125,8 +127,6 @@ struct cycle_stats : time_stats, parallel_stats, fitness_stats {
 
 struct run_stats : time_stats, parallel_stats, fitness_stats {
     
-    std::vector<double> best;
-    
     double best_fitness = 0.0;
     double avg_best_fitness = 0.0;
     
@@ -141,6 +141,19 @@ struct run_stats : time_stats, parallel_stats, fitness_stats {
     }
     
 };
+
+void log_separator(char *log_line, char line_char = '-') {
+    
+    int cols = 80;
+    int rpad = 6;
+    int lpad = cols - sizeof(log_line) + rpad;
+    
+    std::string prefix = std::string(rpad, line_char);
+    std::string suffix = std::string(lpad, line_char);
+    
+    LOG(2, mpi.id, 0, "\r\n%s %s %s\r\n", prefix.c_str(), log_line, suffix.c_str());
+    
+}
 
 
 #endif /* dtype_stats_h */

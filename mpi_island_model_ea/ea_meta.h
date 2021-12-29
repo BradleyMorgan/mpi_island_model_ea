@@ -41,9 +41,7 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         topology child;
         
         child.id = child_id;
-        child.world_size = mpi.size;
         child.fitness = 0.0;
-        child.channel_count = 0;
         child.selection_distribution = 0.0;
         child.channels.resize(mpi.size);
         child.channels.clear();
@@ -203,8 +201,7 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
 
         children.push_back(child);
 
-        total_channels += child.channel_count;
-        channel_counts.push_back(child.channel_count);
+        channel_counts.push_back(child.stats.total_channels);
         
         LOG(5, 0, 0, "child<topology> %d created by rank %d from matrix with %lu senders and %lu receivers\r\n", child.id, mpi.id, child.channels[n].senders.size(), child.channels[n].receivers.size());
 
@@ -336,10 +333,10 @@ void topologies_populate(ea_meta &meta) {
         } else {
             LOG(8, 0, 0, "island %d (root) topology %d\r\n", mpi.id, i);
             topology::create::dynamic(t);
-            LOG(2, 0, 0, "dynamic topology %d created with %d channels\r\n", i, t.channel_count);
+            LOG(2, 0, 0, "dynamic topology %d created with %d channels\r\n", i, t.stats.total_channels);
             meta.topologies.population.push_back(t);
-            meta.topologies.run.stats.total_channels += t.channel_count;
-            channel_counts.push_back(t.channel_count);
+            meta.topologies.run.stats.total_channels += t.stats.total_channels;
+            channel_counts.push_back(t.stats.total_channels);
         }
         
     }
@@ -365,6 +362,8 @@ void topologies_populate(ea_meta &meta) {
     
     LOG(5, mpi.id, 0, "initialized objective (topology) population size %lu \r\n", meta.topologies.population.size());
     
+    meta.topologies.log_population(meta.topologies.run);
+    
 }
 
 void benchmark_topology(ea_meta &meta) {
@@ -374,8 +373,6 @@ void benchmark_topology(ea_meta &meta) {
     topology t;
     
     t.stats = {};
-    t.evaluations = 0;
-    t.world_size = mpi.size;
     t.fitness = 0.0;
     t.selection_distribution = 0.0;
     t.channels = {};
@@ -390,11 +387,13 @@ void benchmark_topology(ea_meta &meta) {
         int prev = i-1 < 0 ? (int)mpi.size-1 : i-1;
 
         t.channels[i].senders.push_back(prev);
+        t.stats.send_channels++;
+        t.stats.total_channels++;
         t.channels[i].receivers.push_back(next);
+        t.stats.recv_channels++;
+        t.stats.total_channels++;
         
     }
-    
-    t.channel_count = t.world_size * 2;
 
     meta.topologies.population.push_back(t);
 
@@ -430,15 +429,20 @@ template<typename e> void ea_meta::begin(e &target) {
                 
                 // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
                 
-                this->ea::begin(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[i]);
+                this->ea::begin(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[i], target.solutions.run);
                 
-                solver_begin(*this, target, this->topologies.population[i], config::ea_2_o1_max_runs, config::ea_2_o1_max_cycles);
+                solver_begin(*this, target, this->topologies.population[i]);
                 
-                this->topologies.end(this->topologies.run.cycle.eval, target.solutions.run, this->topologies.run.cycle.eval.local);
-                //this->ea::end(this->topologies, this->topologies.run.cycle.eval, this->topologies.run.cycle.eval.local);
-            
+                this->ea::end(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[i], target.solutions.run);
+                
+                if(this->topologies.run.cycle.eval.stats.best_fitness > this->topologies.run.cycle.stats.best_fitness) {
+                    this->topologies.run.cycle.stats.best_fitness = this->topologies.run.cycle.eval.stats.best_fitness;
+                }
+                
             } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
             
+            this->topologies.dominated_sort();
+
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
             for(this->topologies.run.cycle.id = 1; this->topologies.run.cycle.id <= this->topologies.run.cycle.max; this->topologies.run.cycle.id++) {
@@ -449,7 +453,7 @@ template<typename e> void ea_meta::begin(e &target) {
                 
                 this->topologies.evolve(target, *this, topology_evolve);
                 
-                this->ea::end(this->topologies, this->topologies.run.cycle, this->topologies.run.local);
+                this->ea::end(this->topologies, this->topologies.run.cycle);
                 
 
             }  // 𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations

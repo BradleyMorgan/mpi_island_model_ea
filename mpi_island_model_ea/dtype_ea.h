@@ -93,7 +93,6 @@ struct ea_run {
     ea_run(): id(0) {};
     
     void begin() {
-        this->id++;
         LOG(4, 0, 0, "\r\n--- BEGIN EA RUN %d OF %d ---\r\n", this->id, this->max);
         this->stats.duration = 0.0;
         this->stats.start = MPI_Wtime();
@@ -212,7 +211,7 @@ struct ea_model {
 template<class variant>
 struct ea {
     
-    char name[128] = "";
+    char name[128];
     
     ea_run run;
     ea_model model;
@@ -220,11 +219,11 @@ struct ea {
     
     // TODO: generalize collection type to store multiple objectives
     
-    ea();
+    ea() {};
     
     void begin() {
         
-        LOG(4, 0, 0, "\r\n--- BEGIN %s EA ---\r\n", this->name);
+        LOG(4, mpi.id, 0, "\r\n--- BEGIN %s EA ---\r\n", this->name);
         
         this->model.isle.population.clear();
         this->model.isle.population.resize(config::mu_sub);
@@ -234,7 +233,7 @@ struct ea {
     
     void end() {
         
-        LOG(4, 0, 0, "\r\n--- END %s EA ---\r\n", this->name);
+        LOG(4, mpi.id, 0, "\r\n--- END %s EA ---\r\n", this->name);
         
         double ea_end = MPI_Wtime();
         
@@ -245,22 +244,47 @@ struct ea {
         MPI_Reduce(&this->stats.local_t, &this->stats.max_t, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, this->model.tcomm);
         MPI_Reduce(&this->stats.local_t, &this->stats.sum_t, 1, MPI_DOUBLE, MPI_SUM, 0, this->model.tcomm);
         
-        this->stats.avg_t = this->stats.sum_t / mpi.size;
+        this->stats.avg_t = this->stats.sum_t.value / mpi.size;
         
     }
     
     #pragma mark EA::DATATYPE::FUNCTION::TEMPLATES
     
-    template<typename f, typename o> void populate(objective<o> &obj, f function) { obj.populate(*this, function); }
-    template<typename f, typename o, typename g> void evaluate(objective<o> &obj, g &individual, f function) { obj.evaluate(*this, individual, function); }
-    template<typename f, typename o, typename m> void evolve(objective<o> &obj, m &meta, f function) { obj.evolve(*this, meta, function); }
-    template<typename f, typename o, typename m, typename g> void evolve(objective<o> &obj, m &meta, g &individual, f function) { obj.evolve(*this, meta, individual, function); }
+    // evolution
     
-    template<typename e> void begin(ea<e> &target);
-    template<typename genome> void begin(objective<genome> &obj, genome *current = NULL);
-    template<typename genome> void end(objective<genome> &obj, genome *current = NULL);
-    template<typename genome, typename i> void begin(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
-    template<typename genome, typename i> void end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
+    template<typename f, typename o> void
+    populate(objective<o> &obj, f function) { obj.populate(*this, function); }
+    
+    template<typename f, typename o, typename g> void
+    evaluate(objective<o> &obj, g &individual, f function) { obj.evaluate(*this, individual, function); }
+   
+    template<typename f, typename o, typename m>
+    void evolve(objective<o> &obj, m &meta, f function) { obj.evolve(*this, meta, function); }
+    
+    template<typename f, typename o, typename m, typename g>
+    void evolve(objective<o> &obj, m &meta, g &individual, f function) { obj.evolve(*this, meta, individual, function); }
+    
+    // interval control
+    
+    template<typename e>
+    void begin(ea<e> &target);
+    
+    template<typename genome>
+    void begin(objective<genome> &obj, genome *current = NULL);
+    
+    template<typename genome> void
+    end(objective<genome> &obj, genome *current = NULL);
+
+    template<typename genome, typename i>
+    void begin(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
+    
+    template<typename genome, typename i> void
+    end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
+    
+    template<typename genome, typename data, typename i> void
+    end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL, data &data_interval = objective<genome>::run);
+    
+    template<typename genome, typename data, typename i> void begin(objective<genome> &obj, i &interval, genome *current, data &data_interval);
     
 };
 
@@ -278,19 +302,41 @@ template<typename variant> template<typename genome> void ea<variant>::end(objec
     
     this->end(obj, obj.run, obj.run.local);
     
+    this->end();
+        
 }
 
 template<typename variant> template<typename genome, typename i> void ea<variant>::begin(objective<genome> &obj, i &interval, genome *current) {
-
+    
+    sprintf(interval.log_head, "BEGIN %s OBJECTIVE %d (%s) %s %d OF %d", this->name, obj.id, obj.name, interval.name, interval.id, interval.max);
+    
     obj.begin(interval, current);
-
-    LOG(3, mpi.id, 0, "(%d,%d,%d,%d,%d) ea::%s::begin(%d,%d,%lu)\r\n", mpi.id, obj.id, obj.run.id, obj.run.cycle.id, obj.run.cycle.eval.id, this->name, obj.id, interval.id, sizeof(current));
     
 }
 
 template<typename variant> template<typename genome, typename i> void ea<variant>::end(objective<genome> &obj, i &interval, genome *current) {
     
+    sprintf(interval.log_tail, "END %s OBJECTIVE %d (%s) %s %d OF %d", this->name, obj.id, obj.name, interval.name, interval.id, interval.max);
+    
     obj.end(interval, interval.local);
+    
+}
+
+template<typename variant> template<typename genome, typename data, typename i> void ea<variant>::begin(objective<genome> &obj, i &interval, genome *current, data &data_interval) {
+    
+    current->stats.target_runs++;
+    
+    sprintf(interval.log_head, "BEGIN %s OBJECTIVE %d (%s %d) %s %d OF %d", this->name, obj.id, obj.name, current->numeric_id(), interval.name, current->stats.target_runs, interval.max_local);
+    
+    obj.begin(interval, data_interval, current);
+    
+}
+
+template<typename variant> template<typename genome, typename data, typename i> void ea<variant>::end(objective<genome> &obj, i &interval, genome *current, data &data_interval) {
+    
+    sprintf(interval.log_tail, "END %s OBJECTIVE %d (%s %d) %s %d OF %d", this->name, obj.id, obj.name, interval.local->numeric_id(), interval.name, data_interval.id-1, interval.max_local);
+    
+    obj.end(interval, data_interval, interval.local);
     
 }
 

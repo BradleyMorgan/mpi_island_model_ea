@@ -9,149 +9,73 @@
 #ifndef dtype_solver_h
 #define dtype_solver_h
 
-template<> struct obj_run_stats<solution> : time_stats, parallel_stats, fitness_stats {
+struct solution_stats : time_stats, parallel_stats, fitness_stats {
     
-    std::vector<double> best;
+    bool log_head = false;
+    bool log_tail = false;
     
-    template<typename stats> void cascade(double stats::*field, double val, char op) {
-        
-        switch (op) {
-            case '<': this->*field = this->*field < val ? this->*field : val;
-            case '>': this->*field = this->*field > val ? this->*field : val;
-            case '+': this->*field += val;
-            case '=': this->*field = val;
-        }
+    int head_interval = 0;
+    int tail_interval = 0;
+    
+    solution_stats(bool head, bool tail) : log_head(head), log_tail(tail) {};
+    
+};
 
-    }
+template<> struct obj_run_stats<solution> : solution_stats {
     
-    void begin_header() {
-        LOG(2, mpi.id, 0, "\n%s %s %s\n", std::string(6,'-').c_str(), "SOLVER EA OBJECTIVE RUN", std::string(103,'-').c_str());
+    void begin_header(char *head) {
+        if (this->log_head == true) { log_separator(head, '='); }
         LOG(2, mpi.id, 0, "\n%4s %6s %8s %11s %11s %11s %11s %11s %11s %14s %14s %11s\n", "R", "c", "e", "avg_fit", "gb_fit", "sm_scat", "sm_gat", "sm_mig", "sum_t", "min_t", "max_t", "avg_t");
     }
     
-    void end_header() {
-        LOG(2, mpi.id, 0, "%s\n", std::string(134,'-').c_str());
+    void end_header(char *tail) {
+        if (this->log_tail == true) { log_separator(tail, '='); }
+        LOG(2, mpi.id, 0, "\n%4s %6s %8s %11s %11s %11s %11s %11s %11s %14s %14s %11s\n", "R", "c", "e", "avg_fit", "gb_fit", "sm_scat", "sm_gat", "sm_mig", "sum_t", "min_t", "max_t", "avg_t");
     }
     
-    obj_run_stats<solution>() : time_stats(), parallel_stats(), fitness_stats() {}
+    obj_run_stats<solution>() : solution_stats(true, true) {}
     
 };
 
-template<> struct obj_cycle_stats<solution> : time_stats, parallel_stats, fitness_stats {
+template<> struct obj_cycle_stats<solution> : solution_stats {
     
-    //obj_run_stats<solution> *run_stats;
-    
-    std::vector<double> best;
-    
-//    template<typename stats> void cascade(double stats::*field, double val, char op) {
-//
-//        switch (op) {
-//            case '+': {
-//                this->*field += val;
-//                this->run_stats->*field += val;
-//            }
-//            case '=': {
-//                this->*field = val;
-//                this->run_stats->*field += val;
-//            }
-//        }
-//
-//    }
-//
-//    template<typename stats> void cascade(mpi_local stats::*field, mpi_local source, char op) {
-//
-//        switch (op) {
-//                switch (op) {
-//                    case '<':
-//                        this->*field = (this->*field).value > source.value ? source : this->*field;
-//                        this->run_stats->*field = (this->run_stats->*field).value > source.value ? source : this->run_stats->*field;
-//                    case '>':
-//                        this->*field = (this->*field).value < source.value ? source : this->*field;
-//                        this->run_stats->*field = (this->run_stats->*field).value < source.value ? source : this->run_stats->*field;
-//                    case '+':
-//                        (this->*field).value += source.value;
-//                        (this->run_stats->*field).value += source.value;
-//                    case '=':
-//                        (this->*field).value = source.value;
-//                        (this->run_stats->*field).value = source.value;
-//                }
-//
-//        }
-//
-//    }
-    
-    //obj_cycle_stats<solution>(obj_run_stats<solution> &r) : time_stats(), parallel_stats(), fitness_stats(), run_stats(&r) {}
-    
-    void begin_header() {
-        //LOG(2, mpi.id, 0, "\n%s %s %s\n", std::string(6,'-').c_str(), "SOLVER EA OBJECTIVE CYCLE", std::string(103,'-').c_str());
-        //LOG(2, mpi.id, 0, "\n%4s %6s %8s %11s %11s %11s %11s %11s %11s %14s %14s %11s\n", "R", "c", "e", "avg_fit", "gb_fit", "sm_scat", "sm_gat", "sm_mig", "sum_t", "min_t", "max_t", "avg_t");
+    void begin_header(char *head) {
+        if (this->log_head == true) { log_separator(head, '-'); }
     }
     
-    void end_header() {
-        //LOG(2, mpi.id, 0, "%s\n", std::string(134,'-').c_str());
+    void end_header(char *tail) {
+        if (this->log_tail == true) { log_separator(tail, '-'); }
     }
     
-    obj_cycle_stats<solution>() : time_stats(), parallel_stats(), fitness_stats() {}
+    obj_cycle_stats<solution>() : solution_stats(false, false) {}
     
 };
 
-template<> struct obj_eval_stats<solution> : time_stats, parallel_stats, fitness_stats {
+template<> struct obj_eval_stats<solution> : solution_stats {
     
-    //obj_cycle_stats<solution> *cycle_stats;
-    
-//    template<typename stats> void cascade(double stats::*field, double val, char op) {
-//                    
-//            switch (op) {
-//                case '<': {
-//                    this->*field = this->*field < val ? this->*field : val;
-//                    double cval = this->cycle_stats->*field;
-//                    cval = cval == 0.0 ? val : cval < val ? cval : val;
-//                }
-//                case '>': {
-//                    this->*field = this->*field > val ? this->*field : val;
-//                    double cval = this->cycle_stats->*field;
-//                    cval = cval == 0.0 ? val : cval > val ? cval : val;
-//                }
-//                case '+': {
-//                    this->*field += val;
-//                    this->cycle_stats->*field += val;
-//                }
-//                case '=': {
-//                    this->*field = val;
-//                    this->cycle_stats->*field += val;
-//                }
-//            }
-//        
-//        this->cycle_stats->cascade(field, val, op);
-//        
-//    }
-//
-    
-    void begin_header() {
-        //LOG(2, mpi.id, 0, "\n%s %s %s\n", std::string(6,'-').c_str(), "SOLVER EA OBJECTIVE EVAL", std::string(103,'-').c_str());
-        //LOG(2, mpi.id, 0, "\n%4s %6s %8s %11s %11s %11s %11s %11s %11s %14s %14s %11s\n", "R", "c", "e", "avg_fit", "gb_fit", "sm_scat", "sm_gat", "sm_mig", "sum_t", "min_t", "max_t", "avg_t");
+    void begin_header(char *head) {
+        if (this->log_head == true) { log_separator(head, '.'); }
     }
     
-    void end_header() {
-        //LOG(2, mpi.id, 0, "%s\n", std::string(134,'-').c_str());
+    void end_header(char *tail) {
+        if (this->log_tail == true) { log_separator(tail, '.'); }
     }
     
-    obj_eval_stats<solution>() : time_stats(), parallel_stats(), fitness_stats() {}
+    obj_eval_stats<solution>() : solution_stats(false, false) {}
     
 };
 
 struct ea_solver: ea<ea_solver> {
     
     std::array<double, DIM> offsets;
-    
-    solution loc;
-    
-    objective<solution> solutions = objective<solution>();
+
+    objective<solution> solutions = objective<solution>(1);
     
     ea_solver() {
         
         this->model.init();
-    
+        this->model.isle.stats.log_interval = config::ea_1_o1_log_island_interval;
+        
         sprintf(this->name, "%s", config::ea_1_name);
         sprintf(this->solutions.name, "%s", config::ea_1_o1_name);
         this->solutions.aggregate = {};
@@ -175,6 +99,7 @@ struct ea_solver: ea<ea_solver> {
         this->solutions.run.max = config::ea_1_o1_max_runs;
         this->solutions.run.cycle.max = config::ea_1_o1_max_cycles;
         this->solutions.run.cycle.eval.max = config::ea_1_o1_max_evals;
+        this->solutions.run.cycle.eval.max_local = config::ea_1_o1_max_fitness_evals;
         
         // ea objective logging
         
@@ -186,12 +111,14 @@ struct ea_solver: ea<ea_solver> {
         this->solutions.run.cycle.log_interval = config::ea_1_o1_log_cycle_interval;
         this->solutions.run.cycle.eval.log_interval = config::ea_1_o1_log_eval_interval;
         
+        this->solutions.run.cycle.log_population_interval = config::ea_1_o1_log_population_interval;
+        this->solutions.run.log_genome_interval = config::ea_1_o1_log_genome_interval;
+        
         // ea objective evolution
         
         this->solutions.mu = config::ea_1_mu;
         this->solutions.lambda = config::ea_1_lambda;
         this->solutions.mutation_rate = config::ea_1_mutation_rate;
-        this->solutions.log_interval = config::ea_1_log_population_interval;
         
         if(mpi.id == 0) {
             this->offsets = generate_offsets(-2.5, 2.5, .5);
@@ -205,6 +132,26 @@ struct ea_solver: ea<ea_solver> {
         
     }
     
+    template<typename i> void log_population(i &interval);
+    
 };
+
+template<> template<typename i> void objective<solution>::log_population(i &interval) {
+
+    if(mpi.id==0) {
+            
+        // top 20 individuals to cut log size
+        
+        for (auto it = this->population.begin(); it != this->population.begin() + 20; ++it) {
+            
+            std::fprintf(config::ea_1_population_out, "%d," "%d," "%d," "%s," "%f," "%d," "%d," "%s," "%s," "%d," "%d,", this->run.id, this->run.cycle.id, this->run.cycle.eval.id, it->id, it->fitness, it->source, it->locale, it->parents[0], it->parents[1], it->selected, it->survival);
+                         
+            std::fprintf(config::ea_1_population_out, "%f," "%d\r\n", it->selection_distribution, it->migrations);
+            
+        }
+        
+    }
+
+}
 
 #endif /* dtype_solver_h */

@@ -63,9 +63,27 @@ struct channel {
 
 struct topology_stats : time_stats, parallel_stats, fitness_stats {
     
+    bool log_head = false;
+    bool log_tail = false;
+    
+    int head_interval = 1;
+    int tail_interval = 1;
+    
+    int send_channels = 0;
+    int recv_channels = 0;
+    int total_channels = 0;
+    
+    int target_runs = 0;
+    int migrations = 0;
+    int departures = 0;
+    int arrivals = 0;
+    
     void minmax(mpi_local topology_stats::*field, mpi_local result, double const &(*func)(double const&, double const&)) {
         this->*field = (this->*field).value == 0.0 ? result : func((this->*field).value, result.value) != (this->*field).value ? result : this->*field;
     }
+    
+    topology_stats(bool head, bool tail) : log_head(head), log_tail(tail) {};
+    topology_stats() : log_head(false), log_tail(false) {};
     
 };
 
@@ -78,17 +96,20 @@ struct topology {
   
     int id = 1;
     
-    int evaluations = 0;
-    
-    int world_size = 0;
-    int channel_count = 0;
-    
-    double fitness = 0.0;
-    
     topology_stats stats;
     
+    double fitness = 0.0;
     double selection_distribution = 0.0;
     
+    // multi-objective fitness
+    
+    std::pair<double, double> fitness_multi = { 0.0, 0.0 };
+    
+    // domination
+    
+    int dom_count = 0;
+    std::vector<topology> dom_genomes;
+
     // an array of @channel{} describing the full context MPI_Send() and MPI_Recv()
     // operations forms the mpi-suitable topology representation
     
@@ -112,22 +133,48 @@ struct topology {
     void distribute(island &isle); // from a single source (root), initate the distribution of channels to each communicating node
     void apply(island &isle, topology &t); // for all communicating nodes, receive the corresponding channels as defined in the topology
     
+    template<typename i> void log(i &interval);
     template<typename i> void measure(i &interval);
     template<typename o> void minmax(mpi_local topology_stats::*field, mpi_local result, o *op);
     
     int numeric_id();
     
-    topology(): world_size(config::world_size) {};
+    bool dominates(topology &t);
+    
+    void init(int &genome_id);
+
+    topology() {};
     
 };
 
-int topology::numeric_id() { return this->id; }
+bool topology::dominates(topology &t) {
+    
+    if(this->fitness_multi.first < t.fitness_multi.first || this->fitness_multi.second < t.fitness_multi.second) { return false; }
+    if(this->fitness_multi.first >= t.fitness_multi.first || this->fitness_multi.second >= t.fitness_multi.second) { return true; }
+    
+    return false;
+    
+}
 
+void topology::init(int &genome_id) {
+    
+    this->id = genome_id;
+    this->fitness = 0.0;
+    this->stats = {};
+    this->selection_distribution = 0.0;
+    this->channels.resize(mpi.size);
+    this->channels.clear();
+    
+}
+
+int topology::numeric_id() { return this->id; }
 
 template<typename i> void topology::measure(i &interval) {
     
     if(mpi.id != 0) { return; }
-    this->fitness = (interval.stats.sum_t.value / interval.max) * -1;
+    
+    this->fitness += (interval.stats.sum_t.value * -1);
+    this->fitness_multi = { this->fitness, interval.stats.avg_best_fitness };
     
     this->stats.minmax(&topology_stats::min_t, interval.stats.min_t, std::min<double>);
     this->stats.minmax(&topology_stats::max_t, interval.stats.max_t, std::max<double>);
@@ -149,6 +196,27 @@ template<typename i> void topology::measure(i &interval) {
     this->stats.sum_migration_t.value += interval.stats.sum_migration_t.value;
     this->stats.avg_migration_t = this->stats.sum_migration_t.value / mpi.size;
     
+}
+
+template<typename i> void topology::log(i &interval) {
+    
+    //if(interval.log_fout == true) {
+
+        if(mpi.id != 0) { return; }
+
+        LOG(2, 0, 0, "TOPOLOGY,%s,%d,%f,%d,%d,%d\r\n",
+
+            interval.name,
+            interval.id,
+            this->fitness,
+            this->stats.departures,
+            this->stats.arrivals,
+            this->stats.migrations);
+
+    //}
+    
+    fflush(interval.stats_out);
+
 }
 
 #endif /* topology_h */

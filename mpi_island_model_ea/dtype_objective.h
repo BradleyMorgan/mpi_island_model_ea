@@ -13,12 +13,11 @@
 
 template<typename genome> struct objective {
     
-    char name[128] = "";
+    char name[128];
     
-    int id = 1;
+    int id = 0;
     int mu = 0;
     int lambda = 0;
-    int log_interval = 0;
     
     FILE *population_out;
     FILE *genome_out;
@@ -36,6 +35,8 @@ template<typename genome> struct objective {
     run_interval run;
     
     genome *local = run.cycle.eval.local;
+    
+    int genome_max_evals = 0;
     
     struct metrics {
         
@@ -72,25 +73,38 @@ template<typename genome> struct objective {
     
     #pragma mark EA::FUNCTION::TEMPLATES: initialization
     
-    objective<genome>() : id(1), local(run.cycle.eval.local), run() {};
+    objective<genome>(int n) : id(n), local(run.cycle.eval.local), run(&population[0]) {};
     
     template<typename i> void end(i &interval, genome *current = NULL);
-    template<typename sint, typename tint> void end(tint &target, sint &source, genome *current);
     template<typename i> void begin(i &interval, genome *current = NULL);
-
-    #pragma mark EA::FUNCTION::TEMPLATES: initialization logging
     
-    template<typename g> std::vector<g> filter(bool check_evals);
+    #pragma mark EA::FUNCTION::TEMPLATES: initialization, logging
 
+    // interval stats, mostly for timing metrics
+    
     template<typename i> void log_begin(i &interval);
     template<typename i> void log_end(i &interval);
-    template<typename sint, typename tint> void log_end(tint &target, sint &source, genome *current);
     template<typename i> void log_stats(i &interval);
-    template<typename sint, typename tint> void log_stats(tint &target, sint &source, genome *current);
+    
+    // the following functions handle inter-ea dependencies, e.g. meta ea
+    // TODO: look for a cleaner way to do this
+
+    template<typename source, typename target> void begin(target &interval, source &data_interval, genome *target_genome);
+    template<typename source, typename target> void end(target &interval, source &data_interval, genome *target_genome);
+    template<typename source, typename target> void log_begin(target &interval, source &data_interval, genome *target_genome);
+    template<typename source, typename target> void log_end(target &interval, source &data_interval, genome *target_genome);
+    template<typename sint, typename tint> void measure(tint &target, sint &source, genome *current);
+    
+    // various functions for calculating objective property values
     
     template<typename i> void measure(i &interval, genome *g);
-    template<typename sint, typename tint> void measure(tint &target, sint &source, genome *current);
+    
+    template<typename i> void log_population(i &interval);
+    template<typename i> void log_genome(i &interval);
+    
     template<typename i> double reduce(i &interval, mpi_local *locf, mpi_local *minf, mpi_local *maxf, mpi_local *sumf);
+    
+    std::vector<std::vector<topology>> dominated_sort();
     
     void minmax(mpi_local *field, mpi_local result, double const &(*func)(double const&, double const&));
     
@@ -111,16 +125,27 @@ template<typename genome> struct obj_run_stats;
 
 template<typename genome> struct objective<genome>::evaluation_interval {
     
-    int id = 0;
+    char name[8] = "EVAL";
+    
+    int id = 1;
     int max = 0;
+    int max_local = 0;
+    
     int log_interval = 0;
+    int log_population_interval = 0;
+    int log_genome_interval = 0;
     
     bool log_stdout = false;
     bool log_fout = true;
     
+    char log_head[160];
+    char log_tail[160];
+    
     FILE *stats_out;
     
     obj_eval_stats<genome> stats;
+    
+    cycle_interval *parent;
     
     genome *local;
     
@@ -128,41 +153,49 @@ template<typename genome> struct objective<genome>::evaluation_interval {
     mpi_local stat_recv;
     
     void init() {
-        this->id = 0;
+        this->id = 1;
         this->local = {};
         this->stat_send = {};
         this->stat_recv = {};
     }
     
-    void begin(genome *current = NULL) {
-        this->id++;
-        LOG(9, 0, 0, "BEGIN INTERVAL EVAL %d\r\n", this->id);
+    void begin(genome *current) {
+        this->local = current;
         this->stats = {};
         this->stat_send.init();
         this->stat_recv.init();
-        this->local = current;
         this->stats.start = MPI_Wtime();
-        this->stats.begin_header();
+        this->stats.begin_header(this->log_head);
     }
 
     void end(genome *current = NULL) {
-        LOG(9, 0, 0, "END INTERVAL EVAL %d\r\n", this->id);
+        this->id++;
         this->stats.local_t.value = MPI_Wtime() - this->stats.start;
-        this->stats.end_header();
+        this->stats.end_header(this->log_tail);
     }
     
-    evaluation_interval(): stats() {};
+    evaluation_interval(cycle_interval *cycle): parent(cycle), stats() {};
 
 };
 
 template<typename genome> struct objective<genome>::cycle_interval {
 
-    int id = 0;
+    char name[8] = "CYCLE";
+    
+    int id = 1;
     int max = 0;
+    
+    const int max_local = 0;
+    
     int log_interval = 0;
+    int log_population_interval = 0;
+    int log_genome_interval = 0;
     
     bool log_stdout = true;
     bool log_fout = true;
+    
+    char log_head[160];
+    char log_tail[160];
     
     FILE *stats_out;
     
@@ -172,52 +205,60 @@ template<typename genome> struct objective<genome>::cycle_interval {
     obj_cycle_stats<genome> stats;
     
     evaluation_interval eval;
+    run_interval *parent;
     
     genome *local = eval.local;
     
     void init() {
-        this->id = 0;
+        this->id = 1;
         this->local = {};
         this->stat_send = {};
         this->stat_recv = {};
         this->eval.init();
     }
     
-    void begin(genome *current = NULL) {
-        LOG(9, 0, 0, "BEGIN INTERVAL CYCLE %d\r\n", this->id);
-        this->stats = {};
+    void begin(genome *current) {
+        this->local = current;
         this->stat_send.init();
         this->stat_recv.init();
-        this->local = current;
-        if(this->local) { LOG(2, mpi.id, 0, "GENOME ID %d", this->local->numeric_id()); }
         this->stats.start = MPI_Wtime();
-        this->stats.begin_header();
+        this->stats.begin_header(this->log_head);
     }
 
     void end(genome *current = NULL) {
-        LOG(9, 0, 0, "END INTERVAL CYCLE %d\r\n", this->id);
         this->stats.local_t.value = MPI_Wtime() - this->stats.start;
-        this->stats.end_header();
+        this->stats.end_header(this->log_tail);
     }
     
-    cycle_interval(): stats(), eval() {};
+    cycle_interval(run_interval *run, genome *current): local(current), stats(), eval(this) {};
     
 };
 
 template<typename genome> struct objective<genome>::run_interval {
     
-    int id = 0;
+    char name[8] = "RUN";
+    
+    int id = 1;
     int max = 0;
+    
+    const int max_local = 0;
+    
     int log_interval = 0;
+    int log_population_interval = 0;
+    int log_genome_interval = 0;
     
     bool log_stdout = true;
     bool log_fout = true;
+
+    char log_head[160];
+    char log_tail[160];
     
     FILE *stats_out;
     
     obj_run_stats<genome> stats;
     
     cycle_interval cycle;
+    run_interval *parent;
     
     genome *local;
     
@@ -232,26 +273,22 @@ template<typename genome> struct objective<genome>::run_interval {
         this->cycle.init();
     }
     
-    void begin(genome *current = NULL) {
-        this->stats = {};
+    void begin(genome *current) {
+        this->local = current;
         this->cycle.stats = {};
         this->cycle.eval.stats = {};
         this->stat_send.init();
         this->stat_recv.init();
-        this->local = current;
         this->stats.start = MPI_Wtime();
-        if(this->local) { LOG(2, mpi.id, 0, "GENOME ID %d", this->local->numeric_id()); }
-        LOG(3, 0, 0, "BEGIN INTERVAL RUN %d\r\n", this->id);
-        this->stats.begin_header();
+        this->stats.begin_header(this->log_head);
     }
 
     void end(genome *current = NULL) {
-        LOG(3, 0, 0, "END INTERVAL RUN %d\r\n", this->id);
         this->stats.local_t.value = MPI_Wtime() - this->stats.start;
-        this->stats.end_header();
+        this->stats.end_header(this->log_tail);
     }
     
-    run_interval(): stats(), cycle() {};
+    run_interval(genome *current): parent(this), local(current), stats(), cycle(this, current) {};
     
 };
 
@@ -314,7 +351,10 @@ template<typename genome> void objective<genome>::cpd() {
 
 }
 
-#pragma mark EA::OBJECTIVE::FUNCTION filter{}
+#pragma mark EA::INTERVAL::FUNCTION filter{}
+
+// return only fully evaluated population members for intervals with
+// high frequencies
 
 template<typename genome> std::vector<genome> objective<genome>::filter(bool check_evals) {
     
@@ -339,23 +379,24 @@ template<typename genome> std::vector<genome> objective<genome>::filter(bool che
     
 }
 
+#pragma mark EA::PARALLEL::INTERVAL reduce{}
+
+// aggregate min|max|sum <field> statistics from all islands and return the average
+
 template<typename genome> template<typename i> double objective<genome>::reduce(i &interval, mpi_local *locf, mpi_local *minf, mpi_local *maxf, mpi_local *sumf) {
     
     interval.stat_recv.init();
     MPI_Reduce(locf, &interval.stat_recv, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
     
     if(mpi.id == 0) { this->minmax(minf, interval.stat_recv, std::min<double>); }
     
     interval.stat_recv.init();
     MPI_Reduce(locf, &interval.stat_recv, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
     
     if(mpi.id == 0) { this->minmax(maxf, interval.stat_recv, std::max<double>); }
     
     interval.stat_recv.init();
     MPI_Reduce(locf, sumf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
     
     double avg = 0.0;
     
@@ -366,7 +407,11 @@ template<typename genome> template<typename i> double objective<genome>::reduce(
 
 #pragma mark EA::META::OBJECTIVE::FUNCTION: <>measure()
 
+// accept a target interval type to receive metrics from a source interval
+// 
 template<typename genome> template<typename sint, typename tint> void objective<genome>::measure(tint &target, sint &source, genome *current) {
+    
+    // aggregate time values from all islands
     
     target.stats.avg_t = this->reduce(target, &source.stats.local_t, &target.stats.min_t, &target.stats.max_t, &target.stats.sum_t);
     target.stats.avg_scatter_t = this->reduce(target, &source.stats.local_scatter_t, &target.stats.min_scatter_t, &target.stats.max_scatter_t, &target.stats.sum_scatter_t);
@@ -384,7 +429,7 @@ template<typename genome> template<typename sint, typename tint> void objective<
     target.stats.best_fitness = valid[0].fitness;
     target.stats.best.push_back(valid[0].fitness);
 
-    if(valid[0].fitness > target.stats.best_fitness) {
+    if(target.stats.best_fitness == 0.0 || valid[0].fitness > target.stats.best_fitness) {
         target.stats.best_fitness = valid[0].fitness;
         target.stats.best.push_back(valid[0].fitness);
     }
@@ -420,13 +465,20 @@ template<typename genome> template<typename i> void objective<genome>::measure(i
     std::vector<genome> valid = this->filter(false);
 
     if(valid.size() == 0) { return; }
-    
-    interval.stats.best_fitness = valid[0].fitness;
-    interval.stats.best.push_back(valid[0].fitness);
 
-    if(valid[0].fitness > interval.stats.best_fitness) {
+    if(interval.stats.best_fitness == 0.0 || valid[0].fitness > interval.stats.best_fitness) {
         interval.stats.best_fitness = valid[0].fitness;
         interval.stats.best.push_back(valid[0].fitness);
+    }
+    
+    if(this->run.cycle.stats.best_fitness == 0.0 || interval.stats.best_fitness > this->run.cycle.stats.best_fitness) {
+        this->run.cycle.stats.best_fitness = interval.stats.best_fitness;
+        this->run.cycle.stats.best.push_back(interval.stats.best_fitness);
+    }
+    
+    if(this->run.stats.best_fitness == 0.0 || this->run.cycle.stats.best_fitness > this->run.stats.best_fitness) {
+        this->run.stats.best_fitness = this->run.cycle.stats.best_fitness;
+        this->run.stats.best.push_back(this->run.cycle.stats.best_fitness);
     }
     
     auto result = minmax_element(valid.begin(), valid.end(),[](genome const &g1, genome const &g2) { return g1.fitness < g2.fitness;});
@@ -442,9 +494,34 @@ template<typename genome> template<typename i> void objective<genome>::measure(i
     
 }
 
+#pragma mark EA::OBJECTIVE::INTERVAL statistics logging
+
 template<typename genome> template<typename i> void objective<genome>::log_stats(i &interval) {
     
-    if(interval.id % interval.log_interval == 0) {
+    if(interval.log_interval != 0 && interval.id % interval.log_interval == 0) {
+        
+        if(interval.log_stdout == true) {
+
+            if(mpi.id != 0) { return; }
+
+            LOG(2, 0, 0, "%04d,%06d,%08d,%11.6f,%11.6f,%11.6f,%11.6f,%11.6f,%11.6f,%11.6f(%d),%11.6f(%d),%11.6f\r\n",
+
+                this->run.id,
+                this->run.cycle.id,
+                this->run.cycle.eval.id,
+                interval.stats.avg_fitness,
+                interval.stats.best_fitness,
+                interval.stats.sum_scatter_t.value,
+                interval.stats.sum_gather_t.value,
+                interval.stats.sum_migration_t.value,
+                interval.stats.sum_t.value,
+                interval.stats.min_t.value,
+                interval.stats.min_t.island,
+                interval.stats.max_t.value,
+                interval.stats.max_t.island,
+                interval.stats.avg_t);
+
+        }
         
         if(interval.log_stdout == true) {
     
@@ -516,40 +593,49 @@ template<typename genome> template<typename i> void objective<genome>::log_stats
     
 }
 
-template<typename genome> template<typename sint, typename tint> void objective<genome>::log_stats(tint &target, sint &source, genome *current) {
-    
-    
-    
-}
+#pragma mark EA::OBJECTIVE::INTERVAL logging wrappers for standard (independent) ea
 
 template<typename genome> template<typename i> void objective<genome>::log_begin(i &interval) {
     
-    LOG(7, 0, 0, "\r\n--- (%d) END OBJECTIVE CYCLE %d OF %d ---\r\n", mpi.id, interval.id, interval.max);
-    LOG(4, mpi.id, 0, "\r\n--- (%d) END OBJECTIVE CYCLE %d OF %d ---\r\n", mpi.id, interval.id, interval.max);
+    LOG(7, 0, 0, "\r\n--- (%d) BEGIN OBJECTIVE %s %d OF %d ---\r\n", mpi.id, interval.name, interval.id, interval.max);
+    LOG(4, mpi.id, 0, "\r\n--- (%d) BEGIN OBJECTIVE %s %d OF %d ---\r\n", mpi.id, interval.name, interval.id, interval.max);
     
 }
 
 template<typename genome> template<typename i> void objective<genome>::log_end(i &interval) {
     
-    LOG(7, 0, 0, "\r\n--- (%d) END OBJECTIVE CYCLE %d OF %d ---\r\n", mpi.id, interval.id, interval.max);
-    LOG(4, mpi.id, 0, "\r\n--- (%d) END OBJECTIVE CYCLE %d OF %d ---\r\n", mpi.id, interval.id, interval.max);
+    LOG(7, 0, 0, "\r\n--- (%d) END OBJECTIVE %s %d OF %d ---\r\n", mpi.id, interval.name, interval.id, interval.max);
+    LOG(4, mpi.id, 0, "\r\n--- (%d) END OBJECTIVE %s %d OF %d ---\r\n", mpi.id, interval.name, interval.id, interval.max);
     
     this->measure(interval, interval.local);
-    this->log_stats(interval);
+    
+    if(interval.log_interval != 0 && interval.id % interval.log_interval == 0) {
+        this->log_stats(interval);
+    }
     
 }
 
-template<typename genome> template<typename sint, typename tint> void objective<genome>::log_end(tint &target, sint &source, genome *current) {
-    
-    this->measure(target, source, current);
-    this->log_stats(target);
+#pragma mark EA::OBJECTIVE::INTERVAL logging wrappers for dependent (meta) ea
+
+template<typename genome> template<typename source, typename target> void objective<genome>::log_begin(target &interval, source &data_interval, genome *target_genome) {
     
 }
+
+template<typename genome> template<typename source, typename target> void objective<genome>::log_end(target &interval, source &data_interval, genome *target_genome) {
+    
+    this->measure(interval, data_interval, target_genome);
+    
+    if(interval.log_interval != 0 && interval.id % interval.log_interval == 0) {
+        this->log_stats(interval);
+    }
+    
+}
+
+#pragma mark EA::OBJECTIVE::INTERVAL control wrappers for independent ea
 
 template<typename genome> template<typename i> void objective<genome>::begin(i &interval, genome *current) {
     
     interval.begin(current);
-    
     this->log_begin(interval);
     
 }
@@ -557,16 +643,41 @@ template<typename genome> template<typename i> void objective<genome>::begin(i &
 template<typename genome> template<typename i> void objective<genome>::end(i &interval, genome *current) {
     
     interval.end(current);
-    
     this->log_end(interval);
+    
+    if(interval.log_population_interval != 0 && interval.id%interval.log_population_interval == 0) {
+        this->log_population(interval);
+    }
+    
+    if(interval.log_genome_interval != 0 && interval.id%interval.log_genome_interval == 0) {
+        current->log(interval);
+    }
     
 }
 
-template<typename genome> template<typename sint, typename tint> void objective<genome>::end(tint &target, sint &source, genome *current) {
+#pragma mark EA::OBJECTIVE::INTERVAL control wrappers for dependent (meta) ea
+
+template<typename genome> template<typename source, typename target> void objective<genome>::begin(target &interval, source &data_interval, genome *target_genome) {
+
+    interval.begin(target_genome);
     
-    target.end(current);
+    this->log_begin(interval, data_interval, target_genome);
     
-    this->log_end(target, source, current);
+}
+
+template<typename genome> template<typename source, typename target> void objective<genome>::end(target &interval, source &data_interval, genome *target_genome) {
+
+    interval.end(target_genome);
+    
+    this->log_end(interval, data_interval, target_genome);
+    
+    if(interval.log_population_interval != 0 && interval.id%interval.log_population_interval == 0) {
+        this->log_population(interval);
+    }
+    
+    if(interval.log_genome_interval != 0 && interval.id%interval.log_genome_interval == 0) {
+        target_genome->log(interval);
+    }
     
 }
 

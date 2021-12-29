@@ -48,11 +48,13 @@ void island::average_fitness() {
 
 // initiate a receive operation for every island in this island's senders list ...
 
-void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
+int island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
     
     LOG(5, 0, 0, "island::migration::receive(%d) operations for %lu senders\r\n", p.id, p.senders.size());
     
     MPI_Status migrant_status;
+    
+    int received = 0;
     
     for(int i=0; i<p.senders.size(); i++) {
         
@@ -65,6 +67,8 @@ void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
         LOG(4, 0, 0, "ISLAND %d MIGRATION RECV %d INIT: waiting for solution from island %d\r\n", p.id, tag, p.senders[i]);
         
         MPI_Recv(&x, 1, d, p.senders[i], tag, p.tcomm, &migrant_status);
+        
+        received++;
         
         LOG(4, 0, 0, "ISLAND %d MIGRATION RECV %d END: received solution %s from island %d\r\n", p.id, tag, x.id, p.senders[i]);
         
@@ -82,16 +86,20 @@ void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
         
     }
     
+    return received;
+    
 }
 #pragma mark FUNCTION: island::migration::send()
 
 // initiate a send operation for every island in this island's receivers list ...
 
-void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
+int island::migration::send(island &p, MPI_Datatype &d, int &eval) {
     
     LOG(5, 0, 0, "island::migration::send(%d) initiating operations for %lu receivers\r\n", p.id, p.receivers.size());
 
     //TODO: test different migration selection methods ...
+
+    int sent = 0;
     
     for(int i=0; i<p.receivers.size(); i++) {
         
@@ -99,18 +107,21 @@ void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
         int top = p.population.size() * 0.20;
         int idx = rand()%top;
         
-        LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d INIT: sending solution %s to island %d\r\n", p.id, tag, p.population[idx].id, p.receivers[i]);
+        //LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d INIT: sending solution %s to island %d\r\n", p.id, tag, p.population[idx].id, p.receivers[i]);
         
-        //LOG(6, 0, 0, "island %d sending tag=%d sol_id=%s p1=%s p2=%s to island %d\r\n", p.id, tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1], p.receivers[i]);
+        LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d INIT: sol_id=%s p1=%s p2=%s to island %d\r\n", p.id, tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1], p.receivers[i]);
         
         MPI_Send(&p.population[idx], 1, d, p.receivers[i], tag, p.tcomm);
         
-        LOG(4, 0, 0, "ISLAND %d MIGRATION SEND %d END: sent solution %s to island %d\r\n", p.id, tag, p.population[idx].id, p.receivers[i]);
+        sent++;
+        
+        LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d END: sent solution %s to island %d total sent %d\r\n", p.id, tag, p.population[idx].id, p.receivers[i], sent);
         
         //LOG(6, 0, 0, "island %d sent tag %d migrant to island %d: [%f,%f]\r\n", p.id, tag, p.receivers[i], p.population[i].input[0], p.population[i].input[1]);
         
     }
-
+    
+    return sent;
 }
 
 #endif /* island_h */

@@ -13,7 +13,7 @@
 
 struct solution {
     
-    char id[64];
+    char id[64] = "0";
     
     std::array<double, DIM> input = {};
     
@@ -31,6 +31,7 @@ struct solution {
 
     int numeric_id();
     
+    template<typename i> void log(i &interval);
     template<typename i> void measure(i &interval);
     
     solution() { strcpy(id, uniqid(sinstances++)); }
@@ -41,6 +42,27 @@ template<typename i> void solution::measure(i &interval) { }
  
 int solution::numeric_id() {
     return (int)std::strtol(this->id, nullptr, 10);
+}
+
+template<typename i> void solution::log(i &interval) {
+ 
+    
+    if(mpi.id==0) {
+        
+        fprintf(config::ea_1_genome_out, "%s,%d,%s,", interval.name, interval.id, this->id);
+        
+        for(int n=0; n<DIM; n++) {
+            
+            fprintf(config::ea_1_genome_out, "%f;", this->input[n]);
+            
+        }
+        
+        fprintf(config::ea_1_genome_out, "\r\n");
+        
+    }
+
+    fflush(config::ea_1_genome_out);
+    
 }
 
 #endif /* dtype_solution_h */

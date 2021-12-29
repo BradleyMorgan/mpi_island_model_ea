@@ -47,7 +47,10 @@ void topology::create::channels(topology &t, std::vector<std::vector<int>> &matr
                 t.channels[i].count++;
                 t.channels[j].count++;
                 
-                t.channel_count += 2;
+                t.stats.recv_channels++;
+                t.stats.send_channels++;
+                
+                t.stats.total_channels = t.stats.recv_channels + t.stats.send_channels;
                 
             }
             
@@ -85,15 +88,15 @@ std::vector<std::vector<int>> topology::create::matrix(const topology &t) {
     LOG(5, 0, 0, "MATRIX: creating adjacency matrix for topology %d: ", t.id);
     
     std::vector<std::vector<int>> matrix;
-    matrix.resize(t.world_size);
+    matrix.resize(mpi.size);
     
-    for(int i=0; i<t.world_size; i++) { // matrix row, sized with world_size indices
+    for(int i=0; i<mpi.size; i++) { // matrix row, sized with world_size indices
 
-        matrix[i].resize(t.world_size);
+        matrix[i].resize(mpi.size);
         
         LOG(9, 0, 0, "size[%d]=%lu, ", i, matrix[i].size());
         
-        for(int j=0; j<t.world_size; j++) { // matrix column [0..world size]
+        for(int j=0; j<mpi.size; j++) { // matrix column [0..world size]
             
             // here we only mark the receiving nodes for each island row with a 1
             // a boolean value of true within a a row's index will tell us what we need to know
@@ -198,8 +201,8 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
 
 void topology::create::dynamic(topology &t) {
     
-    LOG(5, 0, 0, "generating dynamic topology %d world size %d\r\n", t.id, t.world_size);
-    std::vector<std::vector<int>> matrix = topology::create::dynamic_matrix(t.world_size);
+    LOG(5, 0, 0, "generating dynamic topology %d world size %d\r\n", t.id, mpi.size);
+    std::vector<std::vector<int>> matrix = topology::create::dynamic_matrix(mpi.size);
     
     topology::create::channels(t, matrix);
     
@@ -230,7 +233,7 @@ void topology::apply(island &isle, topology &t) {
     
     }
     
-    if(t.world_size == 0) { MPI_Comm_size(MPI_COMM_WORLD, &t.world_size); }
+    if(mpi.size == 0) { MPI_Comm_size(MPI_COMM_WORLD, &mpi.size); }
     
     // initialize *this* (current MPI rank) island's send and receive queue sizes, assume it's empty ...
     
@@ -239,13 +242,13 @@ void topology::apply(island &isle, topology &t) {
     
     // initiate MPI_Recv calls.
     
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound channel size from topology %d\r\n", mpi.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound channel size from topology %d\r\n", mpi.id, mpi.size, t.id);
     
     // complete the MPI_Send of queue size for island export
     
     MPI_Recv(&send_size, 1, MPI_INT, 0, (mpi.id*10)+1, isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %d inbound channels from topology %d\r\n", mpi.id, t.world_size, send_size, t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %d inbound channels from topology %d\r\n", mpi.id, mpi.size, send_size, t.id);
 
     // initialize the set of process send channels
 
@@ -254,11 +257,11 @@ void topology::apply(island &isle, topology &t) {
 
     // complete the MPI_Send of island ids to which this island will send ...
     
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound island ids from topology %d\r\n", mpi.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: inbound island ids from topology %d\r\n", mpi.id, mpi.size, t.id);
     
     MPI_Recv(&isle.senders[0], send_size, MPI_INT, 0, (mpi.id*10)+2, isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu inbound island ids from topology %d\r\n", mpi.id, t.world_size, isle.senders.size(), t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu inbound island ids from topology %d\r\n", mpi.id, mpi.size, isle.senders.size(), t.id);
     
     if(isle.senders.empty()) {
         LOG(6, 0, 0, "[X]\r\n");
@@ -269,11 +272,11 @@ void topology::apply(island &isle, topology &t) {
 
     // complete the MPI_Send of queue size for island import
     
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound channel size from topology %d\r\n", mpi.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound channel size from topology %d\r\n", mpi.id, mpi.size, t.id);
 
     MPI_Recv(&rec_size, 1, MPI_INT, 0, (mpi.id*10)+3, isle.tcomm, MPI_STATUS_IGNORE);
 
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound channels from topology %d\r\n", mpi.id, t.world_size, isle.senders.size(), t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound channels from topology %d\r\n", mpi.id, mpi.size, isle.senders.size(), t.id);
 
     // initialize the set of process receive channels
 
@@ -282,11 +285,11 @@ void topology::apply(island &isle, topology &t) {
 
     // complete the MPI_Send of island ids from which this island will receive ...
 
-    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound island ids from topology %d\r\n", mpi.id, t.world_size, t.id);
+    LOG(6, 0, 0, "ISLAND %d of %d RECV INIT: outbound island ids from topology %d\r\n", mpi.id, mpi.size, t.id);
     
     MPI_Recv(&isle.receivers[0], rec_size, MPI_INT, 0, (mpi.id*10)+4, isle.tcomm, MPI_STATUS_IGNORE);
     
-    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound island ids from topology %d\r\n", mpi.id, t.world_size, isle.senders.size(), t.id);
+    LOG(4, 0, 0, "ISLAND %d of %d RECV END: %lu outbound island ids from topology %d\r\n", mpi.id, mpi.size, isle.senders.size(), t.id);
 
     LOG(7, 0, 0, "topology %d: island %d got %lu exports to ->   ", t.id, mpi.id, isle.receivers.size());
     if(isle.receivers.empty()) {
@@ -332,24 +335,24 @@ void topology::distribute(island &isle) {
     
     // issue an MPI_Send of the required i\o sockets for the provided corresponding process (island) ...
     
-    for(int i=0; i<this->world_size; i++) {
+    for(int i=0; i<mpi.size; i++) {
         
         int send_size = (int)this->channels[i].senders.size();
         int rec_size = (int)this->channels[i].receivers.size();
         
-        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d send channels to %d of %d from topology %d\r\n", mpi.id, send_size, i, this->world_size, this->id);
+        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d send channels to %d of %d from topology %d\r\n", mpi.id, send_size, i, mpi.size, this->id);
         
         MPI_Send(&send_size, 1, MPI_INT, i, (i*10)+1, isle.tcomm); // needed to size target senders vector
         MPI_Send(&this->channels[i].senders[0], send_size, MPI_INT, i, (i*10)+2, isle.tcomm);
         
-        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d send channels to %d of %d from topology %d\r\n", mpi.id, send_size, i, this->world_size, this->id);
+        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d send channels to %d of %d from topology %d\r\n", mpi.id, send_size, i, mpi.size, this->id);
         
-        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d receive channels to %d of %d from topology %d\r\n", mpi.id, rec_size, i, this->world_size, this->id);
+        LOG(6, 0, 0, "ISLAND %d SEND INIT: sending %d receive channels to %d of %d from topology %d\r\n", mpi.id, rec_size, i, mpi.size, this->id);
         
         MPI_Send(&rec_size, 1, MPI_INT, i, (i*10)+3, isle.tcomm); // needed to size target receivers vector
         MPI_Send(&this->channels[i].receivers[0], rec_size, MPI_INT, i, (i*10)+4, isle.tcomm);
         
-        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d receive channels to %d of %d from topology %d\r\n", mpi.id, rec_size, i, this->world_size, this->id);
+        LOG(4, 0, 0, "ISLAND %d SEND END: sent %d receive channels to %d of %d from topology %d\r\n", mpi.id, rec_size, i, mpi.size, this->id);
         
     }
     

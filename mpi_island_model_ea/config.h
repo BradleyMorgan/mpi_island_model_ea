@@ -86,7 +86,10 @@ namespace config {
     int ea_1_log_run_interval = 0;
     int ea_1_log_cycle_interval = 0;
     int ea_1_log_eval_interval = 0;
+
     int ea_1_log_population_interval = 0;
+    int ea_1_log_island_interval = 0;
+    int ea_1_log_genome_interval = 0;
 
     // algorithm 1, objective 1
 
@@ -95,11 +98,14 @@ namespace config {
     int ea_1_o1_max_runs = 0;
     int ea_1_o1_max_cycles = 0;
     int ea_1_o1_max_evals = 0;
+    int ea_1_o1_max_fitness_evals = 0;
 
     int ea_1_o1_log_run_interval = 0;
     int ea_1_o1_log_cycle_interval = 0;
     int ea_1_o1_log_eval_interval = 0;
     int ea_1_o1_log_population_interval = 0;
+    int ea_1_o1_log_island_interval = 0;
+    int ea_1_o1_log_genome_interval = 0;
 
     int ea_1_mu = 0;
     int ea_1_lambda = 0;
@@ -118,6 +124,8 @@ namespace config {
     int ea_2_log_cycle_interval = 0;
     int ea_2_log_eval_interval = 0;
     int ea_2_log_population_interval = 0;
+    int ea_2_log_island_interval = 0;
+    int ea_2_log_genome_interval = 0;
 
     // algorithm 2, objective 1
 
@@ -126,12 +134,14 @@ namespace config {
     int ea_2_o1_max_runs = 0;
     int ea_2_o1_max_cycles = 0;
     int ea_2_o1_max_evals = 0;
-    int ea_2_o1_max_fitness_evals = 1;
+    int ea_2_o1_max_fitness_evals = 0;
     
-    int ea_2_o1_log_run_interval = 1;
-    int ea_2_o1_log_cycle_interval = 1;
-    int ea_2_o1_log_eval_interval = 2;
+    int ea_2_o1_log_run_interval = 0;
+    int ea_2_o1_log_cycle_interval = 0;
+    int ea_2_o1_log_eval_interval = 0;
     int ea_2_o1_log_population_interval = 0;
+    int ea_2_o1_log_island_interval = 0;
+    int ea_2_o1_log_genome_interval = 0;
 
     int ea_2_mu = 0;
     int ea_2_lambda = 0;
@@ -145,9 +155,8 @@ namespace config {
     int send_cap = 0;
     int mu_mode = 0;
     int mu_sub = 0;
+    int lambda_sub = 0;
     int migration_interval = 1;
-
-    double lambda_sub = 0.0;
 
     // variant
 
@@ -160,8 +169,8 @@ namespace config {
 
     // config output strings
 
-    char mu_log[64];
-    char sub_log[64];
+    char mu_log[160];
+    char sub_log[160];
 
     void load(const char *input, const int world_size, const int world_rank);
 
@@ -253,17 +262,22 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::ea_1_log_cycle_interval = stoi(config::items["ea_1_log_cycle_interval"]);
     config::ea_1_log_eval_interval = stoi(config::items["ea_1_log_eval_interval"]);
     config::ea_1_log_population_interval = stoi(config::items["ea_1_log_population_interval"]);
+    config::ea_1_log_island_interval = stoi(config::items["ea_1_log_island_interval"]);
+    config::ea_1_log_genome_interval = stoi(config::items["ea_1_log_genome_interval"]);
     
     sprintf(config::ea_1_o1_name, "%s", config::items["ea_1_o1_name"].c_str());
     
     config::ea_1_o1_max_runs = stoi(config::items["ea_1_o1_max_runs"]);
     config::ea_1_o1_max_cycles = stoi(config::items["ea_1_o1_max_cycles"]);
     config::ea_1_o1_max_evals = stoi(config::items["ea_1_o1_max_evals"]);
+    config::ea_1_o1_max_fitness_evals = stoi(config::items["ea_1_o1_max_fitness_evals"]);
     
     config::ea_1_o1_log_run_interval = stoi(config::items["ea_1_o1_log_run_interval"]);
     config::ea_1_o1_log_cycle_interval = stoi(config::items["ea_1_o1_log_cycle_interval"]);
     config::ea_1_o1_log_eval_interval = stoi(config::items["ea_1_o1_log_eval_interval"]);
     config::ea_1_o1_log_population_interval = stoi(config::items["ea_1_o1_log_population_interval"]);
+    config::ea_1_o1_log_island_interval = stoi(config::items["ea_1_o1_log_island_interval"]);
+    config::ea_1_o1_log_genome_interval = stoi(config::items["ea_1_o1_log_genome_interval"]);
     
     // algorithm 2
     
@@ -284,16 +298,22 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::ea_2_o1_max_runs = stoi(config::items["ea_2_o1_max_runs"]);
     config::ea_2_o1_max_cycles = stoi(config::items["ea_2_o1_max_cycles"]);
     config::ea_2_o1_max_evals = stoi(config::items["ea_2_o1_max_evals"]);
+    config::ea_2_o1_max_fitness_evals = stoi(config::items["ea_2_o1_max_fitness_evals"]);
     
     config::ea_2_log_run_interval = stoi(config::items["ea_2_log_run_interval"]);
     config::ea_2_log_cycle_interval = stoi(config::items["ea_2_log_cycle_interval"]);
     config::ea_2_log_eval_interval = stoi(config::items["ea_2_log_eval_interval"]);
+    
     config::ea_2_log_population_interval = stoi(config::items["ea_2_log_population_interval"]);
+    config::ea_2_log_island_interval = stoi(config::items["ea_2_log_island_interval"]);
+    config::ea_2_log_genome_interval = stoi(config::items["ea_2_log_genome_interval"]);
     
     config::ea_2_o1_log_run_interval = stoi(config::items["ea_2_o1_log_run_interval"]);
     config::ea_2_o1_log_cycle_interval = stoi(config::items["ea_2_o1_log_cycle_interval"]);
     config::ea_2_o1_log_eval_interval = stoi(config::items["ea_2_o1_log_eval_interval"]);
     config::ea_2_o1_log_population_interval = stoi(config::items["ea_2_o1_log_population_interval"]);
+    config::ea_2_o1_log_island_interval = stoi(config::items["ea_2_o1_log_island_interval"]);
+    config::ea_2_o1_log_genome_interval = stoi(config::items["ea_2_o1_log_genome_interval"]);
     
     // parallel
     
@@ -302,6 +322,12 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::send_cap = stoi(config::items["send_cap"]);
     config::mu_mode = stoi(config::items["mu_mode"]);
     config::migration_interval = stoi(config::items["migration_interval"]);
+    config::mu_sub = stoi(config::items["mu_sub"]);
+    config::lambda_sub = stoi(config::items["lambda_sub"]);
+    
+//    double sub_t = stod(config::items["lambda_sub"]);
+//    sub_t *= (config::mu_sub * 1.0);
+//    config::lambda_sub = (int)sub_t;
     
     // parallel, mu_mode
     //
@@ -315,34 +341,32 @@ void config::load(const char *input, const int world_size, const int world_rank)
     // performs crossover at the island level, but including it for placeholder
     //
     
-    sprintf(config::mu_log, ": ");
-    sprintf(config::sub_log,": ");
+    sprintf(config::mu_log, "global mu: %d\r\nglobal lambda: NA", config::ea_1_mu);
+    sprintf(config::sub_log,"local mu: %d\r\nlocal lambda: %d", config::mu_sub, config::lambda_sub);
     
     // TODO: generalize evolution parameters per objective
     
     if(config::mu_mode == 0) {
-        config::ea_1_mu = stoi(config::items["mu"]); // fixed global mu
+        // static global mu, static local lamba
         config::mu_sub = config::ea_1_mu / world_size; // relative island mu
-        config::lambda_sub = stod(config::items["lambda_sub"]); // fixed island lamba
-        sprintf(sub_log, "world proportional mu: (%d/%d)", config::ea_1_mu, world_size);
+        sprintf(config::sub_log, "local_mu: %d\r\nlocal mu calcuation: %d/%d", config::mu_sub, config::ea_1_mu, world_size);
     } else if(config::mu_mode == 1) {
-        config::mu_sub = stoi(config::items["mu_sub"]); // fixed island mu
-        config::lambda_sub = stod(config::items["lambda_sub"]); // fixed island lambda
+        // static local mu, static local lambda
         config::ea_1_mu = world_size * config::mu_sub; // relative global mu
-        sprintf(sub_log, "island proportional mu: (%d*%d)", world_size, config::mu_sub);
+        sprintf(config::mu_log, "global mu: %d\r\nglobal mu calculation: %d*%d", ea_1_mu, world_size, config::mu_sub);
     } else if(config::mu_mode == 2) {
-        config::mu_sub = stoi(config::items["mu_sub"]); // fixed island mu
-        config::lambda_sub = config::mu_sub * stod(config::items["lambda_sub"]); // relative island lambda
+        //config::lambda_sub = config::mu_sub * stod(config::items["lambda_sub"]); // relative island lambda
         config::ea_1_mu = world_size * config::mu_sub; // relative global mu
-        sprintf(sub_log, "island proportional mu: (%d*%f)", config::mu_sub, stod(config::items["lambda_sub"]));
+        sprintf(config::mu_log, "global mu: %d\r\nglobal mu calculation: %d*%d", ea_1_mu, world_size, config::mu_sub);
+        sprintf(config::sub_log, "local mu: %d\r\nlocal lambda: %d\r\nlocal lambda calculation: %d*%d", config::mu_sub, config::lambda_sub, config::mu_sub, config::lambda_sub);
     }
     
-    char mumode[8];
+    char mumode[16];
     config::mu_mode < 1 ? sprintf(mumode, "%s", "fixed") : sprintf(mumode, "%s", "relative" );
     
     // program control
     
-    char mode[5];
+    char mode[16];
     config::ea_mode == 0 ? sprintf(mode, "%s", "benchmark") : sprintf(mode, "%s", "experiment");
     
     // variant
@@ -353,6 +377,41 @@ void config::load(const char *input, const int world_size, const int world_rank)
     
     // create unique pathing for the supplied configuration so we can keep better track of results ...
     
+    // create log path heirarchy to organize output by run date, communicator size, and ea mode
+    
+    // output heirarchy from present working directory
+    // ./logs/<config[n]>/
+    // ./logs/<config[n]>/<objective[n]>/
+    
+    char sub1[32];
+    char sub2[32];
+
+    sprintf(sub1, "logs/%d", world_size);
+    sprintf(sub2, "%s/%s", sub1, mode);
+    
+    int fn = 1;
+    bool found = true;
+    while(found) {
+        sprintf(config::logs_subpath, "%s/%s_%03d", sub2, config::items["config_name"].c_str(), fn);
+        std::ifstream ifile;
+        ifile.open(config::logs_subpath);
+        if(ifile) {
+            fn++;
+        } else {
+            found = false;
+        }
+    }
+    
+    // subdirectory for algorithm 1, objective 1 file output
+    
+    sprintf(config::stats_subpath_ea_1_o1, "%s/%s", config::logs_subpath, config::ea_1_o1_name);
+  
+    
+    // subdirectory for algorithm 2, objective 1 file output
+    
+    sprintf(config::stats_subpath_ea_2_o1, "%s/%s", config::logs_subpath, config::ea_2_o1_name);
+    
+
     if(world_rank == 0) {
         
         // collect current time data
@@ -372,39 +431,17 @@ void config::load(const char *input, const int world_size, const int world_rank)
         // output heirarchy from present working directory
         // ./logs/<config[n]>/
         // ./logs/<config[n]>/<objective[n]>/
-        
-        char sub1[32];
-        char sub2[32];
 
-        sprintf(sub1, "logs/%d", world_size);
         mkdir(sub1,0740);
-        
-        sprintf(sub2, "%s/%s", sub1, mode);
         mkdir(sub2,0740);
-        
-        int fn = 1;
-        bool found = true;
-        while(found) {
-            sprintf(config::logs_subpath, "%s/%s_%03d", sub2, config::items["config_name"].c_str(), fn);
-            std::ifstream ifile;
-            ifile.open(config::logs_subpath);
-            if(ifile) {
-                fn++;
-            } else {
-                found = false;
-            }
-        }
-        
         mkdir(config::logs_subpath, 0740);
         
         // subdirectory for algorithm 1, objective 1 file output
         
-        sprintf(config::stats_subpath_ea_1_o1, "%s/%s", config::logs_subpath, config::ea_1_o1_name);
         mkdir(config::stats_subpath_ea_1_o1, 0740);
         
         // subdirectory for algorithm 2, objective 1 file output
         
-        sprintf(config::stats_subpath_ea_2_o1, "%s/%s", config::logs_subpath, config::ea_2_o1_name);
         mkdir(config::stats_subpath_ea_2_o1, 0740);
         
         // program log filename
@@ -416,8 +453,6 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         sprintf(config::system_log_out, "%s/%s_%d_%s.txt", config::logs_subpath, config::items["log_file"].c_str(), world_size, mode);
         config::program_out = fopen(config::program_log_out, "w");
-        
-        
         
     }
     
@@ -449,19 +484,16 @@ void config::load(const char *input, const int world_size, const int world_rank)
         fprintf(config::program_out, "ea[2]: %s\r\n", config::ea_2_name);
         fprintf(config::program_out, "ea[2] objective[1]: %s\r\n", config::ea_2_o1_name);
         
-        // parallell
-        
-        fprintf(config::program_out, "mu_mode_name: %s\r\n", mode);
-        fprintf(config::program_out, "mu_mode: %d ", config::mu_mode);
-        
         // file locations
         
         fprintf(config::program_out, "log file: %s\r\n", config::program_log_out);
         fprintf(config::program_out, "world size: %d\r\n", world_size);
-        fprintf(config::program_out, "global mu %d\r\n", config::ea_1_mu);
-        fprintf(config::program_out, "global lambda: parallel\r\n");
-        fprintf(config::program_out, "island mu %d\r\n", config::mu_sub);
-        fprintf(config::program_out, "island lambda %f\r\n", config::lambda_sub);
+        
+        // parallell
+        
+        fprintf(config::program_out, "mu_mode_name: %s\r\n", mode);
+        fprintf(config::program_out, "mu_mode: %d ", config::mu_mode);
+        fprintf(config::program_out, "%s\r\n", config::mu_log);
         fprintf(config::program_out, "%s\r\n", config::sub_log);
         
         // log all parameter values as read from file into items collection
@@ -486,58 +518,101 @@ void config::load(const char *input, const int world_size, const int world_rank)
     
     if(world_rank == 0) {
         
-        sprintf(config::ea_1_stats_run, "%s/%s_%s_%d_%s_runs.csv", config::stats_subpath_ea_1_o1, config::ea_1_name, config::ea_1_o1_name, world_size, mode);
-        config::ea_1_run_out = fopen(config::ea_1_stats_run, "w");
+        if(config::ea_1_log_run_interval != 0) {
+            sprintf(config::ea_1_stats_run, "%s/runs_%d.csv", config::stats_subpath_ea_1_o1, world_size);
+            config::ea_1_run_out = fopen(config::ea_1_stats_run, "w");
+        }
         
-        sprintf(config::ea_1_stats_cycle, "%s/%s_%s_%d_%s_cycles.csv", config::stats_subpath_ea_1_o1, config::ea_1_name, config::ea_1_o1_name, world_size, mode);
-        config::ea_1_cycle_out = fopen(config::ea_1_stats_cycle, "w");
+        if(config::ea_1_log_cycle_interval != 0) {
+            sprintf(config::ea_1_stats_cycle, "%s/cycles_%d.csv", config::stats_subpath_ea_1_o1, world_size);
+            config::ea_1_cycle_out = fopen(config::ea_1_stats_cycle, "w");
+        }
         
-        sprintf(config::ea_1_stats_eval, "%s/%s_%s_%d_%s_evals.csv", config::stats_subpath_ea_1_o1, config::ea_1_name, config::ea_1_o1_name, world_size, mode);
-        config::ea_1_eval_out = fopen(config::ea_1_stats_eval, "w");
+        if(config::ea_1_log_eval_interval != 0) {
+            sprintf(config::ea_1_stats_eval, "%s/evals_%d.csv", config::stats_subpath_ea_1_o1, world_size);
+            config::ea_1_eval_out = fopen(config::ea_1_stats_eval, "w");
+        }
         
-        sprintf(config::ea_1_stats_population, "%s/%s_%s_%d_%s_evo.csv", config::stats_subpath_ea_1_o1, config::ea_1_name, config::ea_1_o1_name, world_size, mode);
-        config::ea_1_population_out = fopen(config::ea_1_stats_population, "w");
+        if(config::ea_1_log_population_interval != 0) {
+            sprintf(config::ea_1_stats_population, "%s/evo_%d.csv", config::stats_subpath_ea_1_o1, world_size);
+            config::ea_1_population_out = fopen(config::ea_1_stats_population, "w");
+        }
         
-        sprintf(config::ea_1_stats_genome, "%s/%s_%s_%d_%s_genome.csv", config::stats_subpath_ea_1_o1, config::ea_1_name, config::ea_1_o1_name, world_size, mode);
-        config::ea_1_genome_out = fopen(config::ea_1_stats_genome, "w");
+        if(config::ea_1_log_genome_interval != 0) {
+            sprintf(config::ea_1_stats_genome, "%s/genome_%d.csv", config::stats_subpath_ea_1_o1, world_size);
+            config::ea_1_genome_out = fopen(config::ea_1_stats_genome, "w");
+        }
+            
+        if(config::ea_2_log_run_interval != 0) {
+            sprintf(config::ea_2_stats_run, "%s/runs_%d.csv", config::stats_subpath_ea_2_o1, world_size);
+            config::ea_2_run_out = fopen(config::ea_2_stats_run, "w");
+        }
         
+        if(config::ea_2_log_cycle_interval != 0) {
+            sprintf(config::ea_2_stats_cycle, "%s/cycles_%d.csv", config::stats_subpath_ea_2_o1, world_size);
+            config::ea_2_cycle_out = fopen(config::ea_2_stats_cycle, "w");
+        }
         
-        sprintf(config::ea_2_stats_run, "%s/%s_%s_%d_%s_runs.csv", config::stats_subpath_ea_2_o1, config::ea_2_name, config::ea_2_o1_name, world_size, mode);
-        config::ea_2_run_out = fopen(config::ea_2_stats_run, "w");
+        if(config::ea_2_log_eval_interval != 0) {
+            sprintf(config::ea_2_stats_eval, "%s/evals_%d.csv", config::stats_subpath_ea_2_o1, world_size);
+            config::ea_2_eval_out = fopen(config::ea_2_stats_eval, "w");
+        }
         
-        sprintf(config::ea_2_stats_cycle, "%s/%s_%s_%d_%s_cycles.csv", config::stats_subpath_ea_2_o1, config::ea_2_name, config::ea_2_o1_name, world_size, mode);
-        config::ea_2_cycle_out = fopen(config::ea_2_stats_cycle, "w");
+        if(config::ea_2_log_population_interval != 0) {
+            sprintf(config::ea_2_stats_population, "%s/evo_%d.csv", config::stats_subpath_ea_2_o1,  world_size);
+            config::ea_2_population_out = fopen(config::ea_2_stats_population, "w");
+        }
         
-        sprintf(config::ea_2_stats_eval, "%s/%s_%s_%d_%s_evals.csv", config::stats_subpath_ea_2_o1, config::ea_2_name, config::ea_2_o1_name, world_size, mode);
-        config::ea_2_eval_out = fopen(config::ea_2_stats_eval, "w");
+        if(config::ea_2_log_genome_interval != 0) {
+            sprintf(config::ea_2_stats_genome, "%s/genome_%d.csv", config::stats_subpath_ea_2_o1, world_size);
+            config::ea_2_genome_out = fopen(config::ea_2_stats_genome, "w");
+        }
         
-        sprintf(config::ea_2_stats_population, "%s/%s_%s_%d_%s_evo.csv", config::stats_subpath_ea_2_o1, config::ea_2_name, config::ea_2_o1_name, world_size, mode);
-        config::ea_2_population_out = fopen(config::ea_2_stats_population, "w");
+        if (ea_1_log_run_interval != 0) {
+            fprintf(config::ea_1_run_out, "run,cycle,eval,average_fitness,best_fitness,avg_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_run_t,min_run_i,max_run_t,max_run_i,sum_run_t,avg_run_t,start,duration\r\n");
+        }
         
-        sprintf(config::ea_2_stats_genome, "%s/%s_%s_%d_%s_genome.csv", config::stats_subpath_ea_2_o1, config::ea_2_name, config::ea_2_o1_name, world_size, mode);
-        config::ea_2_genome_out = fopen(config::ea_2_stats_genome, "w");
+        if(ea_1_log_cycle_interval != 0) {
+            fprintf(config::ea_1_cycle_out, "run,cycle,eval,average_fitness,best_fitness,avg_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_cycle_t,min_cycle_i,max_cycle_t,max_cycle_i,sum_cycle_t,avg_cycle_t,start,duration\r\n");
+        }
         
-        fprintf(config::ea_1_run_out, "run,cycle,eval,average_fitness,global_best_fitness,average_global_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_run_t,min_run_i,max_run_t,max_run_i,sum_run_t,avg_run_t,start,duration\r\n");
-        
-        fprintf(config::ea_1_cycle_out, "run,cycle,eval,average_fitness,global_best_fitness,average_global_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_cycle_t,min_cycle_i,max_cycle_t,max_cycle_i,sum_cycle_t,avg_cycle_t,start,duration\r\n");
-                
-        fprintf(config::ea_1_eval_out, "run,cycle,eval,average_fitness,global_best_fitness,average_global_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t,start,duration\r\n");
+        if(config::ea_1_log_eval_interval != 0) {
+            fprintf(config::ea_1_eval_out, "run,cycle,eval,average_fitness,best_fitness,avg_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t,start,duration\r\n");
+        }
         
         // TODO: add stats: global_min_fitness,global_min_genome_id,
         
-        fprintf(config::ea_1_population_out, "run,cycle,eval,average_fitness,global_best_fitness,global_best_genome_id,average_global_best_fitness,ea_t,run_t,cycle_t,eval_t,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t\r\n");
+        if(config::ea_1_log_population_interval != 0) {
+            //fprintf(config::ea_1_population_out, "run,cycle,eval,average_fitness,global_best_fitness,global_best_genome_id,average_global_best_fitness,ea_t,run_t,cycle_t,eval_t,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t\r\n");
+            fprintf(config::ea_1_population_out, "run,cycle,eval,genome_id,fitness,source,locale,parent1,parent2,selected,survived\r\n");
+                         
+        }
         
-        fprintf(config::ea_1_genome_out, "run,cycle,eval,id,rank,fitness,n_best,n_min,n_selected,n_survived,distribution,birth_cycle,parents,genes,meta_genome_id,origin,locale,n_migrations,visas,\r\n");
+        //fprintf(config::ea_1_genome_out, "run,cycle,eval,id,rank,fitness,n_best,n_min,n_selected,n_survived,distribution,birth_cycle,parents,genes,meta_genome_id,origin,locale,n_migrations,visas,\r\n");
         
-        fprintf(config::ea_2_run_out, "run,cycle,eval,average_fitness,global_best_fitness,average_global_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_run_t,min_run_i,max_run_t,max_run_i,sum_run_t,avg_run_t,start,duration\r\n");
+        if(config::ea_1_log_genome_interval != 0) {
+            fprintf(config::ea_1_genome_out, "interval, interval_id, genome_id, genome_genes\r\n");
+        }
         
-        fprintf(config::ea_2_cycle_out, "run,cycle,eval,average_fitness,global_best_fitness,average_global_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_cycle_t,min_cycle_i,max_cycle_t,max_cycle_i,sum_cycle_t,avg_cycle_t,start,duration\r\n");
-                
-        fprintf(config::ea_2_eval_out, "run,cycle,eval,average_fitness,global_best_fitness,average_global_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t,start,duration\r\n");
+        if(config::ea_2_log_run_interval != 0) {
+            fprintf(config::ea_2_run_out, "run,cycle,eval,average_fitness,best_fitness,avg_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_run_t,min_run_i,max_run_t,max_run_i,sum_run_t,avg_run_t,start,duration\r\n");
+        }
         
-        fprintf(config::ea_2_population_out, "run,cycle,eval,average_fitness,global_best_fitness,global_best_genome_id,average_global_best_fitness,ea_t,run_t,cycle_t,eval_t,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t\r\n");
+        if(config::ea_2_log_cycle_interval != 0) {
+            fprintf(config::ea_2_cycle_out, "run,cycle,eval,average_fitness,best_fitness,avg_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_cycle_t,min_cycle_i,max_cycle_t,max_cycle_i,sum_cycle_t,avg_cycle_t,start,duration\r\n");
+        }
         
-        fprintf(config::ea_2_genome_out, "run,cycle,eval,id,rank,fitness,n_best,n_min,n_selected,n_survived,distribution,birth_cycle,parents,genes,meta_genome_id,origin,locale,n_migrations,visas,\r\n");
+        if(config::ea_2_log_eval_interval != 0) {
+            fprintf(config::ea_2_eval_out, "run,cycle,eval,average_fitness,best_fitness,avg_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t,start,duration\r\n");
+        }
+        
+        if(config::ea_2_log_population_interval != 0) {
+            fprintf(config::ea_2_population_out, "run,cycle,eval,average_fitness,best_fitness,best_id,avg_best_fitness,ea_t,run_t,cycle_t,eval_t,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t\r\n");
+        }
+        
+        if(config::ea_2_log_genome_interval != 0) {
+            fprintf(config::ea_2_genome_out, "run,cycle,eval,id,rank,fitness,n_best,n_min,n_selected,n_survived,distribution,birth_cycle,parents,genes,meta_genome_id,origin,locale,n_migrations,visas,\r\n");
+        }
         
         // TODO: add per-island logs with some interval with stats e.g., island_id, island_xxx_min|max|sum|avg_t, island_avg_fit, island_best_fit, island_min_fit, island_channels, island_total_migrations, island_hostname, island_nprocs
         

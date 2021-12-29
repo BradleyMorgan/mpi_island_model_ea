@@ -86,7 +86,7 @@ stats_file:meta
 ## ---- PARAMETER[ea_𝑛_name]: display name for this ea
 ## ---- PARAMETER[ea_𝑛_runs]: ea 𝑛 experimental run maximum (𝑆𝑟𝑚𝑎𝑥)
 ## ---- PARAMETER[ea_𝑛_log_interval]: log every 𝑒 evaluations
-## ---- PARAMETER[ea_𝑛_population_log_interval]: verbose log every 𝑒 evaluations
+## ---- PARAMETER[ea_𝑛_log_population_interval]: verbose log every 𝑒 evaluations
 ## ---- PARAMETER[ea_1_max_evo_cycles]: terminate run at 𝑒 generations (𝑆𝑒𝑚𝑎𝑥)
 ## ---- PARAMETER[ea_1_evo_termination]: aribtrary number to use in ea termination
 ## ---- PARAMETER[ea_1_max_fit_evals]: number of evaluations required for fitness
@@ -106,31 +106,35 @@ ea_1_max_runs:30
 # 𝑆c𝑚𝑎𝑥
 ea_1_max_cycles:10000
 # 𝑆e𝑚𝑎𝑥
-ea_1_max_evals:0
+ea_1_max_evals:32512
 # 𝑆ₘₜ
 ea_1_mutation_rate:0.08
 
 ea_1_log_run_interval:1
 ea_1_log_cycle_interval:100
-ea_1_log_eval_interval:1000
-ea_1_log_population_interval:250
+ea_1_log_eval_interval:0
+ea_1_log_population_interval:50
+ea_1_log_island_interval:250
+ea_1_log_genome_interval:250
 
 # 𝑆₁
-ea_1_o1_name:BENCHMARK
+ea_1_o1_name:solution
 
 # 𝑆r𝑚𝑎𝑥₁
 ea_1_o1_max_runs:2
 # 𝑆c𝑚𝑎𝑥₁
-ea_1_o1_max_cycles:500
+ea_1_o1_max_cycles:100
 # 𝑆e𝑚𝑎𝑥₁
-ea_1_o1_max_evals:0
+ea_1_o1_max_evals:16000
 # 𝑆f𝑚𝑎𝑥₁
 ea_1_o1_max_fitness_evals:1
 
 ea_1_o1_log_run_interval:1
-ea_1_o1_log_cycle_interval:50
+ea_1_o1_log_cycle_interval:10
 ea_1_o1_log_eval_interval:100000
-ea_1_o1_log_population_interval:250
+ea_1_o1_log_population_interval:50
+ea_1_o1_log_island_interval:250
+ea_1_o1_log_genome_interval:1
 
 ## ea_1_evo_termination:0.05
 ## ea_1_o1_name:placeholder_o1
@@ -143,7 +147,7 @@ ea_1_o1_log_population_interval:250
 # 𝛭
 ea_2_name:META
 # 𝛭𝜇
-ea_2_mu:16
+ea_2_mu:8
 # 𝛭𝜆
 ea_2_lambda:4
 # 𝛭𝑟𝑚𝑎𝑥
@@ -161,16 +165,17 @@ ea_2_log_run_interval:1
 ea_2_log_cycle_interval:1
 ea_2_log_eval_interval:2
 ea_2_log_population_interval:250
-ea_2_population_log_interval:1000
+ea_2_log_island_interval:10000
+ea_2_log_genome_interval:1000
 
 # 𝛭₁
-ea_2_o1_name:TOPOLOGY
+ea_2_o1_name:topology
 # 𝛭r𝑚𝑎𝑥₁
-ea_2_o1_max_runs:2
+ea_2_o1_max_runs:10
 # 𝛭c𝑚𝑎𝑥₁
-ea_2_o1_max_cycles:500
+ea_2_o1_max_cycles:50
 # 𝛭e𝑚𝑎𝑥₁
-ea_2_o1_max_evals:2
+ea_2_o1_max_evals:1000
 # 𝛭f𝑚𝑎𝑥₁
 ea_2_o1_max_fitness_evals:2
 
@@ -178,6 +183,8 @@ ea_2_o1_log_run_interval:1
 ea_2_o1_log_cycle_interval:1
 ea_2_o1_log_eval_interval:1
 ea_2_o1_log_population_interval:250
+ea_2_o1_log_island_interval:250
+ea_2_o1_log_genome_interval:250
 
 ##### END SUBSECTION: ea 𝑛 = 2 #####
 
