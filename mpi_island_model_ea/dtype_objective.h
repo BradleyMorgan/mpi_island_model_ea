@@ -125,7 +125,7 @@ template<typename genome> struct obj_run_stats;
 
 template<typename genome> struct objective<genome>::evaluation_interval {
     
-    char name[8] = "EVAL";
+    char name[5] = "EVAL";
     
     int id = 0;
     int max = 0;
@@ -179,7 +179,7 @@ template<typename genome> struct objective<genome>::evaluation_interval {
 
 template<typename genome> struct objective<genome>::cycle_interval {
 
-    char name[8] = "CYCLE";
+    char name[6] = "CYCLE";
     
     int id = 1;
     int max = 0;
@@ -235,7 +235,7 @@ template<typename genome> struct objective<genome>::cycle_interval {
 
 template<typename genome> struct objective<genome>::run_interval {
     
-    char name[8] = "RUN";
+    char name[4] = "RUN";
     
     int id = 1;
     int max = 0;
