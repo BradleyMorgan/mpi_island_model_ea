@@ -111,7 +111,10 @@ struct ea_solver: ea<ea_solver> {
         this->solutions.run.cycle.log_interval = config::ea_1_o1_log_cycle_interval;
         this->solutions.run.cycle.eval.log_interval = config::ea_1_o1_log_eval_interval;
         
+        // log population every nth cycle
         this->solutions.run.cycle.log_population_interval = config::ea_1_o1_log_population_interval;
+        
+        // log current genome every nth run
         this->solutions.run.log_genome_interval = config::ea_1_o1_log_genome_interval;
         
         // ea objective evolution
@@ -144,9 +147,9 @@ template<> template<typename i> void objective<solution>::log_population(i &inte
         
         for (auto it = this->population.begin(); it != this->population.begin() + 20; ++it) {
             
-            std::fprintf(config::ea_1_population_out, "%d," "%d," "%d," "%s," "%f," "%d," "%d," "%s," "%s," "%d," "%d,", this->run.id, this->run.cycle.id, this->run.cycle.eval.id, it->id, it->fitness, it->source, it->locale, it->parents[0], it->parents[1], it->selected, it->survival);
-                         
-            std::fprintf(config::ea_1_population_out, "%f," "%d\r\n", it->selection_distribution, it->migrations);
+            long rank = std::distance(this->population.begin(), it);
+            
+            std::fprintf(config::ea_1_population_out, "%d," "%d," "%d," "%s," "%ld," "%f," "%d," "%d," "%s," "%s," "%d," "%d," "%d," "%f\r\n", this->run.id, this->run.cycle.id, this->run.cycle.eval.id, it->id, rank, it->fitness, it->source, it->locale, it->parents[0], it->parents[1], it->selected, it->survival, it->migrations, it->selection_distribution);
             
         }
         

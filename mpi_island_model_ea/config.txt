@@ -123,15 +123,17 @@ ea_1_o1_name:solution
 # 𝑆r𝑚𝑎𝑥₁
 ea_1_o1_max_runs:2
 # 𝑆c𝑚𝑎𝑥₁
-ea_1_o1_max_cycles:100
+ea_1_o1_max_cycles:1000
 # 𝑆e𝑚𝑎𝑥₁
 ea_1_o1_max_evals:16000
 # 𝑆f𝑚𝑎𝑥₁
 ea_1_o1_max_fitness_evals:1
 
 ea_1_o1_log_run_interval:1
-ea_1_o1_log_cycle_interval:10
-ea_1_o1_log_eval_interval:100000
+ea_1_o1_log_cycle_interval:50
+ea_1_o1_log_eval_interval:0
+
+# assign to interval (run, cycle, or eval) in objective<genome> implementation
 ea_1_o1_log_population_interval:50
 ea_1_o1_log_island_interval:250
 ea_1_o1_log_genome_interval:1
@@ -147,7 +149,7 @@ ea_1_o1_log_genome_interval:1
 # 𝛭
 ea_2_name:META
 # 𝛭𝜇
-ea_2_mu:8
+ea_2_mu:16
 # 𝛭𝜆
 ea_2_lambda:4
 # 𝛭𝑟𝑚𝑎𝑥
@@ -182,9 +184,9 @@ ea_2_o1_max_fitness_evals:2
 ea_2_o1_log_run_interval:1
 ea_2_o1_log_cycle_interval:1
 ea_2_o1_log_eval_interval:1
-ea_2_o1_log_population_interval:250
+ea_2_o1_log_population_interval:1
 ea_2_o1_log_island_interval:250
-ea_2_o1_log_genome_interval:250
+ea_2_o1_log_genome_interval:1
 
 ##### END SUBSECTION: ea 𝑛 = 2 #####
 

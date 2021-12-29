@@ -75,7 +75,6 @@ int island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
         int top = p.population.size() * 0.20;
         int idx = rand()%top;
         
-        x.migrations++;
         x.locale = p.id;
         p.population[idx] = x;
         
@@ -110,6 +109,8 @@ int island::migration::send(island &p, MPI_Datatype &d, int &eval) {
         //LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d INIT: sending solution %s to island %d\r\n", p.id, tag, p.population[idx].id, p.receivers[i]);
         
         LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d INIT: sol_id=%s p1=%s p2=%s to island %d\r\n", p.id, tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1], p.receivers[i]);
+        
+        p.population[idx].migrations++;
         
         MPI_Send(&p.population[idx], 1, d, p.receivers[i], tag, p.tcomm);
         

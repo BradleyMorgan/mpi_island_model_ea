@@ -58,6 +58,7 @@ template<> struct obj_run_stats<topology> : topology_stats {
     
     void begin_header(char *head) {
         if (this->log_head == true) { log_separator(head, '#'); }
+        LOG(2, mpi.id, 0, "\n%4s %6s %8s %11s %11s %11s %11s %11s %11s %14s %14s %11s\n", "r", "c", "E", "avg_fit", "gb_fit", "sm_scat", "sm_gat", "sm_mig", "sum_t", "min_t", "max_t", "avg_t");
     }
     
     void end_header(char *tail) {
@@ -112,7 +113,12 @@ struct ea_meta : ea<ea_meta> {
         this->topologies.run.cycle.log_interval = config::ea_2_o1_log_cycle_interval;
         this->topologies.run.cycle.eval.log_interval = config::ea_2_o1_log_eval_interval;
         
+        // log population every nth cycle
+        
         this->topologies.run.cycle.log_population_interval = config::ea_2_o1_log_population_interval;
+        
+        // log current genome every nth eval
+        
         this->topologies.run.cycle.eval.log_genome_interval = config::ea_2_o1_log_genome_interval;
         
         // evolution properties
@@ -197,9 +203,7 @@ template<> template<typename i> void objective<topology>::log_population(i &inte
         
         for (auto it = this->population.begin(); it != this->population.end(); ++it) {
             
-            std::fprintf(config::ea_2_population_out, "%d," "%d," "%d," "%d," "%f," "%d," "%d," "%d," "%d," "%d," "%d," "%d,", this->run.id, this->run.cycle.id, this->run.cycle.eval.id, it->id, it->fitness, it->stats.send_channels, it->stats.recv_channels, it->stats.total_channels, it->stats.arrivals, it->stats.departures, it->stats.migrations, it->stats.target_runs);
-                         
-            std::fprintf(config::ea_2_population_out, "%f," "%d\r\n", it->selection_distribution, it->stats.migrations);
+            std::fprintf(config::ea_2_population_out, "%d," "%d," "%d," "%d," "%f," "%d," "%d," "%d," "%d," "%d," "%d," "%d," "%f\r\n", this->run.id, this->run.cycle.id, this->run.cycle.eval.id, it->id, it->fitness, it->stats.send_channels, it->stats.recv_channels, it->stats.total_channels, it->stats.arrivals, it->stats.departures, it->stats.migrations, it->stats.target_runs, it->selection_distribution);
             
         }
         

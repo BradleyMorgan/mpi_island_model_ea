@@ -584,7 +584,7 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         if(config::ea_1_log_population_interval != 0) {
             //fprintf(config::ea_1_population_out, "run,cycle,eval,average_fitness,global_best_fitness,global_best_genome_id,average_global_best_fitness,ea_t,run_t,cycle_t,eval_t,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t\r\n");
-            fprintf(config::ea_1_population_out, "run,cycle,eval,genome_id,fitness,source,locale,parent1,parent2,selected,survived\r\n");
+            fprintf(config::ea_1_population_out, "run,cycle,eval,genome_id,rank,fitness,source,locale,parent1,parent2,selected,survived,migrations,selection_distribution\r\n");
                          
         }
         
@@ -607,11 +607,11 @@ void config::load(const char *input, const int world_size, const int world_rank)
         }
         
         if(config::ea_2_log_population_interval != 0) {
-            fprintf(config::ea_2_population_out, "run,cycle,eval,average_fitness,best_fitness,best_id,avg_best_fitness,ea_t,run_t,cycle_t,eval_t,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_eval_t,min_eval_i,max_eval_t,max_eval_i,sum_eval_t,avg_eval_t\r\n");
+            fprintf(config::ea_2_population_out, "run,cycle,eval,genome_id,genome_fitness,send_channels,recv_channels, total_channels, arrivals, departures, migrations, target_runs, selection_distribution\r\n");
         }
         
         if(config::ea_2_log_genome_interval != 0) {
-            fprintf(config::ea_2_genome_out, "run,cycle,eval,id,rank,fitness,n_best,n_min,n_selected,n_survived,distribution,birth_cycle,parents,genes,meta_genome_id,origin,locale,n_migrations,visas,\r\n");
+            fprintf(config::ea_2_genome_out, "interval,interval_id,genome_id,fitness,send_channels,recv_channels,total_channels,departures,arrivals,migrations,selection_distribution\r\n");
         }
         
         // TODO: add per-island logs with some interval with stats e.g., island_id, island_xxx_min|max|sum|avg_t, island_avg_fit, island_best_fit, island_min_fit, island_channels, island_total_migrations, island_hostname, island_nprocs

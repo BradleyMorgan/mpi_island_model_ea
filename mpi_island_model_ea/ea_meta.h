@@ -275,7 +275,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
         meta.ea::begin(meta.topologies, meta.topologies.run.cycle.eval, &(*it));
       
-        solver_begin(meta, solver, *it, config::ea_2_o1_max_runs, config::ea_2_o1_max_cycles);
+        solver_begin(meta, solver, *it);
                 
         meta.ea::end(meta.topologies, meta.topologies.run.cycle.eval, &(*it));
         
@@ -362,8 +362,6 @@ void topologies_populate(ea_meta &meta) {
     
     LOG(5, mpi.id, 0, "initialized objective (topology) population size %lu \r\n", meta.topologies.population.size());
     
-    meta.topologies.log_population(meta.topologies.run);
-    
 }
 
 void benchmark_topology(ea_meta &meta) {
@@ -435,13 +433,7 @@ template<typename e> void ea_meta::begin(e &target) {
                 
                 this->ea::end(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[i], target.solutions.run);
                 
-                if(this->topologies.run.cycle.eval.stats.best_fitness > this->topologies.run.cycle.stats.best_fitness) {
-                    this->topologies.run.cycle.stats.best_fitness = this->topologies.run.cycle.eval.stats.best_fitness;
-                }
-                
             } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
-            
-            this->topologies.dominated_sort();
 
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
@@ -455,7 +447,6 @@ template<typename e> void ea_meta::begin(e &target) {
                 
                 this->ea::end(this->topologies, this->topologies.run.cycle);
                 
-
             }  // 𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
         
             // (𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) + (𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥) iterations

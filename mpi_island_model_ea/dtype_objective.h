@@ -127,7 +127,7 @@ template<typename genome> struct objective<genome>::evaluation_interval {
     
     char name[8] = "EVAL";
     
-    int id = 1;
+    int id = 0;
     int max = 0;
     int max_local = 0;
     
@@ -153,13 +153,13 @@ template<typename genome> struct objective<genome>::evaluation_interval {
     mpi_local stat_recv;
     
     void init() {
-        this->id = 1;
         this->local = {};
         this->stat_send = {};
         this->stat_recv = {};
     }
     
     void begin(genome *current) {
+        this->id++;
         this->local = current;
         this->stats = {};
         this->stat_send.init();
@@ -169,7 +169,6 @@ template<typename genome> struct objective<genome>::evaluation_interval {
     }
 
     void end(genome *current = NULL) {
-        this->id++;
         this->stats.local_t.value = MPI_Wtime() - this->stats.start;
         this->stats.end_header(this->log_tail);
     }
@@ -420,18 +419,25 @@ template<typename genome> template<typename sint, typename tint> void objective<
     
     if(mpi.id != 0) { return; }
     
-    target.local->fitness= target.stats.avg_t * -1;
+    current->measure(target);
     
     std::vector<genome> valid = this->filter(false);
 
     if(valid.size() == 0) { return; }
     
-    target.stats.best_fitness = valid[0].fitness;
-    target.stats.best.push_back(valid[0].fitness);
-
     if(target.stats.best_fitness == 0.0 || valid[0].fitness > target.stats.best_fitness) {
         target.stats.best_fitness = valid[0].fitness;
         target.stats.best.push_back(valid[0].fitness);
+    }
+    
+    if(this->run.cycle.stats.best_fitness == 0.0 || target.stats.best_fitness > this->run.cycle.stats.best_fitness) {
+        this->run.cycle.stats.best_fitness = target.stats.best_fitness;
+        this->run.cycle.stats.best.push_back(target.stats.best_fitness);
+    }
+    
+    if(this->run.stats.best_fitness == 0.0 || this->run.cycle.stats.best_fitness > this->run.stats.best_fitness) {
+        this->run.stats.best_fitness = this->run.cycle.stats.best_fitness;
+        this->run.stats.best.push_back(this->run.cycle.stats.best_fitness);
     }
     
     auto result = minmax_element(valid.begin(), valid.end(),[](genome const &g1, genome const &g2) { return g1.fitness < g2.fitness;});
@@ -444,8 +450,6 @@ template<typename genome> template<typename sint, typename tint> void objective<
     
     target.stats.avg_fitness = target.stats.total_fitness / valid.size();
     target.stats.avg_best_fitness = total_best_fitness / target.stats.best.size();
-    
-    current->measure(target);
     
 }
 
@@ -499,29 +503,6 @@ template<typename genome> template<typename i> void objective<genome>::measure(i
 template<typename genome> template<typename i> void objective<genome>::log_stats(i &interval) {
     
     if(interval.log_interval != 0 && interval.id % interval.log_interval == 0) {
-        
-        if(interval.log_stdout == true) {
-
-            if(mpi.id != 0) { return; }
-
-            LOG(2, 0, 0, "%04d,%06d,%08d,%11.6f,%11.6f,%11.6f,%11.6f,%11.6f,%11.6f,%11.6f(%d),%11.6f(%d),%11.6f\r\n",
-
-                this->run.id,
-                this->run.cycle.id,
-                this->run.cycle.eval.id,
-                interval.stats.avg_fitness,
-                interval.stats.best_fitness,
-                interval.stats.sum_scatter_t.value,
-                interval.stats.sum_gather_t.value,
-                interval.stats.sum_migration_t.value,
-                interval.stats.sum_t.value,
-                interval.stats.min_t.value,
-                interval.stats.min_t.island,
-                interval.stats.max_t.value,
-                interval.stats.max_t.island,
-                interval.stats.avg_t);
-
-        }
         
         if(interval.log_stdout == true) {
     
@@ -666,7 +647,7 @@ template<typename genome> template<typename source, typename target> void object
 }
 
 template<typename genome> template<typename source, typename target> void objective<genome>::end(target &interval, source &data_interval, genome *target_genome) {
-
+    
     interval.end(target_genome);
     
     this->log_end(interval, data_interval, target_genome);

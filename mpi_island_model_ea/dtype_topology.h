@@ -203,19 +203,24 @@ template<typename i> void topology::log(i &interval) {
     //if(interval.log_fout == true) {
 
         if(mpi.id != 0) { return; }
-
-        LOG(2, 0, 0, "TOPOLOGY,%s,%d,%f,%d,%d,%d\r\n",
+    
+        fprintf(config::ea_2_genome_out, "%s,%d,%d,%f,%d,%d,%d,%d,%d,%d,%f\r\n",
 
             interval.name,
             interval.id,
+            this->id,
             this->fitness,
+            this->stats.send_channels,
+            this->stats.recv_channels,
+            this->stats.total_channels,
             this->stats.departures,
             this->stats.arrivals,
-            this->stats.migrations);
+            this->stats.migrations,
+            this->selection_distribution);
 
     //}
     
-    fflush(interval.stats_out);
+    fflush(config::ea_2_genome_out);
 
 }
 
