@@ -173,7 +173,7 @@ template<typename genome> struct objective<genome>::evaluation_interval {
         this->stats.end_header(this->log_tail);
     }
     
-    evaluation_interval(cycle_interval *cycle): parent(cycle), stats(), name("EVAL") {};
+    evaluation_interval(cycle_interval *cycle): parent(cycle), stats() { strcpy(name, "EVAL"); };
 
 };
 
@@ -229,7 +229,7 @@ template<typename genome> struct objective<genome>::cycle_interval {
         this->stats.end_header(this->log_tail);
     }
     
-    cycle_interval(run_interval *run, genome *current): local(current), stats(), eval(this), name("CYCLE") {};
+    cycle_interval(run_interval *run, genome *current): local(current), stats(), eval(this) { strcpy(name, "CYCLE"); };
     
 };
 
@@ -287,7 +287,7 @@ template<typename genome> struct objective<genome>::run_interval {
         this->stats.end_header(this->log_tail);
     }
     
-    run_interval(genome *current): parent(this), local(current), stats(), cycle(this, current), name("RUN") {};
+    run_interval(genome *current): parent(this), local(current), stats(), cycle(this, current) { strcpy(name, "RUN"); };
     
 };
 
