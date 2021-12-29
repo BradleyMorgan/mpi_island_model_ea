@@ -13,7 +13,7 @@
 
 struct solution {
     
-    char id[64] = "0";
+    char id[64];
     
     std::array<double, DIM> input = {};
     
