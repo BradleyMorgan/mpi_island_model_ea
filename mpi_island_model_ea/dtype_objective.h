@@ -125,7 +125,7 @@ template<typename genome> struct obj_run_stats;
 
 template<typename genome> struct objective<genome>::evaluation_interval {
     
-    char name[5] = "EVAL";
+    char name[5];
     
     int id = 0;
     int max = 0;
@@ -173,13 +173,13 @@ template<typename genome> struct objective<genome>::evaluation_interval {
         this->stats.end_header(this->log_tail);
     }
     
-    evaluation_interval(cycle_interval *cycle): parent(cycle), stats() {};
+    evaluation_interval(cycle_interval *cycle): parent(cycle), stats(), name("EVAL") {};
 
 };
 
 template<typename genome> struct objective<genome>::cycle_interval {
 
-    char name[6] = "CYCLE";
+    char name[6];
     
     int id = 1;
     int max = 0;
@@ -229,13 +229,13 @@ template<typename genome> struct objective<genome>::cycle_interval {
         this->stats.end_header(this->log_tail);
     }
     
-    cycle_interval(run_interval *run, genome *current): local(current), stats(), eval(this) {};
+    cycle_interval(run_interval *run, genome *current): local(current), stats(), eval(this), name("CYCLE") {};
     
 };
 
 template<typename genome> struct objective<genome>::run_interval {
     
-    char name[4] = "RUN";
+    char name[4];
     
     int id = 1;
     int max = 0;
@@ -287,7 +287,7 @@ template<typename genome> struct objective<genome>::run_interval {
         this->stats.end_header(this->log_tail);
     }
     
-    run_interval(genome *current): parent(this), local(current), stats(), cycle(this, current) {};
+    run_interval(genome *current): parent(this), local(current), stats(), cycle(this, current), name("RUN") {};
     
 };
 
