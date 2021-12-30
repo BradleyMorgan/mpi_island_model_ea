@@ -114,6 +114,7 @@ template<typename genome> struct objective {
     template<typename f, typename v> genome crossover(v &variant, f function) { return function(*this, variant); }
     template<typename f, typename v> void populate(v &variant, f function) { function(variant); }
     template<typename f, typename v> void distribute(v &variant, f function) { function(variant); }
+    template<typename v> void gather(v &variant);
     template<typename f, typename v, typename m> void evolve(v &variant, m &meta, f function) { function(variant, meta); }
     template<typename f, typename v, typename m, typename g> void evolve(v &variant, m &meta, g &individual, f function) { function(variant, meta, individual); }
     
@@ -161,9 +162,6 @@ template<typename genome> struct objective<genome>::evaluation_interval {
     void begin(genome *current) {
         this->id++;
         this->local = current;
-        this->stats = {};
-        this->stat_send.init();
-        this->stat_recv.init();
         this->stats.start = MPI_Wtime();
         this->stats.begin_header(this->log_head);
     }
@@ -209,8 +207,9 @@ template<typename genome> struct objective<genome>::cycle_interval {
     genome *local = eval.local;
     
     void init() {
-        this->id = 1;
         this->local = {};
+        this->stats = {};
+        this->eval.stats = {};
         this->stat_send = {};
         this->stat_recv = {};
         this->eval.init();
@@ -218,8 +217,7 @@ template<typename genome> struct objective<genome>::cycle_interval {
     
     void begin(genome *current) {
         this->local = current;
-        this->stat_send.init();
-        this->stat_recv.init();
+        this->eval.stats = {};
         this->stats.start = MPI_Wtime();
         this->stats.begin_header(this->log_head);
     }
@@ -265,8 +263,9 @@ template<typename genome> struct objective<genome>::run_interval {
     mpi_local stat_recv;
     
     void init() {
-        this->stats = {};
         this->local = {};
+        this->stats = {};
+        this->cycle.stats = {};
         this->stat_send = {};
         this->stat_recv = {};
         this->cycle.init();
@@ -274,10 +273,8 @@ template<typename genome> struct objective<genome>::run_interval {
     
     void begin(genome *current) {
         this->local = current;
+        this->stats = {};
         this->cycle.stats = {};
-        this->cycle.eval.stats = {};
-        this->stat_send.init();
-        this->stat_recv.init();
         this->stats.start = MPI_Wtime();
         this->stats.begin_header(this->log_head);
     }
@@ -384,17 +381,14 @@ template<typename genome> std::vector<genome> objective<genome>::filter(bool che
 
 template<typename genome> template<typename i> double objective<genome>::reduce(i &interval, mpi_local *locf, mpi_local *minf, mpi_local *maxf, mpi_local *sumf) {
     
-    interval.stat_recv.init();
     MPI_Reduce(locf, &interval.stat_recv, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
     
     if(mpi.id == 0) { this->minmax(minf, interval.stat_recv, std::min<double>); }
     
-    interval.stat_recv.init();
     MPI_Reduce(locf, &interval.stat_recv, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
     
     if(mpi.id == 0) { this->minmax(maxf, interval.stat_recv, std::max<double>); }
     
-    interval.stat_recv.init();
     MPI_Reduce(locf, sumf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
     double avg = 0.0;
@@ -411,7 +405,7 @@ template<typename genome> template<typename i> double objective<genome>::reduce(
 template<typename genome> template<typename sint, typename tint> void objective<genome>::measure(tint &target, sint &source, genome *current) {
     
     // aggregate time values from all islands
-    
+
     target.stats.avg_t = this->reduce(target, &source.stats.local_t, &target.stats.min_t, &target.stats.max_t, &target.stats.sum_t);
     target.stats.avg_scatter_t = this->reduce(target, &source.stats.local_scatter_t, &target.stats.min_scatter_t, &target.stats.max_scatter_t, &target.stats.sum_scatter_t);
     target.stats.avg_gather_t = this->reduce(target, &source.stats.local_gather_t, &target.stats.min_gather_t, &target.stats.max_gather_t, &target.stats.sum_gather_t);
@@ -454,7 +448,7 @@ template<typename genome> template<typename sint, typename tint> void objective<
 }
 
 template<typename genome> template<typename i> void objective<genome>::measure(i &interval, genome *current) {
-    
+     
     interval.stats.avg_t = this->reduce(interval, &interval.stats.local_t, &interval.stats.min_t, &interval.stats.max_t, &interval.stats.sum_t);
     interval.stats.avg_scatter_t = this->reduce(interval, &interval.stats.local_scatter_t, &interval.stats.min_scatter_t, &interval.stats.max_scatter_t, &interval.stats.sum_scatter_t);
     interval.stats.avg_gather_t = this->reduce(interval, &interval.stats.local_gather_t, &interval.stats.min_gather_t, &interval.stats.max_gather_t, &interval.stats.sum_gather_t);
@@ -495,6 +489,7 @@ template<typename genome> template<typename i> void objective<genome>::measure(i
     
     interval.stats.avg_fitness = interval.stats.total_fitness / valid.size();
     interval.stats.avg_best_fitness = total_best_fitness / interval.stats.best.size();
+    
     
 }
 

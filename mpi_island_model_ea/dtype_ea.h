@@ -117,7 +117,7 @@ template<typename m> void parallel_types(m &model) {
 
     MPI_Datatype sol_types[11] = { MPI_CHAR, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT, ptype };
 
-    MPI_Aint sol_offsets[11] = { 0,                                  // id                       + 1 lluint
+    MPI_Aint sol_offsets[11] = { 0,                                  // id                       + 64 char
         sizeof(char)*64,                                             // input                    + 10 double
         sizeof(double)*DIM + sizeof(char)*64,                        // fitness                  + 11 double
         sizeof(double)*(DIM+1) + sizeof(char)*64,                    // selection_distribution   + 12 double
@@ -240,9 +240,9 @@ struct ea {
         this->stats.local_t.value = ea_end - this->stats.start;
         this->stats.local_t.island = mpi.id;
         
-        MPI_Reduce(&this->stats.local_t, &this->stats.min_t, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, this->model.tcomm);
-        MPI_Reduce(&this->stats.local_t, &this->stats.max_t, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, this->model.tcomm);
-        MPI_Reduce(&this->stats.local_t, &this->stats.sum_t, 1, MPI_DOUBLE, MPI_SUM, 0, this->model.tcomm);
+//        MPI_Reduce(&this->stats.local_t, &this->stats.min_t, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, this->model.tcomm);
+//        MPI_Reduce(&this->stats.local_t, &this->stats.max_t, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, this->model.tcomm);
+//        MPI_Reduce(&this->stats.local_t, &this->stats.sum_t, 1, MPI_DOUBLE, MPI_SUM, 0, this->model.tcomm);
         
         this->stats.avg_t = this->stats.sum_t.value / mpi.size;
         
@@ -272,19 +272,20 @@ struct ea {
     template<typename genome>
     void begin(objective<genome> &obj, genome *current = NULL);
     
-    template<typename genome> void
-    end(objective<genome> &obj, genome *current = NULL);
+    template<typename genome>
+    void end(objective<genome> &obj, genome *current = NULL);
 
     template<typename genome, typename i>
     void begin(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
     
-    template<typename genome, typename i> void
-    end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
+    template<typename genome, typename i>
+    void end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL);
     
-    template<typename genome, typename data, typename i> void
-    end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL, data &data_interval = objective<genome>::run);
+    template<typename genome, typename data, typename i>
+    void end(objective<genome> &obj, i &interval = objective<genome>::run, genome *current = NULL, data &data_interval = objective<genome>::run);
     
-    template<typename genome, typename data, typename i> void begin(objective<genome> &obj, i &interval, genome *current, data &data_interval);
+    template<typename genome, typename data, typename i>
+    void begin(objective<genome> &obj, i &interval, genome *current, data &data_interval);
     
 };
 
@@ -301,7 +302,6 @@ template<typename variant> template<typename genome> void ea<variant>::begin(obj
 template<typename variant> template<typename genome> void ea<variant>::end(objective<genome> &obj, genome *current) {
     
     this->end(obj, obj.run, obj.run.local);
-    
     this->end();
         
 }
@@ -318,6 +318,7 @@ template<typename variant> template<typename genome, typename i> void ea<variant
     
     sprintf(interval.log_tail, "END %s OBJECTIVE %d (%s) %s %d OF %d", this->name, obj.id, obj.name, interval.name, interval.id, interval.max);
     
+    obj.gather(*this);
     obj.end(interval, interval.local);
     
 }

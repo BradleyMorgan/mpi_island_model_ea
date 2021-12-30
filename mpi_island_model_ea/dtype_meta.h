@@ -197,6 +197,10 @@ template<> std::vector<std::vector<topology>> objective<topology>::dominated_sor
     
 }
 
+template<> template<typename v> void objective<topology>::gather(v &variant) {
+    
+}
+
 template<> template<typename i> void objective<topology>::log_population(i &interval) {
 
     if(mpi.id==0) {

@@ -145,6 +145,7 @@ std::vector<solution> crossover(ea_solver &solver) {
         
         child.source = mpi.id;
         child.locale = mpi.id;
+        
         child.migrations = 0;
         
         strcpy(child.parents[0], p1.id);
@@ -191,8 +192,8 @@ void solution_populate(ea_solver &solver) {
         
         solution p;
         
-        p.source = mpi.id;
-        p.migrations = 0;
+        //p.source = mpi.id;
+        //p.migrations = 0;
         
         strcpy(p.parents[0], "0");
         strcpy(p.parents[1], "0");
@@ -279,8 +280,8 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
     
     // calculate population fitness and corresponding sorted probability distribution
     
-    solver.solutions.fitness();
-    solver.solutions.cpd();
+    //solver.solutions.fitness();
+    //solver.solutions.cpd();
     
     LOG(6, mpi.id, 0, "(%d) topology %d, eval %d\r\n", mpi.id, t.id, solver.solutions.run.cycle.eval.id);
 
@@ -302,27 +303,27 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         
         // issue migration imports and exports ...
 
-        int scount = 0;
-        int rcount = 0;
+        //int scount = 0;
+        //int rcount = 0;
         
-        LOG(7, mpi.id, 1, "%d %d SEND [%d,%d,%d] -> chans=%lu ->\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations, solver.model.isle.senders.size());
-        solver.model.isle.stats.departures = island::migration::send(solver.model.isle, solver.model.solution_type, solver.solutions.run.cycle.eval.id);
-        LOG(7, mpi.id, 1, "%d %d SEND [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations);
+        LOG(7, mpi.id, 0, "%d %d SEND [%d,%d,%d] -> chans=%lu ->\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations, solver.model.isle.receivers.size());
+        island::migration::send(solver.model.isle, solver.model.solution_type, solver.solutions.run.cycle.eval.id);
+        LOG(7, mpi.id, 0, "%d %d SEND [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations);
         
-        LOG(7, mpi.id, 1, "%d %d RECV [%d,%d,%d] -> chans=%lu ->\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations, solver.model.isle.receivers.size());
-        solver.model.isle.stats.arrivals = island::migration::receive(solver.model.isle, solver.model.solution_type, solver.solutions.run.cycle.eval.id);
-        LOG(7, mpi.id, 1, "%d %d RECV [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations);
+        LOG(7, mpi.id, 0, "%d %d RECV [%d,%d,%d] -> chans=%lu ->\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations, solver.model.isle.receivers.size());
+        island::migration::receive(solver.model.isle, solver.model.solution_type, solver.solutions.run.cycle.eval.id);
+        LOG(7, mpi.id, 0, "%d %d RECV [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations);
         
-        MPI_Reduce(&solver.model.isle.stats.departures, &scount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
-        MPI_Reduce(&solver.model.isle.stats.arrivals, &rcount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
+        //MPI_Reduce(&solver.model.isle.stats.departures, &scount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
+        //MPI_Reduce(&solver.model.isle.stats.arrivals, &rcount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
         
-        solver.model.isle.stats.migrations += scount + rcount;
+        //solver.model.isle.stats.migrations += scount + rcount;
         
-        if(mpi.id == 0) {
-            t.stats.departures += scount;
-            t.stats.arrivals += rcount;
-            t.stats.migrations += scount + rcount;
-        }
+        //if(mpi.id == 0) {
+        //    t.stats.departures += scount;
+        //    t.stats.arrivals += rcount;
+        //    t.stats.migrations += scount + rcount;
+        //}
         
         solver.solutions.run.cycle.stats.local_migration_t.value = MPI_Wtime() - migrate_start;
         solver.solutions.run.stats.local_migration_t.value += solver.solutions.run.cycle.stats.local_migration_t.value;
@@ -332,29 +333,6 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
     }
 
     LOG(4, 0, 0, "ISLAND %d MIGRATION topology=%d migr[%d,%d,%d] schan=%lu rchan=%lu, fit=%f\r\n", mpi.id, t.id, t.stats.departures, t.stats.arrivals, t.stats.migrations, solver.model.isle.senders.size(), solver.model.isle.receivers.size(), t.fitness);
-    
-    LOG(7, 0, 0, "rank %d topology = %d rounds = %d eval = %d\r\n", mpi.id, t.id, t.stats.migrations, meta.topologies.run.cycle.eval.id);
-
-    LOG(8, mpi.id, 0, "rounds=%d, total_time=%013.10f, fit=%013.10f\r\n", t.stats.migrations, solver.solutions.run.cycle.stats.sum_migration_t.value, t.fitness);
-    
-    // output for various intervals ...
-    
-    if(solver.solutions.run.cycle.id%solver.solutions.run.cycle.log_interval == 0) {
-    
-        LOG(6, 0, 0, "\r\nISLAND %d of %d GATHER INIT: %d solutions from %d islands = (%d * %d) = mu = %d\r\n", mpi.id, mpi.size, config::mu_sub, mpi.size, config::mu_sub, mpi.size, solver.solutions.mu);
-        
-        double gather_start = MPI_Wtime();
-        
-        // gather island subpopulations back into the aggregate population on rank 0 ...
-        
-        MPI_Gather(&solver.model.isle.population[0], solver.model.island_size, solver.model.solution_type, &solver.solutions.population[0], solver.model.island_size, solver.model.solution_type, 0, solver.model.tcomm);
-        
-        solver.solutions.run.cycle.stats.local_gather_t.value = MPI_Wtime() - gather_start;
-        solver.solutions.run.stats.local_gather_t.value += solver.solutions.run.cycle.stats.local_gather_t.value;
-        
-        LOG(4, 0, 0, "\r\nISLAND %d of %d GATHER END: %lu solutions from %d islands = (%d / %d) = island_mu = %d\r\n", mpi.id, mpi.size, solver.solutions.population.size(), mpi.size, solver.solutions.mu, mpi.size, config::mu_sub);
-        
-    }
 
 }
 

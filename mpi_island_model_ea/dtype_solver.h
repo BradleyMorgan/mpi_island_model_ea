@@ -139,6 +139,36 @@ struct ea_solver: ea<ea_solver> {
     
 };
 
+template<> template<typename v> void objective<solution>::gather(v &variant) {
+
+    if(this->run.cycle.id%this->run.cycle.log_population_interval) {
+        
+        LOG(6, 0, 0, "\r\nISLAND %d of %d GATHER INIT: %d solutions from %d islands = (%d * %d) = mu = %d\r\n", mpi.id, mpi.size, config::mu_sub, mpi.size, config::mu_sub, mpi.size, this->mu);
+            
+        double gather_start = MPI_Wtime();
+            
+        // gather island subpopulations back into the aggregate population on rank 0 ...
+        
+        if(mpi.id == 0) {
+            this->population.clear();
+            this->population.resize(this->mu);
+        }
+        
+        MPI_Gather(&variant.model.isle.population[0], config::mu_sub, variant.model.solution_type, &this->population[0], config::mu_sub, variant.model.solution_type, 0, variant.model.tcomm);
+        
+        this->run.cycle.stats.local_gather_t.value = MPI_Wtime() - gather_start;
+        this->run.stats.local_gather_t.value += this->run.cycle.stats.local_gather_t.value;
+        
+        LOG(4, 0, 0, "\r\nISLAND %d of %d GATHER END: %lu solutions from %d islands = (%d / %d) = island_mu = %d\r\n", mpi.id, mpi.size, this->population.size(), mpi.size, this->mu, mpi.size, config::mu_sub);
+        
+        std::sort(this->population.begin(), this->population.end(), compare_fitness<solution>);
+        std::reverse(this->population.begin(), this->population.end());
+        
+    }
+    
+}
+
+
 template<> template<typename i> void objective<solution>::log_population(i &interval) {
 
     if(mpi.id==0) {

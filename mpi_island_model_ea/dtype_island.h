@@ -93,8 +93,8 @@ struct island {
     
     struct migration {
         
-        static int send(island &p, MPI_Datatype &d, int &eval);
-        static int receive(island &p, MPI_Datatype &d, int &eval);
+        static void send(island &p, MPI_Datatype &d, int &eval);
+        static void receive(island &p, MPI_Datatype &d, int &eval);
         
     };
     

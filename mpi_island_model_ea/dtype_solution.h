@@ -21,8 +21,8 @@ struct solution {
     double selection_distribution = 0.0;
     double group = 0.0;
 
-    int source = 0;
-    int locale = 0;
+    int source = mpi.id;
+    int locale;
     int migrations = 0;
     int selected = 0;
     int survival = 0;
@@ -34,7 +34,7 @@ struct solution {
     template<typename i> void log(i &interval);
     template<typename i> void measure(i &interval);
     
-    solution() { strcpy(id, uniqid(sinstances++)); }
+    solution() : source(mpi.id), locale(mpi.id) { strcpy(id, uniqid(sinstances++)); }
 
 };
 
