@@ -138,27 +138,163 @@ struct ea_meta : ea<ea_meta> {
     
 };
 
-template<> std::vector<std::vector<topology>> objective<topology>::dominated_sort() {
+bool sort_o1(const std::pair<int,int> &a, const std::pair<int,int> &b) {
+       return a.first > b.first;
+}
+
+bool sort_o2(const std::pair<int,int> &a, const std::pair<int,int> &b) {
+       return a.second > b.second;
+}
+
+bool cmp_o1(const topology *lt, const topology *rt) {
+  return lt->fitness_multi.first < rt->fitness_multi.first;
+}
+
+bool cmp_o2(const topology *lt, const topology *rt) {
+    return lt->fitness_multi.second < rt->fitness_multi.second;
+}
+
+bool compare_multi(const topology *lt, const topology *rt) {
+    return lt->dom_rank <= rt->dom_rank && (lt->distance > rt->distance);
+}
+
+struct PlotRange {
+    double begin, end, count;
+    double get_step() const { return (end - begin) / count; }
+};
+
+template <typename F>
+void TextPlot2d(F func, PlotRange range_x, PlotRange range_y) {
+    const auto step_x = range_x.get_step();
+    const auto step_y = range_y.get_step();
+    // multiply steps by iterated integer
+    // to avoid accumulation of error in x and y
+    for(int j = 0;; ++j) {
+        auto y = range_y.begin + step_y * j;
+        if(y >= range_y.end) break;
+        for(int i = 0;; ++i) {
+            auto x = range_x.begin + step_x * i;
+            if(x >= range_x.end) break;
+            auto z = func(x, y);
+            if(z != z) { printf("?"); } // NaN outputs a '?'
+            else       { printf("%c", z < 0 ? '#':'o'); }
+        }
+        printf("\n");
+    }
+}
+
+void plot_fronts(std::vector<std::vector<topology*>> &fronts) {
+
+    for(std::vector<std::vector<topology*>>::iterator it = fronts.begin(); it != fronts.end(); ++it) {
+        
+        std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o1_minmax = std::minmax_element(it->begin(), it->end(), cmp_o1);
+        
+        std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o2_minmax = std::minmax_element(it->begin(), it->end(), cmp_o2);
+        
+        //double o1_min = std::min_element(it->begin(), it->end(), cmp_o1);
+       // double o1_max = std::max_element(it->begin(), it->end(), cmp_o1);
+        
+        for(std::vector<topology*>::iterator t = it->begin(); t != it->end(); ++t) {
+        
+            TextPlot2d(
+                [](double x, double y){ return std::sin(x) + std::cos(y/2)*std::cos(y/2) - x/y; },
+                {0.0, (*t)->fitness_multi.first, o1_minmax.second[0]->fitness_multi.first},
+                {(*t)->fitness_multi.second, (*t)->fitness_multi.second, o1_minmax.second[0]->fitness_multi.second}
+            );
+            
+        }
+        
+    }
+
+}
+
+double calculate_distance_o1(std::vector<topology*> &subjects, unsigned idx) {
     
-    std::vector<std::vector<topology>> fronts(1);
+    return subjects[idx]->distance + (subjects[idx+1]->fitness_multi.first - subjects[idx-1]->fitness_multi.first);
+    
+}
+        
+double calculate_distance_o2(std::vector<topology*> &subjects, unsigned idx) {
+    
+    return subjects[idx]->distance + (subjects[idx+1]->fitness_multi.second - subjects[idx-1]->fitness_multi.second);
+    
+}
+
+// take the average distance of the two points on either side of this point along each of the objectives
+
+void crowding_distance(std::vector<topology*> &front) {
+    
+    if(front.size() == 0) { return; }
+
+    const double infinity = std::numeric_limits<double>::infinity();
+
+    //for(unsigned m = 0; m < front.size(); ++m) {
+        
+        std::sort(front.begin(), front.end(), [](const topology *a, const topology *b) {
+            return (*a).fitness_multi.first < (*b).fitness_multi.first;
+        });
+        
+        front[0]->distance = infinity;
+        front[front.size()-1]->distance = infinity;
+
+        for(unsigned k = 1; k < front.size()-1; ++k) {
+            
+            front[k]->distance = calculate_distance_o1(front, k);
+        
+        }
+    
+    std::sort(front.begin(), front.end(), [](const topology *a, const topology *b) {
+        return (*a).fitness_multi.second < (*b).fitness_multi.second;
+    });
+    
+    front[0]->distance = infinity;
+    front[front.size()-1]->distance = infinity;
+
+    for(unsigned k = 1; k < front.size()-1; ++k) {
+        
+        front[k]->distance = calculate_distance_o2(front, k);
+    
+    }
+
+    printf("\r\n");
+
+}
+
+template<> std::vector<std::vector<topology*>> objective<topology>::define_fronts() {
+    
+    // create an array instance to store pareto fronts
+    // return an empty front if the parallel ea process is not root
+    
+    std::vector<std::vector<topology*>> fronts;
+    std::vector<topology*> front_c;
     
     if(mpi.id != 0) { return fronts; }
     
+    // for each solution calculate:
+    // the number of times the solution @var{population[i]} is dominated
+    // set of individuals @var{population[j..n]} dominated by the solution at @var{population[i]}
+        
     for(std::vector<topology>::iterator t1 = this->population.begin(); t1 != this->population.end(); ++t1) {
-    
-        long offset = std::distance(this->population.begin(), t1) + 1;
         
-        for(std::vector<topology>::iterator t2 = this->population.begin() + offset; t2 != this->population.end(); ++t2) {
+        // @var{population[i]}
         
+        for(std::vector<topology>::iterator t2 = this->population.begin(); t2 != this->population.end(); ++t2) {
+        
+            // @var{population[j]}
+            
             if (t1 == t2) { continue; }
             
             if (t1->dominates(*t2)) {
                 
-                t1->dom_genomes.push_back(*t2);
+                // add population[j] to set of @var{population[i]} dominated indivduals
+                
+                t1->dom_genomes.push_back(&*t2);
                 
                 LOG(2, mpi.id, 0, "%d (%f,%f) dominates %d (%f,%f) and has %lu dom genomes\r\n", t1->id, t1->fitness_multi.first, t1->fitness_multi.second, t2->id, t2->fitness_multi.first, t2->fitness_multi.second, t1->dom_genomes.size());
                 
             } else if(t2->dominates(*t1)) {
+                
+                // @var{population[j]} is dominant, so increment @var{population[i]} domination count
                 
                 t1->dom_count++;
                 
@@ -168,36 +304,60 @@ template<> std::vector<std::vector<topology>> objective<topology>::dominated_sor
             
         }
         
+        // @var{population[i]} domination comparison complete
+        // if it was not dominated, add it to @var{front_c}
+        
         if(t1->dom_count == 0) {
-            fronts[0].push_back(*t1);
-            LOG(2, mpi.id, 0, "added %d (dominated by %d, dominates %lu) to fronts (size %lu)\r\n ", t1->id, t1->dom_count, t1->dom_genomes.size(), fronts[0].size());
+            
+            t1->dom_rank = 1;
+            front_c.push_back(&*t1);
+            
         }
 
     }
     
+    crowding_distance(front_c);
+    fronts.push_back(front_c);
+    
+    // for each solution in @var{front_c} we iterate over each solution @var{i}
+    
     int idx = 0;
     
-    for(std::vector<topology>::iterator t1 = fronts[idx].begin(); t1 != fronts[idx].end(); ++t1) {
+    while(fronts[idx].size() != 0) {
+    
+        std::vector<topology*> front_n;
+    
+        for(std::vector<topology*>::iterator i = fronts[idx].begin(); i != fronts[idx].end(); ++i) {
         
-        std::vector<topology> front;
+            // decrement the associated @var{dom_count} by one
+            // if @var{dom_count} == 0 for any solution in the current front @var{front_c}
+            // add it to set @var{front_n}
+            
+            std::copy_if((*i)->dom_genomes.begin(), (*i)->dom_genomes.end(), std::back_inserter(front_n), [&](topology *t) {
+                (*t).dom_count -= 1;
+                if((*t).dom_count == 0) {
+                    (*t).dom_rank = idx + 1;
+                }
+                return(*t).dom_count == 0;
+            });
         
-        LOG(2, mpi.id, 0, "creating front %d from %lu genomes dominated by genome %d\r\n", idx, t1->dom_genomes.size(), t1->id);
+        }
         
-        std::copy_if(t1->dom_genomes.begin(), t1->dom_genomes.end(), std::back_inserter(front), [&](topology &t) {
-            t.dom_count -= 1;
-            LOG(2, mpi.id, 0, "front %d rank %d genome %d dom_count = %d\r\n", idx, t1->id, t.id, t.dom_count);
-            return t.dom_count == 0;
-        });
-        
-       // for(std::vector<topology>::iterator t2 = front.dominated.begin(); t2 != front.dominated.end; ++t2)
+        idx++;
+
+        crowding_distance(front_n);
+       
+        fronts.push_back(front_n);
         
     }
-
+    
     return fronts;
     
 }
 
 template<> template<typename v> void objective<topology>::gather(v &variant) {
+    
+    // placeholder
     
 }
 
@@ -207,7 +367,7 @@ template<> template<typename i> void objective<topology>::log_population(i &inte
         
         for (auto it = this->population.begin(); it != this->population.end(); ++it) {
             
-            std::fprintf(config::ea_2_population_out, "%d," "%d," "%d," "%d," "%f," "%d," "%d," "%d," "%d," "%d," "%d," "%d," "%f\r\n", this->run.id, this->run.cycle.id, this->run.cycle.eval.id, it->id, it->fitness, it->stats.send_channels, it->stats.recv_channels, it->stats.total_channels, it->stats.arrivals, it->stats.departures, it->stats.migrations, it->stats.target_runs, it->selection_distribution);
+            std::fprintf(config::ea_2_population_out, "%d," "%d," "%d," "%d," "%f," "%f," "%d," "%f," "%d," "%lu," "%d," "%d," "%d," "%d," "%d," "%d," "%d," "%f\r\n", this->run.id, this->run.cycle.id, this->run.cycle.eval.id, it->id, it->fitness_multi.first, it->fitness_multi.second, it->dom_rank, it->distance, it->dom_count, it->dom_genomes.size(), it->stats.send_channels, it->stats.recv_channels, it->stats.total_channels, it->stats.arrivals, it->stats.departures, it->stats.migrations, it->stats.target_runs, it->selection_distribution);
             
         }
         

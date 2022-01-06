@@ -104,7 +104,7 @@ template<typename genome> struct objective {
     
     template<typename i> double reduce(i &interval, mpi_local *locf, mpi_local *minf, mpi_local *maxf, mpi_local *sumf);
     
-    std::vector<std::vector<topology>> dominated_sort();
+    std::vector<std::vector<topology*>> define_fronts();
     
     void minmax(mpi_local *field, mpi_local result, double const &(*func)(double const&, double const&));
     
@@ -445,6 +445,10 @@ template<typename genome> template<typename sint, typename tint> void objective<
     target.stats.avg_fitness = target.stats.total_fitness / valid.size();
     target.stats.avg_best_fitness = total_best_fitness / target.stats.best.size();
     
+    current->fitness_multi.second = source.stats.avg_best_fitness;
+    
+    printf("");
+
 }
 
 template<typename genome> template<typename i> void objective<genome>::measure(i &interval, genome *current) {

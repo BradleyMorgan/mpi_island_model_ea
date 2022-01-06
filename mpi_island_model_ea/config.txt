@@ -123,14 +123,14 @@ ea_1_o1_name:solution
 # 𝑆r𝑚𝑎𝑥₁
 ea_1_o1_max_runs:2
 # 𝑆c𝑚𝑎𝑥₁
-ea_1_o1_max_cycles:1000
+ea_1_o1_max_cycles:50
 # 𝑆e𝑚𝑎𝑥₁
 ea_1_o1_max_evals:16000
 # 𝑆f𝑚𝑎𝑥₁
 ea_1_o1_max_fitness_evals:1
 
 ea_1_o1_log_run_interval:1
-ea_1_o1_log_cycle_interval:50
+ea_1_o1_log_cycle_interval:10
 ea_1_o1_log_eval_interval:0
 
 # assign to interval (run, cycle, or eval) in objective<genome> implementation

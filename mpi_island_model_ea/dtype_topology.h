@@ -103,12 +103,16 @@ struct topology {
     
     // multi-objective fitness
     
+    double distance = 0.0;
+    
     std::pair<double, double> fitness_multi = { 0.0, 0.0 };
     
     // domination
     
+    int dom_rank = 0;
     int dom_count = 0;
-    std::vector<topology> dom_genomes;
+    
+    std::vector<topology*> dom_genomes;
 
     // an array of @channel{} describing the full context MPI_Send() and MPI_Recv()
     // operations forms the mpi-suitable topology representation
@@ -174,7 +178,7 @@ template<typename i> void topology::measure(i &interval) {
     if(mpi.id != 0) { return; }
     
     this->fitness += (interval.stats.sum_t.value * -1);
-    this->fitness_multi = { this->fitness, interval.stats.avg_best_fitness };
+    this->fitness_multi.first = this->fitness;
     
     this->stats.minmax(&topology_stats::min_t, interval.stats.min_t, std::min<double>);
     this->stats.minmax(&topology_stats::max_t, interval.stats.max_t, std::max<double>);

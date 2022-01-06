@@ -273,11 +273,11 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
         // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin ...
         
-        meta.ea::begin(meta.topologies, meta.topologies.run.cycle.eval, &(*it));
+        meta.ea::begin(meta.topologies, meta.topologies.run.cycle.eval, &(*it), solver.solutions.run);
       
         solver_begin(meta, solver, *it);
                 
-        meta.ea::end(meta.topologies, meta.topologies.run.cycle.eval, &(*it));
+        meta.ea::end(meta.topologies, meta.topologies.run.cycle.eval, &(*it), solver.solutions.run);
         
         meta.topologies.population.push_back(*it);
 
@@ -290,7 +290,9 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         // similar to crossover, we only need to perform survival selection on the root island,
         // so only truncate the the worst individuals in the root island population ...
         
-        std::sort(meta.topologies.population.begin(), meta.topologies.population.end(), compare_fitness<topology>);
+        meta.topologies.define_fronts();
+        
+        std::sort(meta.topologies.population.begin(), meta.topologies.population.end(), compare_multi<topology>);
         std::reverse(meta.topologies.population.begin(), meta.topologies.population.end());
 
         meta.topologies.population.erase(meta.topologies.population.begin()+(meta.topologies.mu-1), meta.topologies.population.end());
@@ -435,6 +437,8 @@ template<typename e> void ea_meta::begin(e &target) {
                 
             } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
 
+            std::vector<std::vector<topology*>> fronts = this->topologies.define_fronts();
+            
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
             for(this->topologies.run.cycle.id = 1; this->topologies.run.cycle.id <= this->topologies.run.cycle.max; this->topologies.run.cycle.id++) {
@@ -453,9 +457,9 @@ template<typename e> void ea_meta::begin(e &target) {
             
             this->ea::end(this->topologies, this->topologies.run, this->topologies.run.local);
             
-        } else {
-            
             benchmark_topology(*this);
+            
+        } else {
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations ...
             
