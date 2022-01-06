@@ -230,21 +230,23 @@ void crowding_distance(std::vector<topology*> &front) {
 
     //for(unsigned m = 0; m < front.size(); ++m) {
         
-        std::sort(front.begin(), front.end(), [](const topology *a, const topology *b) {
-            return (*a).fitness_multi.first < (*b).fitness_multi.first;
-        });
-        
-        front[0]->distance = infinity;
-        front[front.size()-1]->distance = infinity;
-
-        for(unsigned k = 1; k < front.size()-1; ++k) {
-            
-            front[k]->distance = calculate_distance_o1(front, k);
-        
-        }
-    
     std::sort(front.begin(), front.end(), [](const topology *a, const topology *b) {
-        return (*a).fitness_multi.second < (*b).fitness_multi.second;
+        return (*a).fitness_multi.first > (*b).fitness_multi.first;
+    });
+    
+    
+    
+    front[0]->distance = infinity;
+    front[front.size()-1]->distance = infinity;
+
+    for(unsigned k = 1; k < front.size()-1; ++k) {
+        
+        front[k]->distance = calculate_distance_o1(front, k);
+    
+    }
+
+    std::sort(front.begin(), front.end(), [](const topology *a, const topology *b) {
+        return (*a).fitness_multi.second > (*b).fitness_multi.second;
     });
     
     front[0]->distance = infinity;

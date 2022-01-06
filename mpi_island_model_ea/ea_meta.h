@@ -300,7 +300,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
         LOG(2, 0, 0, "reversing sort ...\r\n");
         
-        std::reverse(meta.topologies.population.begin(), meta.topologies.population.end());
+        //std::reverse(meta.topologies.population.begin(), meta.topologies.population.end());
 
         LOG(2, 0, 0, "truncating population ...\r\n");
         
