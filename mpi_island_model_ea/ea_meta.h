@@ -290,13 +290,24 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         // similar to crossover, we only need to perform survival selection on the root island,
         // so only truncate the the worst individuals in the root island population ...
         
+        LOG(2, 0, 0, "defining fronts ...\r\n");
+        
         meta.topologies.define_fronts();
         
+        LOG(2, 0, 0, "sorting by multiple objective fitness ...\r\n");
+        
         std::sort(meta.topologies.population.begin(), meta.topologies.population.end(), compare_multi<topology>);
+        
+        LOG(2, 0, 0, "reversing sort ...\r\n");
+        
         std::reverse(meta.topologies.population.begin(), meta.topologies.population.end());
 
+        LOG(2, 0, 0, "truncating population ...\r\n");
+        
         meta.topologies.population.erase(meta.topologies.population.begin()+(meta.topologies.mu-1), meta.topologies.population.end());
 
+        LOG(2, 0, 0, "calculating aggregate fitness ...\r\n");
+        
         meta.topologies.fitness();
         
     }
@@ -404,6 +415,10 @@ template<> template<typename i> void objective<topology>::end(i &interval, topol
     interval.end(current);
     
     this->log_end(interval);
+    
+    if(interval.log_population_interval != 0 && interval.id%interval.log_population_interval == 0) {
+        this->log_population(interval);
+    }
     
 }
 

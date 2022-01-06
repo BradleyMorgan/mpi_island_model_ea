@@ -607,7 +607,6 @@ void config::load(const char *input, const int world_size, const int world_rank)
         }
         
         if(config::ea_2_log_population_interval != 0) {
-            
             fprintf(config::ea_2_population_out, "run,cycle,eval,genome_id,genome_o1_fitness,genome_o2_fitness,rank,distance,dominated,dominates,send_channels,recv_channels, total_channels, arrivals, departures, migrations, target_runs, selection_distribution\r\n");
         }
         

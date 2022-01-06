@@ -166,7 +166,7 @@ ea_2_mutation_rate:0.20
 ea_2_log_run_interval:1
 ea_2_log_cycle_interval:1
 ea_2_log_eval_interval:2
-ea_2_log_population_interval:250
+ea_2_log_population_interval:1
 ea_2_log_island_interval:10000
 ea_2_log_genome_interval:1000
 

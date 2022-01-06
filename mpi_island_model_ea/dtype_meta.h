@@ -277,6 +277,7 @@ template<> std::vector<std::vector<topology*>> objective<topology>::define_front
     for(std::vector<topology>::iterator t1 = this->population.begin(); t1 != this->population.end(); ++t1) {
         
         // @var{population[i]}
+        t1->dom_genomes.clear();
         
         for(std::vector<topology>::iterator t2 = this->population.begin(); t2 != this->population.end(); ++t2) {
         
@@ -309,24 +310,39 @@ template<> std::vector<std::vector<topology*>> objective<topology>::define_front
         
         if(t1->dom_count == 0) {
             
+            LOG(2, 0, 0, "adding topology %d to initial front (size %lu) ...\r\n", t1->id, front_c.size());
+            
             t1->dom_rank = 1;
             front_c.push_back(&*t1);
+            
+            LOG(2, 0, 0, "added topology %d, to first front (size %lu) ...\r\n", t1->id, front_c.size());
             
         }
 
     }
     
+    LOG(2, 0, 0, "assigning crowding distances for initial front ...\r\n");
+    
     crowding_distance(front_c);
+    
+    LOG(2, 0, 0, "adding first front (size %lu) to fronts (size %lu) ...\r\n", front_c.size(), fronts.size());
+    
     fronts.push_back(front_c);
+    
+    LOG(2, 0, 0, "added first front (size %lu) to fronts (size %lu) ...\r\n", front_c.size(), fronts.size());
     
     // for each solution in @var{front_c} we iterate over each solution @var{i}
     
     int idx = 0;
     
+    LOG(2, 0, 0, "iterating front genomes ...\r\n");
+    
     while(fronts[idx].size() != 0) {
     
         std::vector<topology*> front_n;
     
+        LOG(2, 0, 0, "creating front %d  ...\r\n", idx);
+        
         for(std::vector<topology*>::iterator i = fronts[idx].begin(); i != fronts[idx].end(); ++i) {
         
             // decrement the associated @var{dom_count} by one
@@ -334,22 +350,34 @@ template<> std::vector<std::vector<topology*>> objective<topology>::define_front
             // add it to set @var{front_n}
             
             std::copy_if((*i)->dom_genomes.begin(), (*i)->dom_genomes.end(), std::back_inserter(front_n), [&](topology *t) {
+                LOG(2, 0, 0, "checking topology %d dom_count %d in front %d (size %lu)\r\n", (*t).id, (*t).dom_count, idx, front_n.size());
                 (*t).dom_count -= 1;
                 if((*t).dom_count == 0) {
                     (*t).dom_rank = idx + 1;
+                    LOG(2, 0, 0, "assigned rank %d to topology %d dom_count %d in front %d (size %lu)\r\n", (*t).dom_rank, (*t).id, (*t).dom_count, idx, front_n.size());
                 }
                 return(*t).dom_count == 0;
             });
-        
+            
         }
+        
+        LOG(2, 0, 0, "created front %d (size %lu)\r\n", idx, front_n.size());
         
         idx++;
 
+        LOG(2, 0, 0, "assigning crowding distances for front %d ...\r\n", idx);
+        
         crowding_distance(front_n);
        
+        LOG(2, 0, 0, "adding front %d (size %lu) to fronts (size %lu) ...\r\n", idx, front_n.size(), fronts.size());
+        
         fronts.push_back(front_n);
         
+        LOG(2, 0, 0, "added front %d (size %lu) to fronts (size %lu) ...\r\n", idx, front_n.size(), fronts.size());
+        
     }
+    
+    LOG(2, 0, 0, "returning fronts (size %lu) ...\r\n", fronts.size());
     
     return fronts;
     
