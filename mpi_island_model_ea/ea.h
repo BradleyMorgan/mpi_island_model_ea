@@ -43,6 +43,19 @@ template<typename genome> genome parent(objective<genome> &o) {
         
 }
 
+template<typename genome> std::pair<genome, genome> binary_tournament(objective<genome> &o) {
+
+    genome p1 = o.population[rand()%o.population.size()];
+    genome p2 = o.population[rand()%o.population.size()];
+
+    //std::sort(o.population.begin(), o.population.end(), compare_multi<topology>);
+    
+    std::pair<genome, genome> result = std::minmax(p1, p2, compare_multi<topology>);
+    
+    return result;
+        
+}
+
 //template<typename variant> void ea_end(ea<variant> &solver, objective<solution> &obj) {
 //    
 //    LOG(5, 0, 0, "\r\n--- (%d) END EA ---\r\n", mpi.id);

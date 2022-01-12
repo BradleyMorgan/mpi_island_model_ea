@@ -229,6 +229,7 @@ void topology::apply(island &isle, topology &t) {
         
         LOG(6, mpi.id, 0, "distributing topology %d\r\n", t.id);
     
+        t.init_multi();
         t.distribute(isle);
     
     }

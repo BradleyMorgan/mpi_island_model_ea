@@ -68,6 +68,14 @@ struct topology_stats : time_stats, parallel_stats, fitness_stats {
     
     int head_interval = 1;
     int tail_interval = 1;
+ 
+    double total_o1_fitness = 0.0;
+    double total_o2_fitness = 0.0;
+    
+    double avg_o1_fitness = 0.0;
+    double avg_o2_fitness = 0.0;
+    
+    double avg_distance;
     
     int send_channels = 0;
     int recv_channels = 0;
@@ -146,15 +154,30 @@ struct topology {
     bool dominates(topology &t);
     
     void init(int &genome_id);
-
+    void init_multi();
+    
     topology() {};
     
 };
 
 bool topology::dominates(topology &t) {
     
+    // the equalities used here are for a maximization problem
+    
+    // to dominate, an individual must be at least as good as the individual
+    // to which it is compared for all objectives ...
+    // and strictly better for one (or more) of the solution objectives
+    //
+    // so for maximization, if any of the objective fitness values in this
+    // solution (this) are less than (<) that of the individual (t) to which
+    // we are comparing, we can disqualify it as dominate.
+    //
+    // if that criteria is met, this solution (this) is dominate if it is better (>)
+    // than the provided solution (t) for any objective
+    //
+    
     if(this->fitness_multi.first < t.fitness_multi.first || this->fitness_multi.second < t.fitness_multi.second) { return false; }
-    if(this->fitness_multi.first >= t.fitness_multi.first || this->fitness_multi.second >= t.fitness_multi.second) { return true; }
+    if(this->fitness_multi.first > t.fitness_multi.first || this->fitness_multi.second > t.fitness_multi.second) { return true; }
     
     return false;
     
@@ -168,6 +191,19 @@ void topology::init(int &genome_id) {
     this->selection_distribution = 0.0;
     this->channels.resize(mpi.size);
     this->channels.clear();
+    
+}
+
+void topology::init_multi() {
+    
+    if(mpi.id == 0) {
+        
+        this->dom_genomes.clear();
+        this->dom_rank = 0;
+        this->dom_count = 0;
+        this->distance = 0.0;
+        
+    }
     
 }
 
@@ -208,12 +244,15 @@ template<typename i> void topology::log(i &interval) {
 
         if(mpi.id != 0) { return; }
     
-        fprintf(config::ea_2_genome_out, "%s,%d,%d,%f,%d,%d,%d,%d,%d,%d,%f\r\n",
+        fprintf(config::ea_2_genome_out, "%s,%d,%d,%f,%f,%d,%lu,%d,%d,%d,%d,%d,%d,%f\r\n",
 
             interval.name,
             interval.id,
             this->id,
-            this->fitness,
+            this->fitness_multi.first,
+            this->fitness_multi.second,
+            this->dom_rank,
+            this->dom_genomes.size(),
             this->stats.send_channels,
             this->stats.recv_channels,
             this->stats.total_channels,

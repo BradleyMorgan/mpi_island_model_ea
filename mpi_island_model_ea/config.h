@@ -44,6 +44,7 @@ namespace config {
     FILE *ea_2_eval_out;
     FILE *ea_2_population_out;
     FILE *ea_2_genome_out;
+    FILE *ea_2_multi_out;
 
     // log filenames
 
@@ -62,6 +63,7 @@ namespace config {
     char ea_2_stats_eval[64];
     char ea_2_stats_population[64];
     char ea_2_stats_genome[64];
+    char ea_2_stats_multi[64];
     
     // log subpaths
 
@@ -567,6 +569,12 @@ void config::load(const char *input, const int world_size, const int world_rank)
             sprintf(config::ea_2_stats_genome, "%s/genome_%d.csv", config::stats_subpath_ea_2_o1, world_size);
             config::ea_2_genome_out = fopen(config::ea_2_stats_genome, "w");
         }
+        
+        sprintf(config::ea_2_stats_multi, "%s/multi_%d.csv", config::stats_subpath_ea_2_o1, world_size);
+        config::ea_2_multi_out = fopen(config::ea_2_stats_multi, "w");
+      
+        fprintf(config::ea_2_multi_out, "run,cycle,eval,rank,distance,dominated,dominates,o1_fitness,o2_fitness\r\n");
+        fflush(config::ea_2_multi_out);
         
         if (ea_1_log_run_interval != 0) {
             fprintf(config::ea_1_run_out, "run,cycle,eval,average_fitness,best_fitness,avg_best_fitness,min_scatter_t,min_scatter_i,max_scatter_t,max_scatter_i,sum_scatter_t,avg_scatter_t,min_gather_t,min_gather_i,max_gather_t,max_gather_i,sum_gather_t,avg_gather_t,min_migration_t,min_migration_i,max_migration_t,max_migration_i,sum_migration_t,avg_migration_t,min_run_t,min_run_i,max_run_t,max_run_i,sum_run_t,avg_run_t,start,duration\r\n");

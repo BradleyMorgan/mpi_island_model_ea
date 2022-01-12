@@ -25,7 +25,7 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         return children;
     }
         
-    meta.topologies.cpd();
+    //meta.topologies.cpd();
     
     int total_channels = 0;
     std::vector<int> channel_counts;
@@ -40,28 +40,28 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         
         topology child;
         
-        child.id = child_id;
-        child.fitness = 0.0;
-        child.selection_distribution = 0.0;
-        child.channels.resize(mpi.size);
-        child.channels.clear();
+        child.init(child_id);
+        child.init_multi();
         
         LOG(5, mpi.id, 0, "creating topo kids\r\n");
 
-        topology t1 = meta.topologies.select(parent<topology>);
-        topology t2 = meta.topologies.select(parent<topology>);
+        std::pair<topology,topology> t1 = meta.topologies.tournament(binary_tournament<topology>);
+        std::pair<topology,topology> t2 = meta.topologies.tournament(binary_tournament<topology>);
+        
+        // topology t1 = meta.topologies.select(parent<topology>, 2);
+        // topology t2 = meta.topologies.select(parent<topology>);
 
         // calculate an adjacency matrix for each parent's associated topology for use in
         // generating child topology ...
 
-        LOG(5, mpi.id, 0, "parents<topology> t1=%2.10f,t2=%2.10f ...\r\n", t1.fitness, t2.fitness);
+        LOG(5, mpi.id, 0, "parents<topology> t1=%2.10f,t2=%2.10f ...\r\n", t1.first.fitness, t2.first.fitness);
 
-        std::vector<std::vector<int>> m1 = topology::create::matrix(t1);
-        std::vector<std::vector<int>> m2 = topology::create::matrix(t2);
+        std::vector<std::vector<int>> m1 = topology::create::matrix(t1.first);
+        std::vector<std::vector<int>> m2 = topology::create::matrix(t2.first);
 
         // recombine the parent adjacency matrices, initialize ...
 
-        LOG(5, mpi.id, 0, "recombining topology %d <-> %d ...\r\n", t1.id, t2.id);
+        LOG(5, mpi.id, 0, "recombining topology %d <-> %d ...\r\n", t1.first.id, t2.first.id);
 
         std::vector<std::vector<int>> child_matrix;
         child_matrix.resize(mpi.size);
@@ -265,7 +265,6 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
 
         // the apply function distributes a topology's send\recv channels to all islands ...
 
-        it->fitness = 0.0;
         it->apply(meta.model.isle, *it);
 
         // once the send\recv channels have been established, we perform a user defined number of evolutionary cycles
@@ -290,29 +289,39 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         // similar to crossover, we only need to perform survival selection on the root island,
         // so only truncate the the worst individuals in the root island population ...
         
-        LOG(2, 0, 0, "defining fronts ...\r\n");
+        LOG(2, 0, 0, "defining fronts, deriving from front[0..n].dom_genomes ...\r\n");
         
-        meta.topologies.define_fronts();
+        std::vector<std::vector<topology*>> fronts = meta.topologies.define_fronts();
+        meta.log_fronts(fronts);
         
-        LOG(2, 0, 0, "sorting by multiple objective fitness ...\r\n");
+        LOG(2, 0, 0, "defined %lu fronts ...\r\n", fronts.size());
+        
+        LOG(2, 0, 0, "assigning crowding distances for fronts ...\r\n");
+        
+        meta.topologies.crowding_distance(fronts);
+        
+        LOG(2, 0, 0, "assigned crowding distances for fronts ...\r\n");
+        
+        LOG(2, 0, 0, "sorting by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
         
         std::sort(meta.topologies.population.begin(), meta.topologies.population.end(), compare_multi<topology>);
         
-        LOG(2, 0, 0, "reversing sort ...\r\n");
+        LOG(2, 0, 0, "sorted by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
         
-        //std::reverse(meta.topologies.population.begin(), meta.topologies.population.end());
-
-        LOG(2, 0, 0, "truncating population ...\r\n");
+        LOG(2, 0, 0, "truncating population size %lu...\r\n", meta.topologies.population.size());
         
-        meta.topologies.population.erase(meta.topologies.population.begin()+(meta.topologies.mu-1), meta.topologies.population.end());
+        meta.topologies.population.erase(meta.topologies.population.begin()+meta.topologies.mu, meta.topologies.population.end());
 
-        LOG(2, 0, 0, "calculating aggregate fitness ...\r\n");
+        LOG(2, 0, 0, "truncated population size %lu...\r\n", meta.topologies.population.size());
+        
+        LOG(2, 0, 0, "calculating aggregate fitness current = %f...\r\n", meta.topologies.aggregate.value.fitness);
         
         meta.topologies.fitness();
         
+        LOG(2, 0, 0, "calculated aggregate fitness new = %f...\r\n", meta.topologies.aggregate.value.fitness);
+        
     }
    
-    
 }
 
 #pragma mark FUNCTION: topology_populate()
@@ -452,7 +461,10 @@ template<typename e> void ea_meta::begin(e &target) {
                 
             } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
 
+            // evaluate initial population for multi-objective fitness metrics
+            
             std::vector<std::vector<topology*>> fronts = this->topologies.define_fronts();
+            this->log_fronts(fronts);
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
@@ -472,9 +484,9 @@ template<typename e> void ea_meta::begin(e &target) {
             
             this->ea::end(this->topologies, this->topologies.run, this->topologies.run.local);
             
-            benchmark_topology(*this);
-            
         } else {
+
+            benchmark_topology(*this);
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations ...
             

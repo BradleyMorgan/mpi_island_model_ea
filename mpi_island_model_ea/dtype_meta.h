@@ -135,6 +135,7 @@ struct ea_meta : ea<ea_meta> {
     
     template<typename e> void begin(e &target);
     template<typename i> void log_population(i &interval);
+    void log_fronts(std::vector<std::vector<topology*>> &fronts);
     
 };
 
@@ -155,54 +156,65 @@ bool cmp_o2(const topology *lt, const topology *rt) {
 }
 
 bool compare_multi(const topology *lt, const topology *rt) {
-    return lt->dom_rank <= rt->dom_rank && (lt->distance > rt->distance);
+    if (lt->dom_rank < rt->dom_rank) { return true; }
+    return lt->distance > rt->distance;
 }
 
-struct PlotRange {
-    double begin, end, count;
-    double get_step() const { return (end - begin) / count; }
-};
-
-template <typename F>
-void TextPlot2d(F func, PlotRange range_x, PlotRange range_y) {
-    const auto step_x = range_x.get_step();
-    const auto step_y = range_y.get_step();
-    // multiply steps by iterated integer
-    // to avoid accumulation of error in x and y
-    for(int j = 0;; ++j) {
-        auto y = range_y.begin + step_y * j;
-        if(y >= range_y.end) break;
-        for(int i = 0;; ++i) {
-            auto x = range_x.begin + step_x * i;
-            if(x >= range_x.end) break;
-            auto z = func(x, y);
-            if(z != z) { printf("?"); } // NaN outputs a '?'
-            else       { printf("%c", z < 0 ? '#':'o'); }
+void ea_meta::log_fronts(std::vector<std::vector<topology*>> &fronts) {
+    
+    if(mpi.id==0) {
+        
+        for (std::vector<std::vector<topology*>>::iterator front = fronts.begin(); front != fronts.end(); ++front) {
+            
+            for (std::vector<topology*>::iterator t = front->begin(); t != front->end(); ++t) {
+                
+                double d = (*t)->distance == std::numeric_limits<double>::infinity() ? INFINITY : (*t)->distance;
+                
+                std::fprintf(config::ea_2_multi_out, "%d," "%d," "%d," "%d," "%f," "%d," "%lu," "%f," "%f\r\n", this->topologies.run.id, this->topologies.run.cycle.id, this->topologies.run.cycle.eval.id, (*t)->dom_rank, d, (*t)->dom_count, (*t)->dom_genomes.size(), (*t)->fitness_multi.first, (*t)->fitness_multi.second);
+                
+            }
+            
         }
-        printf("\n");
+        
+        fflush(config::ea_2_multi_out);
+        
     }
+    
+    
 }
 
 void plot_fronts(std::vector<std::vector<topology*>> &fronts) {
 
-    for(std::vector<std::vector<topology*>>::iterator it = fronts.begin(); it != fronts.end(); ++it) {
+    std::vector<std::vector<int>> plane;
+    
+    plane.resize(fronts.size());
+    
+    for(std::vector<std::vector<topology*>>::iterator front = fronts.begin(); front != fronts.end(); ++front) {
         
-        std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o1_minmax = std::minmax_element(it->begin(), it->end(), cmp_o1);
+ //       std::vector<int> y;
         
-        std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o2_minmax = std::minmax_element(it->begin(), it->end(), cmp_o2);
+      // unsigned long y_len = front->size() - 1;
+//
+//        y.resize(y_len);
         
-        //double o1_min = std::min_element(it->begin(), it->end(), cmp_o1);
-       // double o1_max = std::max_element(it->begin(), it->end(), cmp_o1);
+        std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o1_minmax = std::minmax_element(front->begin(), front->end(), cmp_o1);
         
-        for(std::vector<topology*>::iterator t = it->begin(); t != it->end(); ++t) {
+        double range_min = (*o1_minmax.first)->fitness_multi.first;
+        double range_max = (*o1_minmax.second)->fitness_multi.first;
+        double range_step = range_max - range_min / front->size();
+        //double range_offset = range_step * 1.5;
         
-            TextPlot2d(
-                [](double x, double y){ return std::sin(x) + std::cos(y/2)*std::cos(y/2) - x/y; },
-                {0.0, (*t)->fitness_multi.first, o1_minmax.second[0]->fitness_multi.first},
-                {(*t)->fitness_multi.second, (*t)->fitness_multi.second, o1_minmax.second[0]->fitness_multi.second}
-            );
-            
+        std::vector<int> y;
+        
+        for(std::vector<topology*>::iterator t = front->begin(); t != front->end(); ++t) {
+  
         }
+        
+
+        // std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o2_minmax =
+        // std::minmax_element(front->begin(), front->end(), cmp_o2);
+        // double o1_min = std::min_element(it->begin(), it->end(), cmp_o1);
+        // double o1_max = std::max_element(it->begin(), it->end(), cmp_o1);
         
     }
 
@@ -210,52 +222,72 @@ void plot_fronts(std::vector<std::vector<topology*>> &fronts) {
 
 double calculate_distance_o1(std::vector<topology*> &subjects, unsigned idx) {
     
-    return subjects[idx]->distance + (subjects[idx+1]->fitness_multi.first - subjects[idx-1]->fitness_multi.first);
+    double result = subjects[idx]->distance + abs(subjects[idx+1]->fitness_multi.first - subjects[idx-1]->fitness_multi.first) / abs(subjects[subjects.size()-1]->fitness_multi.first - subjects[0]->fitness_multi.first);
+    
+    LOG(2, 0, 0, "front index %d o1 distance = %f\r\n", idx, result);
+    
+    return result;
     
 }
         
 double calculate_distance_o2(std::vector<topology*> &subjects, unsigned idx) {
     
-    return subjects[idx]->distance + (subjects[idx+1]->fitness_multi.second - subjects[idx-1]->fitness_multi.second);
+    double result = subjects[idx]->distance + abs(subjects[idx+1]->fitness_multi.second - subjects[idx-1]->fitness_multi.second) / abs(subjects[subjects.size()-1]->fitness_multi.second - subjects[0]->fitness_multi.second);;
+    
+    LOG(2, 0, 0, "front index %d o2 distance = %f\r\n", idx, result);
+    
+    return result;
     
 }
 
 // take the average distance of the two points on either side of this point along each of the objectives
 
-void crowding_distance(std::vector<topology*> &front) {
+template<> void objective<topology>::crowding_distance(std::vector<std::vector<topology*>> &fronts) {
     
-    if(front.size() == 0) { return; }
+    if(mpi.id != 0 || fronts[0].size() == 0) { return; }
 
-    const double infinity = std::numeric_limits<double>::infinity();
-
-    //for(unsigned m = 0; m < front.size(); ++m) {
+    for(std::vector<std::vector<topology*>>::iterator front = fronts.begin(); front != fronts.end(); ++front) {
         
-    std::sort(front.begin(), front.end(), [](const topology *a, const topology *b) {
-        return (*a).fitness_multi.first > (*b).fitness_multi.first;
-    });
-    
-    
-    
-    front[0]->distance = infinity;
-    front[front.size()-1]->distance = infinity;
-
-    for(unsigned k = 1; k < front.size()-1; ++k) {
+        if(front->size() == 0) { return; }
         
-        front[k]->distance = calculate_distance_o1(front, k);
-    
-    }
+        const double infinity = std::numeric_limits<double>::infinity();
 
-    std::sort(front.begin(), front.end(), [](const topology *a, const topology *b) {
-        return (*a).fitness_multi.second > (*b).fitness_multi.second;
-    });
-    
-    front[0]->distance = infinity;
-    front[front.size()-1]->distance = infinity;
-
-    for(unsigned k = 1; k < front.size()-1; ++k) {
+        // sort front by objective 1 fitness
+        // currently maximization of solution quality
+            
+        std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
+            return (*a).fitness_multi.first > (*b).fitness_multi.first;
+        });
         
-        front[k]->distance = calculate_distance_o2(front, k);
-    
+        // set o1 relative best and worst boundaries
+        
+        (*front)[0]->distance = infinity;
+        (*front)[front->size()-1]->distance = infinity;
+
+        // for each individual in the current front, measure the distance of o1
+        // from its neighboring solutions
+        // for maximization, sorted front will contain values in ascending order
+        // so idx-1 will be the next worst and idx+1 will be the next best
+        // presumably idx+1 > idx-1
+        
+        // D_i = F_best[+1] (o1 fitness of next worst) - F_best[-1] (o1 fitness of next best)
+        
+        for(unsigned k = 1; k < front->size()-1; ++k) {
+            
+            (*front)[k]->distance = calculate_distance_o1(*front, k);
+        
+        }
+
+        std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
+            return (*a).fitness_multi.second > (*b).fitness_multi.second;
+        });
+
+        for(unsigned k = 1; k < front->size()-1; ++k) {
+            
+            (*front)[k]->distance = calculate_distance_o2(*front, k);
+        
+        }
+        
     }
 
     printf("\r\n");
@@ -270,16 +302,19 @@ template<> std::vector<std::vector<topology*>> objective<topology>::define_front
     std::vector<std::vector<topology*>> fronts;
     std::vector<topology*> front_c;
     
+    unsigned long count = 0;
+    
     if(mpi.id != 0) { return fronts; }
     
     // for each solution calculate:
     // the number of times the solution @var{population[i]} is dominated
     // set of individuals @var{population[j..n]} dominated by the solution at @var{population[i]}
-        
+    
     for(std::vector<topology>::iterator t1 = this->population.begin(); t1 != this->population.end(); ++t1) {
-        
-        // @var{population[i]}
-        t1->dom_genomes.clear();
+        t1->init_multi();
+    }
+    
+    for(std::vector<topology>::iterator t1 = this->population.begin(); t1 != this->population.end(); ++t1) {
         
         for(std::vector<topology>::iterator t2 = this->population.begin(); t2 != this->population.end(); ++t2) {
         
@@ -322,16 +357,13 @@ template<> std::vector<std::vector<topology*>> objective<topology>::define_front
         }
 
     }
-    
-    LOG(2, 0, 0, "assigning crowding distances for initial front ...\r\n");
-    
-    crowding_distance(front_c);
-    
+        
     LOG(2, 0, 0, "adding first front (size %lu) to fronts (size %lu) ...\r\n", front_c.size(), fronts.size());
     
     fronts.push_back(front_c);
+    count += front_c.size();
     
-    LOG(2, 0, 0, "added first front (size %lu) to fronts (size %lu) ...\r\n", front_c.size(), fronts.size());
+    LOG(2, 0, 0, "added front %d (size %lu) to fronts (size %lu) ...\r\n", 0, front_c.size(), fronts.size());
     
     // for each solution in @var{front_c} we iterate over each solution @var{i}
     
@@ -366,20 +398,18 @@ template<> std::vector<std::vector<topology*>> objective<topology>::define_front
         LOG(2, 0, 0, "created front %d (size %lu)\r\n", idx, front_n.size());
         
         idx++;
-
-        LOG(2, 0, 0, "assigning crowding distances for front %d ...\r\n", idx);
-        
-        crowding_distance(front_n);
        
         LOG(2, 0, 0, "adding front %d (size %lu) to fronts (size %lu) ...\r\n", idx, front_n.size(), fronts.size());
         
         fronts.push_back(front_n);
+        count += front_n.size();
         
         LOG(2, 0, 0, "added front %d (size %lu) to fronts (size %lu) ...\r\n", idx, front_n.size(), fronts.size());
         
     }
     
-    LOG(2, 0, 0, "returning fronts (size %lu) ...\r\n", fronts.size());
+    
+    LOG(2, 0, 0, "returning fronts (size %lu) with %lu individuals ...\r\n", fronts.size(), count);
     
     return fronts;
     

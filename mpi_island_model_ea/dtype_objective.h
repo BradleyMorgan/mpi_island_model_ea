@@ -104,6 +104,7 @@ template<typename genome> struct objective {
     
     template<typename i> double reduce(i &interval, mpi_local *locf, mpi_local *minf, mpi_local *maxf, mpi_local *sumf);
     
+    void crowding_distance(std::vector<std::vector<topology*>> &fronts);
     std::vector<std::vector<topology*>> define_fronts();
     
     void minmax(mpi_local *field, mpi_local result, double const &(*func)(double const&, double const&));
@@ -111,6 +112,8 @@ template<typename genome> struct objective {
     #pragma mark EA::FUNCTION::TEMPLATES: evolution cycle
 
     template<typename f> genome select(f function) { return function(*this); }
+    template<typename f> std::pair<genome,genome> tournament(f function) { return function(*this); }
+    
     template<typename f, typename v> genome crossover(v &variant, f function) { return function(*this, variant); }
     template<typename f, typename v> void populate(v &variant, f function) { function(variant); }
     template<typename f, typename v> void distribute(v &variant, f function) { function(variant); }
@@ -295,7 +298,7 @@ template<typename genome> struct objective<genome>::run_interval {
 
 template<typename genome> void objective<genome>::fitness() {
     
-    LOG(8, 0, 0, "calculating total fitness ...\r\n");
+     LOG(8, 0, 0, "calculating total fitness ...\r\n");
     
     this->aggregate.value.fitness = 0.0;
     
@@ -439,11 +442,14 @@ template<typename genome> template<typename sint, typename tint> void objective<
     target.stats.min_fitness = result.first->fitness;
     target.stats.max_fitness = result.second->fitness;
     target.stats.total_fitness = std::accumulate(valid.begin(), valid.end(), 0.0, [](double v, const genome& o){ return o.fitness + v; });
-    
-    double total_best_fitness = std::accumulate(target.stats.best.begin(), target.stats.best.end(), 0.0);
-    
+    target.stats.total_o1_fitness = std::accumulate(valid.begin(), valid.end(), 0.0, [](double v, const genome& o){ return o.fitness_multi.first + v; });
+    target.stats.total_o2_fitness = std::accumulate(valid.begin(), valid.end(), 0.0, [](double v, const genome& o){ return o.fitness_multi.first + v; });
+    target.stats.total_best_fitness = std::accumulate(target.stats.best.begin(), target.stats.best.end(), 0.0);
     target.stats.avg_fitness = target.stats.total_fitness / valid.size();
-    target.stats.avg_best_fitness = total_best_fitness / target.stats.best.size();
+    target.stats.avg_o1_fitness = target.stats.total_o1_fitness / valid.size();
+    target.stats.avg_o2_fitness = target.stats.total_o2_fitness / valid.size();
+    
+    target.stats.avg_best_fitness = target.stats.total_best_fitness / target.stats.best.size();
     
     current->fitness_multi.second = source.stats.avg_best_fitness;
     

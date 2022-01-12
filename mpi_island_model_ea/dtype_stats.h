@@ -80,8 +80,8 @@ struct fitness_stats {
     double min_fitness = 0.0;
     double max_fitness = 0.0;
     double sum_fitness = 0.0;
-    
     double best_fitness = 0.0;
+    double total_best_fitness = 0.0;
     double avg_best_fitness = 0.0;
     
 };

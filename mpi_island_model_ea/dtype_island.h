@@ -132,7 +132,11 @@ template<typename genome> bool compare_fitness(const genome &p1, const genome &p
 }
 
 template<typename genome> bool compare_multi(const genome &lt, const genome &rt) {
-    return lt.dom_rank <= rt.dom_rank && (lt.distance > rt.distance);
+    
+    if(lt.dom_rank == rt.dom_rank) { return lt.distance > rt.distance; }
+    
+    return lt.dom_rank < rt.dom_rank;
+    
 }
 
 void island::cpd() {

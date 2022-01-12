@@ -303,8 +303,8 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         
         // issue migration imports and exports ...
 
-        //int scount = 0;
-        //int rcount = 0;
+        int scount = 0;
+        int rcount = 0;
         
         LOG(7, mpi.id, 0, "%d %d SEND [%d,%d,%d] -> chans=%lu ->\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations, solver.model.isle.receivers.size());
         island::migration::send(solver.model.isle, solver.model.solution_type, solver.solutions.run.cycle.eval.id);
@@ -314,16 +314,16 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         island::migration::receive(solver.model.isle, solver.model.solution_type, solver.solutions.run.cycle.eval.id);
         LOG(7, mpi.id, 0, "%d %d RECV [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations);
         
-        //MPI_Reduce(&solver.model.isle.stats.departures, &scount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
-        //MPI_Reduce(&solver.model.isle.stats.arrivals, &rcount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
+        MPI_Reduce(&solver.model.isle.stats.departures, &scount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
+        MPI_Reduce(&solver.model.isle.stats.arrivals, &rcount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
         
-        //solver.model.isle.stats.migrations += scount + rcount;
+        solver.model.isle.stats.migrations += scount + rcount;
         
-        //if(mpi.id == 0) {
-        //    t.stats.departures += scount;
-        //    t.stats.arrivals += rcount;
-        //    t.stats.migrations += scount + rcount;
-        //}
+        if(mpi.id == 0) {
+            t.stats.departures += scount;
+            t.stats.arrivals += rcount;
+            t.stats.migrations += scount + rcount;
+        }
         
         solver.solutions.run.cycle.stats.local_migration_t.value = MPI_Wtime() - migrate_start;
         solver.solutions.run.stats.local_migration_t.value += solver.solutions.run.cycle.stats.local_migration_t.value;
