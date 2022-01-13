@@ -222,7 +222,7 @@ void plot_fronts(std::vector<std::vector<topology*>> &fronts) {
 
 double calculate_distance_o1(std::vector<topology*> &subjects, unsigned idx) {
     
-    LOG(2, 0, 0, "calculating front index %d o1 distance with [%f][%f][%f]\r\n", idx, subjects[idx+1]->fitness_multi.first, subjects[idx]->fitness_multi.first, subjects[idx-1]->fitness_multi.first);
+    LOG(2, 0, 0, "calculating front index %d o1 distance with abs(%f - %f) / (%f - %f)\r\n", idx, subjects[idx+1]->fitness_multi.first, subjects[idx-1]->fitness_multi.first, subjects[subjects.size()-1]->fitness_multi.first, subjects[0]->fitness_multi.first);
     
     double result = subjects[idx]->distance + abs(subjects[idx+1]->fitness_multi.first - subjects[idx-1]->fitness_multi.first) / abs(subjects[subjects.size()-1]->fitness_multi.first - subjects[0]->fitness_multi.first);
     
@@ -234,7 +234,7 @@ double calculate_distance_o1(std::vector<topology*> &subjects, unsigned idx) {
         
 double calculate_distance_o2(std::vector<topology*> &subjects, unsigned idx) {
     
-    LOG(2, 0, 0, "calculating front index %d o2 distance with [%f][%f][%f]\r\n", idx, subjects[idx+1]->fitness_multi.first, subjects[idx]->fitness_multi.first, subjects[idx-1]->fitness_multi.first);
+    LOG(2, 0, 0, "calculating front index %d o1 distance with abs(%f - %f) / (%f - %f)\r\n", idx, subjects[idx+1]->fitness_multi.second, subjects[idx-1]->fitness_multi.second, subjects[subjects.size()-1]->fitness_multi.second, subjects[0]->fitness_multi.second);
     
     double result = subjects[idx]->distance + abs(subjects[idx+1]->fitness_multi.second - subjects[idx-1]->fitness_multi.second) / abs(subjects[subjects.size()-1]->fitness_multi.second - subjects[0]->fitness_multi.second);;
     
