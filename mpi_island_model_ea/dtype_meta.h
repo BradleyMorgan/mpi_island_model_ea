@@ -246,6 +246,8 @@ template<> void objective<topology>::crowding_distance(std::vector<std::vector<t
     
     if(mpi.id != 0 || fronts[0].size() == 0) { return; }
 
+    int idx = 0;
+    
     for(std::vector<std::vector<topology*>>::iterator front = fronts.begin(); front != fronts.end(); ++front) {
         
         if(front->size() == 0) { return; }
@@ -254,16 +256,24 @@ template<> void objective<topology>::crowding_distance(std::vector<std::vector<t
 
         // sort front by objective 1 fitness
         // currently maximization of solution quality
-            
+        
+        LOG(2, 0, 0, "sorting front %d by objective 1 fitness\r\n", idx);
+        
         std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
             return (*a).fitness_multi.first > (*b).fitness_multi.first;
         });
         
+        LOG(2, 0, 0, "sorted front %d by objective 1 fitness\r\n", idx);
+        
         // set o1 relative best and worst boundaries
+        
+        LOG(2, 0, 0, "setting front %d min and max distance to INF\r\n", idx);
         
         (*front)[0]->distance = infinity;
         (*front)[front->size()-1]->distance = infinity;
 
+        LOG(2, 0, 0, "set front %d min and max distance to INF\r\n", idx);
+        
         // for each individual in the current front, measure the distance of o1
         // from its neighboring solutions
         // for maximization, sorted front will contain values in ascending order
@@ -272,25 +282,46 @@ template<> void objective<topology>::crowding_distance(std::vector<std::vector<t
         
         // D_i = F_best[+1] (o1 fitness of next worst) - F_best[-1] (o1 fitness of next best)
         
+        LOG(2, 0, 0, "calculating front %d by objective 1 distances\r\n", idx);
+        
         for(unsigned k = 1; k < front->size()-1; ++k) {
             
             (*front)[k]->distance = calculate_distance_o1(*front, k);
         
         }
+        
+        LOG(2, 0, 0, "calculated front %d by objective 1 distances\r\n", idx);
+        
+        LOG(2, 0, 0, "sorting front %d by objective 1 fitness\r\n", idx);
 
         std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
             return (*a).fitness_multi.second > (*b).fitness_multi.second;
         });
+        
+        LOG(2, 0, 0, "sorted front %d by objective 1 fitness\r\n", idx);
+        
+        LOG(2, 0, 0, "setting front %d min and max distance to INF\r\n", idx);
+        
+        (*front)[0]->distance = infinity;
+        (*front)[front->size()-1]->distance = infinity;
 
+        LOG(2, 0, 0, "set front %d min and max distance to INF\r\n", idx);
+        
+        LOG(2, 0, 0, "calculating front %d by objective 1 distances\r\n", idx);
+        
         for(unsigned k = 1; k < front->size()-1; ++k) {
             
             (*front)[k]->distance = calculate_distance_o2(*front, k);
         
         }
         
+        LOG(2, 0, 0, "calculating front %d by objective 1 distances\r\n", idx);
+        
+        idx++;
+        
     }
 
-    printf("\r\n");
+    LOG(2, 0, 0, "calculated crowding distance for %lu fronts\r\n", fronts.size());
 
 }
 
