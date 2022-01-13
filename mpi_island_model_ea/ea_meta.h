@@ -292,7 +292,6 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         LOG(2, 0, 0, "defining fronts, deriving from front[0..n].dom_genomes ...\r\n");
         
         std::vector<std::vector<topology*>> fronts = meta.topologies.define_fronts();
-        meta.log_fronts(fronts);
         
         LOG(2, 0, 0, "defined %lu fronts ...\r\n", fronts.size());
         
@@ -301,6 +300,8 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         meta.topologies.crowding_distance(fronts);
         
         LOG(2, 0, 0, "assigned crowding distances for fronts ...\r\n");
+        
+        meta.log_fronts(fronts);
         
         LOG(2, 0, 0, "sorting by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
         
@@ -464,6 +465,8 @@ template<typename e> void ea_meta::begin(e &target) {
             // evaluate initial population for multi-objective fitness metrics
             
             std::vector<std::vector<topology*>> fronts = this->topologies.define_fronts();
+            
+            this->topologies.crowding_distance(fronts);
             this->log_fronts(fronts);
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
