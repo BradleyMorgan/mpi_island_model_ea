@@ -226,7 +226,7 @@ double calculate_distance_o1(std::vector<topology*> &subjects, unsigned idx) {
     
     double result = subjects[idx]->distance + fabs(subjects[idx+1]->fitness_multi.first - subjects[idx-1]->fitness_multi.first) / fabs(subjects[subjects.size()-1]->fitness_multi.first - subjects[0]->fitness_multi.first);
     
-    LOG(2, 0, 0, "calculated front index %d o1 distance = %f\r\n", idx, result);
+    LOG(2, 0, 0, "calculated front index %d o1 distance with abs(%f - %f) / (%f - %f) = %f\r\n", idx, subjects[idx+1]->fitness_multi.first, subjects[idx-1]->fitness_multi.first, subjects[subjects.size()-1]->fitness_multi.first, subjects[0]->fitness_multi.first, result);
     
     return result;
     
@@ -234,11 +234,11 @@ double calculate_distance_o1(std::vector<topology*> &subjects, unsigned idx) {
         
 double calculate_distance_o2(std::vector<topology*> &subjects, unsigned idx) {
     
-    LOG(2, 0, 0, "calculating front index %d o1 distance with abs(%f - %f) / (%f - %f)\r\n", idx, subjects[idx+1]->fitness_multi.second, subjects[idx-1]->fitness_multi.second, subjects[subjects.size()-1]->fitness_multi.second, subjects[0]->fitness_multi.second);
+    LOG(2, 0, 0, "calculating front index %d o2 distance with abs(%f - %f) / (%f - %f)\r\n", idx, subjects[idx+1]->fitness_multi.second, subjects[idx-1]->fitness_multi.second, subjects[subjects.size()-1]->fitness_multi.second, subjects[0]->fitness_multi.second);
     
     double result = subjects[idx]->distance + fabs(subjects[idx+1]->fitness_multi.second - subjects[idx-1]->fitness_multi.second) / fabs(subjects[subjects.size()-1]->fitness_multi.second - subjects[0]->fitness_multi.second);;
     
-    LOG(2, 0, 0, "calculated front index %d o2 distance = %f\r\n", idx, result);
+    LOG(2, 0, 0, "calculated front index %d o2 distance with abs(%f - %f) / (%f - %f) = %f\r\n", idx, subjects[idx+1]->fitness_multi.second, subjects[idx-1]->fitness_multi.second, subjects[subjects.size()-1]->fitness_multi.second, subjects[0]->fitness_multi.second, result);
     
     return result;
     
