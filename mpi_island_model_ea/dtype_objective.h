@@ -165,6 +165,7 @@ template<typename genome> struct objective<genome>::evaluation_interval {
     void begin(genome *current) {
         this->id++;
         this->local = current;
+        this->parent->local = current;
         this->stats.start = MPI_Wtime();
         this->stats.begin_header(this->log_head);
     }

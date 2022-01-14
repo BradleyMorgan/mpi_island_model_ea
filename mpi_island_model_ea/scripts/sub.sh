@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=08:00:00
+#SBATCH --time=72:00:00
 #SBATCH --exclude node052
 
 module load openmpi
