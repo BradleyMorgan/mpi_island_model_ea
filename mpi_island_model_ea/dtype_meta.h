@@ -148,11 +148,11 @@ bool sort_o2(const std::pair<int,int> &a, const std::pair<int,int> &b) {
 }
 
 bool cmp_o1(const topology *lt, const topology *rt) {
-  return lt->fitness_multi.first < rt->fitness_multi.first;
+  return lt->fitness_multi.first > rt->fitness_multi.first;
 }
 
 bool cmp_o2(const topology *lt, const topology *rt) {
-    return lt->fitness_multi.second < rt->fitness_multi.second;
+    return lt->fitness_multi.second > rt->fitness_multi.second;
 }
 
 bool compare_multi(const topology *lt, const topology *rt) {
@@ -264,7 +264,7 @@ template<> void objective<topology>::crowding_distance(std::vector<std::vector<t
         LOG(2, 0, 0, "sorting front %d by objective 1 fitness\r\n", idx);
         
         std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
-            return (*a).fitness_multi.first > (*b).fitness_multi.first;
+            return (*a).fitness_multi.first < (*b).fitness_multi.first;
         });
         
         LOG(2, 0, 0, "sorted front %d by objective 1 fitness\r\n", idx);
@@ -299,7 +299,7 @@ template<> void objective<topology>::crowding_distance(std::vector<std::vector<t
         LOG(2, 0, 0, "sorting front %d by objective 1 fitness\r\n", idx);
 
         std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
-            return (*a).fitness_multi.second > (*b).fitness_multi.second;
+            return (*a).fitness_multi.second < (*b).fitness_multi.second;
         });
         
         LOG(2, 0, 0, "sorted front %d by objective 1 fitness\r\n", idx);

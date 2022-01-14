@@ -301,11 +301,11 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         
         LOG(2, 0, 0, "assigned crowding distances for fronts ...\r\n");
         
-        LOG(2, 0, 0, "sorting by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
-        
-        std::sort(meta.topologies.population.begin(), meta.topologies.population.end(), compare_multi<topology>);
-        
-        LOG(2, 0, 0, "sorted by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
+//        LOG(2, 0, 0, "sorting by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
+//
+//        std::sort(meta.topologies.population.begin(), meta.topologies.population.end(), compare_multi<topology>);
+//
+//        LOG(2, 0, 0, "sorted by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
         
         meta.log_fronts(fronts);
         
@@ -467,7 +467,6 @@ template<typename e> void ea_meta::begin(e &target) {
             std::vector<std::vector<topology*>> fronts = this->topologies.define_fronts();
             
             this->topologies.crowding_distance(fronts);
-            //this->log_fronts(fronts);
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
