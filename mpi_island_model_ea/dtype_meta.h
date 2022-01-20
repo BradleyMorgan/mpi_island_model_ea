@@ -139,20 +139,12 @@ struct ea_meta : ea<ea_meta> {
     
 };
 
-bool sort_o1(const std::pair<int,int> &a, const std::pair<int,int> &b) {
-       return a.first > b.first;
-}
-
-bool sort_o2(const std::pair<int,int> &a, const std::pair<int,int> &b) {
-       return a.second > b.second;
-}
-
 bool cmp_o1(const topology *lt, const topology *rt) {
-  return lt->fitness_multi.first > rt->fitness_multi.first;
+  return lt->fitness_multi.first < rt->fitness_multi.first;
 }
 
 bool cmp_o2(const topology *lt, const topology *rt) {
-    return lt->fitness_multi.second > rt->fitness_multi.second;
+    return lt->fitness_multi.second < rt->fitness_multi.second;
 }
 
 bool compare_multi(const topology *lt, const topology *rt) {
@@ -183,42 +175,42 @@ void ea_meta::log_fronts(std::vector<std::vector<topology*>> &fronts) {
     
 }
 
-void plot_fronts(std::vector<std::vector<topology*>> &fronts) {
-
-    std::vector<std::vector<int>> plane;
-    
-    plane.resize(fronts.size());
-    
-    for(std::vector<std::vector<topology*>>::iterator front = fronts.begin(); front != fronts.end(); ++front) {
-        
- //       std::vector<int> y;
-        
-      // unsigned long y_len = front->size() - 1;
+//void plot_fronts(std::vector<std::vector<topology*>> &fronts) {
+//
+//    std::vector<std::vector<int>> plane;
+//
+//    plane.resize(fronts.size());
+//
+//    for(std::vector<std::vector<topology*>>::iterator front = fronts.begin(); front != fronts.end(); ++front) {
+//
+//       std::vector<int> y;
+//
+//       unsigned long y_len = front->size() - 1;
 //
 //        y.resize(y_len);
-        
-        std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o1_minmax = std::minmax_element(front->begin(), front->end(), cmp_o1);
-        
-        double range_min = (*o1_minmax.first)->fitness_multi.first;
-        double range_max = (*o1_minmax.second)->fitness_multi.first;
-        double range_step = range_max - range_min / front->size();
-        //double range_offset = range_step * 1.5;
-        
-        std::vector<int> y;
-        
-        for(std::vector<topology*>::iterator t = front->begin(); t != front->end(); ++t) {
-  
-        }
-        
-
-        // std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o2_minmax =
-        // std::minmax_element(front->begin(), front->end(), cmp_o2);
-        // double o1_min = std::min_element(it->begin(), it->end(), cmp_o1);
-        // double o1_max = std::max_element(it->begin(), it->end(), cmp_o1);
-        
-    }
-
-}
+//
+//        std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o1_minmax = std::minmax_element(front->begin(), front->end(), cmp_o1);
+//
+//        double range_min = (*o1_minmax.first)->fitness_multi.first;
+//        double range_max = (*o1_minmax.second)->fitness_multi.first;
+//        double range_step = range_max - range_min / front->size();
+//        double range_offset = range_step * 1.5;
+//
+//        std::vector<int> y;
+//
+//        for(std::vector<topology*>::iterator t = front->begin(); t != front->end(); ++t) {
+//
+//        }
+//
+//
+//        // std::pair<std::vector<topology*>::iterator, std::vector<topology*>::iterator> o2_minmax =
+//        // std::minmax_element(front->begin(), front->end(), cmp_o2);
+//        // double o1_min = std::min_element(it->begin(), it->end(), cmp_o1);
+//        // double o1_max = std::max_element(it->begin(), it->end(), cmp_o1);
+//
+//    }
+//
+//}
 
 double calculate_distance_o1(std::vector<topology*> &subjects, unsigned idx) {
     
@@ -384,7 +376,7 @@ template<> std::vector<std::vector<topology*>> objective<topology>::define_front
             
             LOG(2, 0, 0, "adding topology %d to initial front (size %lu) ...\r\n", t1->id, front_c.size());
             
-            t1->dom_rank = 1;
+            t1->dom_rank = 0;
             front_c.push_back(&*t1);
             
             LOG(2, 0, 0, "added topology %d, to first front (size %lu) ...\r\n", t1->id, front_c.size());

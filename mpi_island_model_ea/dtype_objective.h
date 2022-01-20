@@ -452,9 +452,10 @@ template<typename genome> template<typename sint, typename tint> void objective<
     
     target.stats.avg_best_fitness = target.stats.total_best_fitness / target.stats.best.size();
     
-    current->fitness_multi.second = source.stats.avg_best_fitness;
+    //current->fitness_multi.second = source.stats.avg_best_fitness;
+    current->fitness_multi.second = source.stats.avg_fitness / source.id;
     
-    printf("");
+    LOG(5, 0, 0, "returning source %d -> target %d interval fitness calculations\r\n", source.id, target.id);
 
 }
 
