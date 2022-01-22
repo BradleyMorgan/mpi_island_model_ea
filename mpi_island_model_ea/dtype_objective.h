@@ -436,6 +436,7 @@ template<typename genome> template<typename sint, typename tint> void objective<
     if(this->run.stats.best_fitness == 0.0 || this->run.cycle.stats.best_fitness > this->run.stats.best_fitness) {
         this->run.stats.best_fitness = this->run.cycle.stats.best_fitness;
         this->run.stats.best.push_back(this->run.cycle.stats.best_fitness);
+        current->log_matrix(target);
     }
     
     auto result = minmax_element(valid.begin(), valid.end(),[](genome const &g1, genome const &g2) { return g1.fitness < g2.fitness;});

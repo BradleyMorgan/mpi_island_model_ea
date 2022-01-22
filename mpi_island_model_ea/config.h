@@ -13,6 +13,7 @@
 #include <map>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <cmath>
 
 static const int DIM = 10;
 
@@ -256,8 +257,19 @@ void config::load(const char *input, const int world_size, const int world_rank)
     config::ea_1_max_cycles = stoi(config::items["ea_1_max_cycles"]);
     config::ea_1_max_evals = stoi(config::items["ea_1_max_evals"]);
     
+    // ea_1_mu: base population size
+    // ea mode 0: fixed, used to determine subpopulation size for world_size >1
+    // ea_mode 1: calculated, overridden if world_size >1 as mu_sub * world_size
+    // ea_mode 2: calculated, overridden if world_size >1 as mu_sub * world_size
+    
     config::ea_1_mu = stoi(config::items["ea_1_mu"]);
+    
+    // ea_1_lambda: base number of offspring per generation
+    // ea mode 0,1,2: uses lambda_sub for world size >1
+    
     config::ea_1_lambda = stoi(config::items["ea_1_lambda"]);
+    
+    
     config::ea_1_mutation_rate = stod(config::items["ea_1_mutation_rate"]);
     
     config::ea_1_log_run_interval = stoi(config::items["ea_1_log_run_interval"]);
@@ -320,16 +332,24 @@ void config::load(const char *input, const int world_size, const int world_rank)
     // parallel
     
     config::world_size = world_size;
-    config::recv_cap = stoi(config::items["recv_cap"]);
-    config::send_cap = stoi(config::items["send_cap"]);
+    config::recv_cap = std::round((world_size * 1.0) * stod(config::items["recv_cap"]));
+    config::send_cap = std::round((world_size * 1.0) * stod(config::items["send_cap"]));
     config::mu_mode = stoi(config::items["mu_mode"]);
     config::migration_interval = stoi(config::items["migration_interval"]);
-    config::mu_sub = stoi(config::items["mu_sub"]);
-    config::lambda_sub = stoi(config::items["lambda_sub"]);
     
-//    double sub_t = stod(config::items["lambda_sub"]);
-//    sub_t *= (config::mu_sub * 1.0);
-//    config::lambda_sub = (int)sub_t;
+    // mu_sub: subpopulation sizing for parallel ea (world_size >1)
+    // ea_1_mu: base population size
+    // ea mode 0: calculated, overridden if world_size >1 as config::ea_1_mu / world_size
+    // ea_mode 1: fixed, used to determine global population size (mu_sub * world_size)
+    // ea_mode 2: fixed, used to determine global population size (mu_sub * world_size)
+    
+    config::mu_sub = stoi(config::items["mu_sub"]);
+    
+    // lambda_sub: number of offspring per island, per generation
+    // ea mode 0,1: fixed, use value as specified
+    // ea_mode 2: calculated, overridden as mu_sub * specified value
+    
+    config::lambda_sub = stoi(config::items["lambda_sub"]);
     
     // parallel, mu_mode
     //
@@ -343,24 +363,32 @@ void config::load(const char *input, const int world_size, const int world_rank)
     // performs crossover at the island level, but including it for placeholder
     //
     
-    sprintf(config::mu_log, "global mu: %d\r\nglobal lambda: NA", config::ea_1_mu);
-    sprintf(config::sub_log,"local mu: %d\r\nlocal lambda: %d", config::mu_sub, config::lambda_sub);
+    // default for unknown mu_mode just accepts specified values
+    
+    sprintf(config::mu_log, "global mu: %d (base)\r\nglobal lambda: %d (base)\r\n", config::ea_1_mu, config::ea_1_lambda);
+    sprintf(config::sub_log,"local mu: %d (base)\r\nlocal lambda: %d (base)\r\n", config::mu_sub, config::lambda_sub);
     
     // TODO: generalize evolution parameters per objective
     
     if(config::mu_mode == 0) {
         // static global mu, static local lamba
+        // ea_1_mu, ea_1_lambda, lambda_sub = as specified
+        // override mu_sub
         config::mu_sub = config::ea_1_mu / world_size; // relative island mu
-        sprintf(config::sub_log, "local_mu: %d\r\nlocal mu calcuation: %d/%d", config::mu_sub, config::ea_1_mu, world_size);
+        sprintf(config::sub_log, "local_mu: %d (derived) \r\nlocal mu calcuation: %d/%d", config::mu_sub, config::ea_1_mu, world_size);
     } else if(config::mu_mode == 1) {
         // static local mu, static local lambda
+        // mu_sub, ea_1_lambda, lambda_sub = as specified
+        // override ea_1_mu
         config::ea_1_mu = world_size * config::mu_sub; // relative global mu
-        sprintf(config::mu_log, "global mu: %d\r\nglobal mu calculation: %d*%d", ea_1_mu, world_size, config::mu_sub);
-    } else if(config::mu_mode == 2) {
-        //config::lambda_sub = config::mu_sub * stod(config::items["lambda_sub"]); // relative island lambda
+        sprintf(config::mu_log, "global mu: %d (derived)\r\nglobal mu calculation: %d*%d", ea_1_mu, world_size, config::mu_sub);
+    } else if(config::mu_mode == 2 || config::lambda_sub < 1) {
+        // mu_sub, ea_1_lambda = as specified
+        // override lambda_sub, ea_1_mu,
+        config::lambda_sub = std::round((config::mu_sub * 1.0) * stod(config::items["lambda_sub"])); // relative island lambda
         config::ea_1_mu = world_size * config::mu_sub; // relative global mu
-        sprintf(config::mu_log, "global mu: %d\r\nglobal mu calculation: %d*%d", ea_1_mu, world_size, config::mu_sub);
-        sprintf(config::sub_log, "local mu: %d\r\nlocal lambda: %d\r\nlocal lambda calculation: %d*%d", config::mu_sub, config::lambda_sub, config::mu_sub, config::lambda_sub);
+        sprintf(config::mu_log, "global mu: %d (derived)\r\nglobal mu calculation: %d*%d", ea_1_mu, world_size, config::mu_sub);
+        sprintf(config::sub_log, "local mu: %d (base)\r\nlocal lambda: %d (derived)\r\nlocal lambda calculation: %f*%f", config::mu_sub, config::lambda_sub, (config::mu_sub * 1.0), stod(config::items["lambda_sub"]));
     }
     
     char mumode[16];
@@ -413,6 +441,10 @@ void config::load(const char *input, const int world_size, const int world_rank)
     
     sprintf(config::stats_subpath_ea_2_o1, "%s/%s", config::logs_subpath, config::ea_2_o1_name);
     
+    // subdirectory for algorithm2, objective 1 genome representation
+    
+    sprintf(config::genome_subpath, "%s/best", config::stats_subpath_ea_2_o1);
+    
 
     if(world_rank == 0) {
         
@@ -446,6 +478,10 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         mkdir(config::stats_subpath_ea_2_o1, 0740);
         
+        // subdirectory for algorithm2, objective 1 genome representation
+        
+        mkdir(config::genome_subpath, 0740);
+        
         // program log filename
         
         sprintf(config::program_log_out, "%s/%s_%d_%s.txt", config::logs_subpath, config::items["log_file"].c_str(), world_size, mode);
@@ -476,8 +512,9 @@ void config::load(const char *input, const int world_size, const int world_rank)
         
         time_t stamp = time(NULL);
         fprintf(config::program_out, "configuration: %s\r\n", config::items["config_name"].c_str());
-        fprintf(config::program_out, "stamp: %s\r\n", ctime(&stamp));
+        fprintf(config::program_out, "stamp: %s", ctime(&stamp));
         fprintf(config::program_out, "seed: %u\r\n", config::seed);
+        fprintf(config::program_out, "---:---\r\n");
         
         // titles
         
@@ -485,20 +522,29 @@ void config::load(const char *input, const int world_size, const int world_rank)
         fprintf(config::program_out, "ea[1] objective[1]: %s\r\n", config::ea_1_o1_name);
         fprintf(config::program_out, "ea[2]: %s\r\n", config::ea_2_name);
         fprintf(config::program_out, "ea[2] objective[1]: %s\r\n", config::ea_2_o1_name);
+        fprintf(config::program_out, "---:---\r\n");
         
         // file locations
         
-        fprintf(config::program_out, "log file: %s\r\n", config::program_log_out);
-        fprintf(config::program_out, "world size: %d\r\n", world_size);
+        fprintf(config::program_out, "log_root: %s\r\n", config::logs_subpath);
+        fprintf(config::program_out, "config_log: %s\r\n", config::program_log_out);
+        fprintf(config::program_out, "system_log: %s\r\n", config::system_log_out);
+        fprintf(config::program_out, "ea_1_logs: %s\r\n", config::stats_subpath_ea_1_o1);
+        fprintf(config::program_out, "ea_2_logs: %s\r\n", config::stats_subpath_ea_2_o1);
+        fprintf(config::program_out, "---:---\r\n");
         
-        // parallell
+        // parallel
         
+        fprintf(config::program_out, "world_size: %d\r\n", world_size);
         fprintf(config::program_out, "mu_mode_name: %s\r\n", mode);
-        fprintf(config::program_out, "mu_mode: %d ", config::mu_mode);
+        fprintf(config::program_out, "mu_mode: %d\r\n", config::mu_mode);
         fprintf(config::program_out, "%s\r\n", config::mu_log);
         fprintf(config::program_out, "%s\r\n", config::sub_log);
+        fprintf(config::program_out, "---:---\r\n");
         
         // log all parameter values as read from file into items collection
+        
+        fprintf(config::program_out, "key:values\r\n");
         
         std::map <std::string, std::string>::iterator items_iterator;
         
@@ -619,8 +665,9 @@ void config::load(const char *input, const int world_size, const int world_rank)
         }
         
         if(config::ea_2_log_genome_interval != 0) {
-            fprintf(config::ea_2_genome_out, "interval,interval_id,genome_id,fitness,send_channels,recv_channels,total_channels,departures,arrivals,migrations,selection_distribution\r\n");
+            fprintf(config::ea_2_genome_out, "interval,interval_id,genome_id,o1_fitness,o2_fitness,send_channels,recv_channels,total_channels,departures,arrivals,migrations,selection_distribution\r\n");
         }
+    
         
         // TODO: add per-island logs with some interval with stats e.g., island_id, island_xxx_min|max|sum|avg_t, island_avg_fit, island_best_fit, island_min_fit, island_channels, island_total_migrations, island_hostname, island_nprocs
         

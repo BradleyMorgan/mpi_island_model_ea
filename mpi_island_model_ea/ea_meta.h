@@ -333,8 +333,11 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
 
 void topologies_populate(ea_meta &meta) {
     
-    int send_max = mpi.size * ((config::send_cap * 1.0) / 100.0);
-    int recv_max = mpi.size * ((config::recv_cap * 1.0) / 100.0);
+//    int send_max = mpi.size * ((config::send_cap * 1.0) / 100.0);
+//    int recv_max = mpi.size * ((config::recv_cap * 1.0) / 100.0);
+    int send_max = config::send_cap;
+    int recv_max = config::recv_cap;
+    
     int matrix_size = mpi.size * mpi.size;
     
     LOG(2, 0, mpi.id, "sparsity=%f send_max=%d recv_max=%d prob=%f\r\n", config::sparsity, send_max, recv_max, config::sparsity * matrix_size);

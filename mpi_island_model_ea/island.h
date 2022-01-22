@@ -72,10 +72,14 @@ void island::migration::receive(island &p, MPI_Datatype &d, int &eval) {
         
         p.population[idx] = x;
         p.population[idx].locale = mpi.id;
+        p.population[idx].migrations++;
         
         visa v(eval, p.id, p.senders[i], p.population[idx].id);
+        
         p.visas.push_back(v);
-            
+        
+        p.stats.arrivals++;
+        
         LOG(5, 0, 0, "island %d received migrant %s tag=%d from island %d: [%f,%f] with status %d\r\n", p.id, x.id, tag, migrant_status.MPI_SOURCE, p.population[0].fitness, p.population[0].fitness, migrant_status.MPI_ERROR);
         
     }
@@ -99,11 +103,11 @@ void island::migration::send(island &p, MPI_Datatype &d, int &eval) {
         
         LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d INIT: sol_id=%s p1=%s p2=%s to island %d\r\n", p.id, tag, p.population[idx].id, p.population[idx].parents[0], p.population[idx].parents[1], p.receivers[i]);
         
-        p.population[idx].migrations++;
-        
         MPI_Send(&p.population[idx], 1, d, p.receivers[i], tag, p.tcomm);
+                
+        p.stats.departures++;
         
-        LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d END: sent solution %s to island %d\r\n", p.id, tag, p.population[idx].id, p.receivers[i]);
+        LOG(6, 0, 0, "ISLAND %d MIGRATION SEND %d END: sent solution %s to island %d, have sent %d with %d total migrations\r\n", p.id, tag, p.population[idx].id, p.receivers[i], p.stats.departures++, p.population[idx].migrations);
         
     }
     

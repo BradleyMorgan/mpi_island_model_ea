@@ -14,9 +14,9 @@ dim:10
 # --- PARAMETER[mrecv_cap]: maximum number of received population individuals per island ---
 # --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
 
-sparsity:0.20
-recv_cap:60
-send_cap:60
+sparsity:0.28
+recv_cap:0.15
+send_cap:0.20
 
 ##### END SUBSECTION: solver ea custom parameters #####
 
@@ -30,9 +30,9 @@ send_cap:60
 # --- PARAMETER<mu_modes<2>>[double::lambda_sub] island lambda determined as a percentage of island_mu (proportional island lambda) ---
 # --- PARAMETER[migration_interval]: perform island migrations every 𝑒 generations ---
 
-mu_mode:1
+mu_mode:2
 mu_sub:128
-lambda_sub:32
+lambda_sub:0.20
 
 ## use real number value for lambda sizing proportional to subpopulation mu
 ## lambda_sub:0.20

@@ -146,6 +146,7 @@ struct topology {
     void apply(island &isle, topology &t); // for all communicating nodes, receive the corresponding channels as defined in the topology
     
     template<typename i> void log(i &interval);
+    template<typename i> void log_matrix(i &interval);
     template<typename i> void measure(i &interval);
     template<typename o> void minmax(mpi_local topology_stats::*field, mpi_local result, o *op);
     
@@ -238,30 +239,69 @@ template<typename i> void topology::measure(i &interval) {
     
 }
 
+template<typename i> void topology::log_matrix(i &interval) {
+    
+    char matrix_fname[128];
+    
+    sprintf(matrix_fname, "%s/topo_%d_%s_%d.csv", config::genome_subpath, this->id, interval.name, interval.id);
+    
+    FILE *matrix_out = fopen(matrix_fname, "w");
+    
+    fprintf(matrix_out, "matrix = [");
+    
+    for(int row=0; row<mpi.size; row++) {
+    
+        fprintf(matrix_out,"[");
+      
+        for(int col=0; col<mpi.size; col++) {
+            
+            if(std::find(this->channels[row].receivers.begin(), this->channels[row].receivers.end(), col) != this->channels[row].receivers.end()) {
+                LOG(8, 0, 0, "1,");
+                fprintf(matrix_out,"1");
+            } else {
+                LOG(8, 0, 0, "0, ");
+                fprintf(matrix_out,"0");
+                
+            }
+            
+            if(col <= mpi.size-2) {
+                fprintf(matrix_out,",");
+            } else {
+                fprintf(matrix_out,"]");
+            }
+            
+        }
+      
+        if(row <= mpi.size-2) {
+            fprintf(matrix_out,",\r\n");
+        } else {
+            fprintf(matrix_out,"]\r\n");
+        }
+        
+    }
+    
+    fclose(matrix_out);
+    
+}
+
 template<typename i> void topology::log(i &interval) {
     
-    //if(interval.log_fout == true) {
+    if(mpi.id != 0) { return; }
 
-        if(mpi.id != 0) { return; }
-    
-        fprintf(config::ea_2_genome_out, "%s,%d,%d,%f,%f,%d,%lu,%d,%d,%d,%d,%d,%d,%f\r\n",
+    fprintf(config::ea_2_genome_out, "%s,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d,%f\r\n",
 
-            interval.name,
-            interval.id,
-            this->id,
-            this->fitness_multi.first,
-            this->fitness_multi.second,
-            this->dom_rank,
-            this->dom_genomes.size(),
-            this->stats.send_channels,
-            this->stats.recv_channels,
-            this->stats.total_channels,
-            this->stats.departures,
-            this->stats.arrivals,
-            this->stats.migrations,
-            this->selection_distribution);
-
-    //}
+        interval.name,
+        interval.id,
+        this->id,
+        this->fitness_multi.first,
+        this->fitness_multi.second,
+        this->stats.send_channels,
+        this->stats.recv_channels,
+        this->stats.total_channels,
+        this->stats.departures,
+        this->stats.arrivals,
+        this->stats.migrations,
+        this->selection_distribution);
     
     fflush(config::ea_2_genome_out);
 

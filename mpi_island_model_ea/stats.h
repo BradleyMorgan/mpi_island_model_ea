@@ -20,49 +20,6 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
-void log_topology_matrix(int world_size, topology &t, int count) {
-    
-    //sprintf(config::ea_2_stats_genome, "%s/%03d_%d_%ld.py", config::stats_subpath_ea_2_o1, count, world_size, time(0));
-    
-    //config::ea_2_genome_out = fopen(config::ea_2_stats_genome, "w");
-    
-    fprintf(config::ea_2_genome_out, "matrix = [");
-    
-    for(int i=0; i<world_size; i++) {
-    
-        fprintf(config::ea_2_genome_out,"[");
-      
-        for(int j=0; j<world_size; j++) {
-            
-            if(std::find(t.channels[i].receivers.begin(), t.channels[i].receivers.end(), j) != t.channels[i].receivers.end()) {
-                LOG(8, 0, 0, "1,");
-                fprintf(config::ea_2_genome_out,"1");
-            } else {
-                LOG(8, 0, 0, "0, ");
-                fprintf(config::ea_2_genome_out,"0");
-                
-            }
-            
-            if(j <= world_size-2) {
-                fprintf(config::ea_2_genome_out,",");
-            } else {
-                fprintf(config::ea_2_genome_out,"]");
-            }
-            
-        }
-      
-        if(i <= world_size-2) {
-            fprintf(config::ea_2_genome_out,",\r\n");
-        } else {
-            fprintf(config::ea_2_genome_out,"]\r\n");
-        }
-        
-    }
-    
-    fclose(config::ea_2_genome_out);
-    
-}
-
 //void log_pop_stats(ea_solver &solver, island &isle, MPI_Datatype &visa_type) {
 //    
 //    std::vector<visa> visas;

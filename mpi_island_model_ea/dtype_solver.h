@@ -74,10 +74,10 @@ struct ea_solver: ea<ea_solver> {
     ea_solver() {
         
         this->model.init();
-        this->model.isle.stats.log_interval = config::ea_1_o1_log_island_interval;
         
         sprintf(this->name, "%s", config::ea_1_name);
         sprintf(this->solutions.name, "%s", config::ea_1_o1_name);
+        
         this->solutions.aggregate = {};
         
         LOG(2, mpi.id, 0, "%s EA INIT\r\n", this->name);
@@ -117,7 +117,9 @@ struct ea_solver: ea<ea_solver> {
         // log current genome every nth run
         this->solutions.run.log_genome_interval = config::ea_1_o1_log_genome_interval;
         
-        // ea objective evolution
+        // ea objective evolution parameters
+        // objective level population is assigned global mu\lambda values for parallel ea
+        // subpopulation (island mu\lambda) is defined at the model level
         
         this->solutions.mu = config::ea_1_mu;
         this->solutions.lambda = config::ea_1_lambda;
@@ -143,7 +145,7 @@ template<> template<typename v> void objective<solution>::gather(v &variant) {
 
     if(this->run.cycle.id%this->run.cycle.log_population_interval) {
         
-        LOG(6, 0, 0, "\r\nISLAND %d of %d GATHER INIT: %d solutions from %d islands = (%d * %d) = mu = %d\r\n", mpi.id, mpi.size, config::mu_sub, mpi.size, config::mu_sub, mpi.size, this->mu);
+        LOG(6, 0, 0, "\r\nISLAND %d of %d GATHER INIT: %d solutions from %d islands = (%d * %d) = mu = %d\r\n", mpi.id, mpi.size, variant.model.island_mu, mpi.size, variant.model.island_mu, mpi.size, this->mu);
             
         double gather_start = MPI_Wtime();
             
@@ -151,10 +153,10 @@ template<> template<typename v> void objective<solution>::gather(v &variant) {
         
         if(mpi.id == 0) {
             this->population.clear();
-            this->population.resize(this->mu);
+            this->population.resize(this->mu); // objective level mu = base population size
         }
         
-        MPI_Gather(&variant.model.isle.population[0], config::mu_sub, variant.model.solution_type, &this->population[0], config::mu_sub, variant.model.solution_type, 0, variant.model.tcomm);
+        MPI_Gather(&variant.model.isle.population[0], variant.model.island_mu, variant.model.solution_type, &this->population[0], variant.model.island_mu, variant.model.solution_type, 0, variant.model.tcomm);
         
         this->run.cycle.stats.local_gather_t.value = MPI_Wtime() - gather_start;
         this->run.stats.local_gather_t.value += this->run.cycle.stats.local_gather_t.value;

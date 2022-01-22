@@ -133,8 +133,10 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
     matrix.resize(world_size);
     
     int comm_count = 0;
-    int send_max = world_size * ((config::send_cap * 1.0) / 100.0);
-    int recv_max = world_size * ((config::recv_cap * 1.0) / 100.0);
+//    int send_max = world_size * ((config::send_cap * 1.0) / 100.0);
+//    int recv_max = world_size * ((config::recv_cap * 1.0) / 100.0);
+    int send_max = config::send_cap;
+    int recv_max = config::recv_cap;
     int rec_count[world_size];
     int snd_count[world_size];
     

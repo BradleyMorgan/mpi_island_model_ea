@@ -155,7 +155,9 @@ struct ea_model {
 
     char name[128];
     
-    int island_size;
+    int island_mu = 0;
+    int island_lambda = 0;
+    
     int root = 0;
 
     // isle holds context specific population and migration data
@@ -182,11 +184,12 @@ struct ea_model {
         config::load("config.txt", mpi.size, mpi.id);
 
         this->tcomm = MPI_COMM_WORLD;
-        this->island_size = config::mu_sub;
+        this->island_mu = config::mu_sub;
+        this->island_lambda = config::lambda_sub;
         
         parallel_types(*this);
         
-        this->isle.init();
+        this->isle.init(this->island_mu, this->island_lambda);
         
     }
     
@@ -226,7 +229,7 @@ struct ea {
         LOG(4, mpi.id, 0, "\r\n--- BEGIN %s EA ---\r\n", this->name);
         
         this->model.isle.population.clear();
-        this->model.isle.population.resize(config::mu_sub);
+        this->model.isle.population.resize(model.island_mu);
         this->stats.start = MPI_Wtime();
         
     }

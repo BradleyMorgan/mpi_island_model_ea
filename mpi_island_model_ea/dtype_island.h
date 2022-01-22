@@ -39,6 +39,11 @@ struct visa {
     visa() : eval(0), source(0), destination(0) {}
     visa(int e, int s, int d, char g[64]) : eval(e), source(s), destination(d) { strcpy(genome_id, g); }
     
+    std::ostream &operator<<(std::ostream &str) {
+        str << this->destination << ":";
+        return str;
+    }
+    
 };
 
 #pragma mark DATATYPE: island{}
@@ -51,6 +56,8 @@ struct visa {
 struct island {
     
     int id = mpi.id;
+    int mu = 0;
+    int lambda = 0;
     
     std::vector<solution> population;
     
@@ -98,19 +105,22 @@ struct island {
         
     };
     
-    void init() {
+    void init(int island_mu, int island_lambda) {
         
         LOG(6, 0, 0, "ISLAND %d entered initialization\r\n", this->id);
         
+        this->mu = island_mu;
+        this->lambda = island_lambda;
         this->population.clear();
-        this->population.resize(config::mu_sub);
+        this->population.resize(this->mu);
         this->tcomm = MPI_COMM_WORLD;
         this->senders.clear();
         this->receivers.clear();
-
+        this->stats.log_interval = config::ea_1_o1_log_island_interval;
+        
         sprintf(this->stats.island_out, "%s/island_%d.csv", config::stats_subpath_ea_1_o1, this->id);
         
-        LOG(2, 0, 0, "ISLAND %d initalized with empty population [0,n] => [%f,%f] sized %lu log %s\r\n", this->id, this->population[0].fitness, this->population[config::mu_sub-1].fitness, this->population.size(), this->stats.island_out);
+        LOG(2, 0, 0, "ISLAND %d initalized with empty population [0,n] => [%f,%f] sized %lu log %s\r\n", this->id, this->population[0].fitness, this->population[this->mu-1].fitness, this->population.size(), this->stats.island_out);
         
     }
     

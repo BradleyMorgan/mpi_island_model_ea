@@ -94,7 +94,7 @@ std::vector<solution> crossover(ea_solver &solver) {
     
     std::vector<solution> children;
     
-    for(int i = 0; i < config::lambda_sub; i++) {
+    for(int i = 0; i < solver.model.island_lambda; i++) {
         
         LOG(5, 0, 0, "island %d creating objective<solution> child %d ...\r\n",
             mpi.id, i);
@@ -249,9 +249,9 @@ void solution_scatter(ea_solver &solver) {
 
     double scatter_start = MPI_Wtime();
     
-    LOG(4, mpi.id, 0, "\r\nSOLVER RUN %d SCATTER BEGIN: island %d distributing %d solutions to each of %d islands \r\n", solver.solutions.run.id, mpi.id, config::mu_sub, mpi.size);
+    LOG(4, mpi.id, 0, "\r\nSOLVER RUN %d SCATTER BEGIN: island %d distributing %d solutions to each of %d islands \r\n", solver.solutions.run.id, mpi.id, solver.model.island_mu, mpi.size);
     
-    MPI_Scatter(&solver.solutions.population[0], config::mu_sub, solver.model.solution_type, &solver.model.isle.population[0], config::mu_sub, solver.model.solution_type, 0, solver.model.tcomm);
+    MPI_Scatter(&solver.solutions.population[0], solver.model.island_mu, solver.model.solution_type, &solver.model.isle.population[0], solver.model.island_mu, solver.model.solution_type, 0, solver.model.tcomm);
     
     solver.solutions.run.stats.local_scatter_t.value = MPI_Wtime() - scatter_start;
     
@@ -291,7 +291,7 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
 
     // select the best solutions and remove n children ...
     
-    select_survivors(solver.model.isle, children, solver.model.island_size);
+    select_survivors(solver.model.isle, children, solver.model.island_mu);
 
     LOG(6, mpi.id, 0, "island migrations ...\r\n");
     
@@ -303,6 +303,9 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         
         // issue migration imports and exports ...
 
+        solver.model.isle.stats.departures = 0;
+        solver.model.isle.stats.arrivals = 0;
+        
         int scount = 0;
         int rcount = 0;
         
@@ -314,10 +317,14 @@ void solutions_evolve(ea_solver &solver, ea_meta &meta, topology &t) {
         island::migration::receive(solver.model.isle, solver.model.solution_type, solver.solutions.run.cycle.eval.id);
         LOG(7, mpi.id, 0, "%d %d RECV [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, t.stats.departures, t.stats.arrivals, t.stats.migrations);
         
+        LOG(9, 0, 0, "%d %d MIGR REDUCE SEND [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, solver.model.isle.stats.departures, solver.model.isle.stats.arrivals, solver.model.isle.stats.migrations);
+        
         MPI_Reduce(&solver.model.isle.stats.departures, &scount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
         MPI_Reduce(&solver.model.isle.stats.arrivals, &rcount, 1, MPI_INT, MPI_SUM, 0, solver.model.isle.tcomm);
         
         solver.model.isle.stats.migrations += scount + rcount;
+        
+        LOG(9, mpi.id, 0, "%d %d MIGR REDUCE RECV [%d,%d,%d]\r\n", solver.model.isle.id, solver.solutions.run.cycle.id, scount, rcount, solver.model.isle.stats.migrations);
         
         if(mpi.id == 0) {
             t.stats.departures += scount;
