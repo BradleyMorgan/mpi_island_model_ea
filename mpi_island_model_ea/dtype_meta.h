@@ -256,7 +256,7 @@ template<> void objective<topology>::crowding_distance(std::vector<std::vector<t
         LOG(2, 0, 0, "sorting front %d by objective 1 fitness\r\n", idx);
         
         std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
-            return (*a).fitness_multi.first < (*b).fitness_multi.first;
+            return (*a).fitness_multi.first > (*b).fitness_multi.first;
         });
         
         LOG(2, 0, 0, "sorted front %d by objective 1 fitness\r\n", idx);
@@ -291,7 +291,7 @@ template<> void objective<topology>::crowding_distance(std::vector<std::vector<t
         LOG(2, 0, 0, "sorting front %d by objective 1 fitness\r\n", idx);
 
         std::sort(front->begin(), front->end(), [](const topology *a, const topology *b) {
-            return (*a).fitness_multi.second < (*b).fitness_multi.second;
+            return (*a).fitness_multi.second > (*b).fitness_multi.second;
         });
         
         LOG(2, 0, 0, "sorted front %d by objective 1 fitness\r\n", idx);

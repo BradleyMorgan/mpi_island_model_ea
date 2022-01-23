@@ -67,8 +67,10 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
         child_matrix.resize(mpi.size);
 
         int comm_count = 0;
-        int send_max = mpi.size * ((config::send_cap * 1.0) / 100.0);
-        int recv_max = mpi.size * ((config::recv_cap * 1.0) / 100.0);
+        // int send_max = mpi.size * ((config::send_cap * 1.0) / 100.0);
+        // int recv_max = mpi.size * ((config::recv_cap * 1.0) / 100.0);
+        int send_max = config::send_cap;
+        int recv_max = config::recv_cap;
         int rec_count[mpi.size];
         int snd_count[mpi.size];
 
@@ -169,10 +171,12 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
 
                 if(rand()/(RAND_MAX+1.0) < meta.topologies.mutation_rate) {
 
-                    LOG(5, mpi.id, 0, "mutating child<topology> %d ...\r\n", child.id);
+                    LOG(2, mpi.id, 0, "mutating child<topology> %d ...\r\n", child.id);
 
                     if(child_matrix[i][j] == 0 && rand()/(RAND_MAX+1.0) < config::sparsity) {
 
+                        LOG(2, mpi.id, 0, "mutation adding channel at %d,%d ...\r\n", i, j);
+                        
                         child_matrix[i][j] = 1;
                         rec_count[j]++;
                         snd_count[i]++;
@@ -181,9 +185,22 @@ std::vector<topology> topology_crossover(ea_meta &meta) {
                     }
 
                     if(child_matrix[i][j] == 1 && rand()/(RAND_MAX+1.0) > config::sparsity && comm_count > 1) {
-
-                        child_matrix[i][j] = 0;
-                        comm_count--;
+                                                
+                        if(rand()%2 == 1) {
+                            LOG(2, mpi.id, 0, "mutation removing channel at %d,%d ...\r\n", i, j);
+                            child_matrix[i][j] = 0;
+                            comm_count--;
+                        } else {
+                            int randj, randi;
+                            do {
+                                randi = rand()%mpi.size;
+                                randj = rand()%mpi.size;
+                            }
+                            while(child_matrix[randi][randj] == 1);
+                            LOG(2, mpi.id, 0, "mutation swapping channel at %d,%d with %d,%d ...\r\n", i, j, randi, randj);
+                            child_matrix[i][j] = 0;
+                            child_matrix[randi][randj] = 1;
+                        }
 
                     }
 
@@ -300,6 +317,8 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         meta.topologies.crowding_distance(fronts);
         
         LOG(2, 0, 0, "assigned crowding distances for fronts ...\r\n");
+        
+        LOG(2, mpi.id, 0, "FRONT %d: distance=%f, x=%f, y=%f\r\n", fronts[0][0]->id, fronts[0][0]->distance, fronts[0][0]->fitness, fronts[0][0]->fitness);
         
         meta.log_fronts(fronts);
         
@@ -509,7 +528,7 @@ template<typename e> void ea_meta::begin(e &target) {
                     
                     this->ea::begin(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[0]);
                    
-                    solver_begin(*this, target, this->topologies.population[0], config::ea_2_o1_max_runs, config::ea_2_o1_max_cycles);
+                    solver_begin(*this, target, this->topologies.population[0]);
                             
                     this->ea::end(this->topologies, this->topologies.run.cycle.eval, this->topologies.run.cycle.eval.local);
                 

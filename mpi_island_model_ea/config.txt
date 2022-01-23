@@ -14,9 +14,9 @@ dim:10
 # --- PARAMETER[mrecv_cap]: maximum number of received population individuals per island ---
 # --- PARAMETER[send_cap]: maximum number of individuals sent per island ---
 
-sparsity:0.28
-recv_cap:0.15
-send_cap:0.20
+sparsity:0.22
+recv_cap:0.35
+send_cap:0.35
 
 ##### END SUBSECTION: solver ea custom parameters #####
 
@@ -121,16 +121,16 @@ ea_1_log_genome_interval:250
 ea_1_o1_name:solution
 
 # 𝑆r𝑚𝑎𝑥₁
-ea_1_o1_max_runs:2
+ea_1_o1_max_runs:5
 # 𝑆c𝑚𝑎𝑥₁
-ea_1_o1_max_cycles:100
+ea_1_o1_max_cycles:200
 # 𝑆e𝑚𝑎𝑥₁
 ea_1_o1_max_evals:16000
 # 𝑆f𝑚𝑎𝑥₁
 ea_1_o1_max_fitness_evals:1
 
 ea_1_o1_log_run_interval:1
-ea_1_o1_log_cycle_interval:10
+ea_1_o1_log_cycle_interval:20
 ea_1_o1_log_eval_interval:0
 
 # assign to interval (run, cycle, or eval) in objective<genome> implementation
@@ -149,9 +149,9 @@ ea_1_o1_log_genome_interval:1
 # 𝛭
 ea_2_name:META
 # 𝛭𝜇
-ea_2_mu:24
+ea_2_mu:48
 # 𝛭𝜆
-ea_2_lambda:8
+ea_2_lambda:12
 # 𝛭𝑟𝑚𝑎𝑥
 ea_2_max_runs:3
 # 𝛭c𝑚𝑎𝑥
@@ -179,7 +179,7 @@ ea_2_o1_max_cycles:50
 # 𝛭e𝑚𝑎𝑥₁
 ea_2_o1_max_evals:1000
 # 𝛭f𝑚𝑎𝑥₁
-ea_2_o1_max_fitness_evals:2
+ea_2_o1_max_fitness_evals:5
 
 ea_2_o1_log_run_interval:1
 ea_2_o1_log_cycle_interval:1
@@ -191,4 +191,3 @@ ea_2_o1_log_genome_interval:1
 ##### END SUBSECTION: ea 𝑛 = 2 #####
 
 ####### END SECTION: ea-specific parameters #######
-
