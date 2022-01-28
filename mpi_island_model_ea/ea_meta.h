@@ -510,7 +510,7 @@ template<typename e> void ea_meta::begin(e &target) {
             
         } else {
 
-            benchmark_topology(*this);
+            //benchmark_topology(*this);
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations ...
             
@@ -525,13 +525,22 @@ template<typename e> void ea_meta::begin(e &target) {
                 for(int i=0; i<this->topologies.lambda; i++) {
                   
                     // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
+                    benchmark_topology(*this);
                     
-                    this->ea::begin(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[0]);
+                    this->ea::begin(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[0], target.solutions.run);
                    
                     solver_begin(*this, target, this->topologies.population[0]);
-                            
-                    this->ea::end(this->topologies, this->topologies.run.cycle.eval, this->topologies.run.cycle.eval.local);
+                    
+                    this->ea::end(this->topologies, this->topologies.run.cycle.eval, this->topologies.run.cycle.eval.local, target.solutions.run);
+                    
+                }
                 
+                if(mpi.id == 0) {
+                
+                    std::fprintf(config::ea_2_multi_out, "%d," "%d," "%d," "%s," "%s," "%s," "%s," "%f," "%f\r\n", this->topologies.run.id, this->topologies.run.cycle.id, this->topologies.run.cycle.eval.id, "NA", "NA", "NA", "NA", topologies.population[0].fitness_multi.first, topologies.population[0].fitness_multi.second);
+                    
+                    fflush(config::ea_2_multi_out);
+                    
                 }
                 
                 this->ea::end(this->topologies, this->topologies.run.cycle, this->topologies.run.cycle.local);

@@ -44,7 +44,7 @@ migration_interval:1
 ##### BEGIN SUBSECTION: experimental parameters #####
 # --- PARAMETER[ea_mode]: benchmark vs. experimental mode(s)
 
-ea_mode:1
+ea_mode:0
 seed:0
 
 ##### END SUBSECTION: experimental parameters #####

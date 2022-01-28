@@ -172,7 +172,6 @@ void ea_meta::log_fronts(std::vector<std::vector<topology*>> &fronts) {
         
     }
     
-    
 }
 
 //void plot_fronts(std::vector<std::vector<topology*>> &fronts) {
