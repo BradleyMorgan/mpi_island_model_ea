@@ -516,6 +516,8 @@ template<typename e> void ea_meta::begin(e &target) {
             
             for(this->topologies.run.cycle.id = 1; this->topologies.run.cycle.id <= this->topologies.run.cycle.max; this->topologies.run.cycle.id++) {
              
+                this->topologies.run.cycle.stats = {};
+                
                 this->ea::begin(this->topologies, this->topologies.run.cycle, this->topologies.run.cycle.local);
                 
                 // we don't need to evolve since the benchmark uses a static topology (id=1)
