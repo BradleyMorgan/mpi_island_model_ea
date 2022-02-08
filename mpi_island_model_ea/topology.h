@@ -128,8 +128,11 @@ std::vector<std::vector<int>> random_pairs() {
     
     std::vector<std::vector<int>> matrix;
     matrix.resize(mpi.size);
+    
     int nsnd[mpi.size];
     int nrec[mpi.size];
+    
+    int nchan = 0;
     
     for(int i=0; i<mpi.size; i++) {
         nsnd[i] = 0;
@@ -137,36 +140,47 @@ std::vector<std::vector<int>> random_pairs() {
         matrix[i].resize(mpi.size);
     }
     
-    for(int i=0; i<mpi.size; i++) {
+    while(nchan < (mpi.size / 3)) {
     
-        int snd = 0;
-        int rec = 0;
+        for(int i=0; i<mpi.size; i++) {
         
-        while (snd == rec) {
+            int snd = 0;
+            int rec = 0;
             
             snd = rand()%(mpi.size-1);
-            rec = rand()%(mpi.size-1);
             
             while(nsnd[snd] >= config::send_cap) {
                 snd = rand()%(mpi.size-1);
             }
             
-            while(nsnd[snd] >= config::send_cap) {
-                rec = rand()%(mpi.size-1);
-            }
-        
-        }
+            for (int j=0; j<mpi.size; j++) {
             
-        if(prob_true(config::sparsity)) {
-        
-            matrix[snd][rec] = 1;
-            nsnd[snd]++;
-            nrec[rec]++;
-            
-            LOG(2, 0, 0, "%d: [%d(%d)][%d(%d)]:\r\n", i, snd, nsnd[snd], rec, nrec[rec]);
-            
-        }
+                while (snd == rec) {
                     
+                    rec = rand()%(mpi.size-1);
+                    
+                    while(nsnd[snd] >= config::send_cap) {
+                        rec = rand()%(mpi.size-1);
+                    }
+                
+                }
+                
+            }
+                    
+            if(prob_true(config::sparsity)) {
+            
+                matrix[snd][rec] = 1;
+                nsnd[snd]++;
+                nrec[rec]++;
+                
+                nchan++;
+                
+                LOG(2, 0, 0, "%d: [%d(%d)][%d(%d)]:\r\n", i, snd, nsnd[snd], rec, nrec[rec]);
+                
+            }
+                        
+        }
+        
     }
     
     return matrix;
