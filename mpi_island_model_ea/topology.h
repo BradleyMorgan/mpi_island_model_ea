@@ -122,6 +122,57 @@ std::vector<std::vector<int>> topology::create::matrix(const topology &t) {
     
 }
 
+#pragma mark FUNCTION random_pairs()
+
+std::vector<std::vector<int>> random_pairs() {
+    
+    std::vector<std::vector<int>> matrix;
+    matrix.resize(mpi.size);
+    int nsnd[mpi.size];
+    int nrec[mpi.size];
+    
+    for(int i=0; i<mpi.size; i++) {
+        nsnd[i] = 0;
+        nrec[i] = 0;
+        matrix[i].resize(mpi.size);
+    }
+    
+    for(int i=0; i<mpi.size; i++) {
+    
+        int snd = 0;
+        int rec = 0;
+        
+        while (snd == rec) {
+            
+            snd = rand()%(mpi.size-1);
+            rec = rand()%(mpi.size-1);
+            
+            while(nsnd[snd] >= config::send_cap) {
+                snd = rand()%(mpi.size-1);
+            }
+            
+            while(nsnd[snd] >= config::send_cap) {
+                rec = rand()%(mpi.size-1);
+            }
+        
+        }
+            
+        if(prob_true(config::sparsity)) {
+        
+            matrix[snd][rec] = 1;
+            nsnd[snd]++;
+            nrec[rec]++;
+            
+            LOG(2, 0, 0, "%d: [%d(%d)][%d(%d)]:\r\n", i, snd, nsnd[snd], rec, nrec[rec]);
+            
+        }
+                    
+    }
+    
+    return matrix;
+    
+}
+
 #pragma mark FUNCTION: create::dynamic_matrix()
 
 // create a randomly populated adjacency matrix of size world_size*world_size,
@@ -204,7 +255,8 @@ std::vector<std::vector<int>> topology::create::dynamic_matrix(const int world_s
 void topology::create::dynamic(topology &t) {
     
     LOG(5, 0, 0, "generating dynamic topology %d world size %d\r\n", t.id, mpi.size);
-    std::vector<std::vector<int>> matrix = topology::create::dynamic_matrix(mpi.size);
+    //std::vector<std::vector<int>> matrix = topology::create::dynamic_matrix(mpi.size);
+    std::vector<std::vector<int>> matrix = random_pairs();
     
     topology::create::channels(t, matrix);
     
