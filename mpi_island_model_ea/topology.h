@@ -159,7 +159,7 @@ std::vector<std::vector<int>> random_pairs() {
                     
                     rec = rand()%(mpi.size-1);
                     
-                    while(nsnd[snd] >= config::send_cap) {
+                    while(nrec[rec] >= config::recv_cap) {
                         rec = rand()%(mpi.size-1);
                     }
                 
