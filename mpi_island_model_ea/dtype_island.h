@@ -162,6 +162,8 @@ void island::cpd() {
     std::sort(this->population.begin(), this->population.end(), compare_fitness<solution>);
     std::reverse(this->population.begin(), this->population.end());
 
+    this->total_fitness();
+    
     LOG(6, 0, 0, "objective %d cpd calculation total fitness = %f", this->id, this->metrics.value.total_fitness);
 
     for(int i=0; i < this->population.size(); i++) {

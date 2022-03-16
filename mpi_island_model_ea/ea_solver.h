@@ -131,11 +131,17 @@ std::vector<solution> crossover(ea_solver &solver) {
             
         }
         
+        
+        // child evaluation
+        
         solver.ea::begin(solver.solutions, solver.solutions.run.cycle.eval, &child);
         
         child.fitness = offset_rastrigin(child.input, solver.offsets);
         
         solver.ea::end(solver.solutions, solver.solutions.run.cycle.eval, &child);
+        
+        // end child evaluation
+        
         
         if(child.fitness > (p1.fitness / 4)) {
             LOG(4, 0, 0, "LOW island %d %f<->%f child<solution> %d fitness %f\r\n", mpi.id, p1.fitness, p2.fitness, i, child.fitness);
