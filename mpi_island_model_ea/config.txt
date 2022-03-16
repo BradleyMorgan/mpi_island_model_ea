@@ -121,7 +121,8 @@ ea_1_log_genome_interval:250
 ea_1_o1_name:solution
 
 # 𝑆r𝑚𝑎𝑥₁
-ea_1_o1_max_runs:5
+
+ea_1_o1_max_runs:3
 # 𝑆c𝑚𝑎𝑥₁
 ea_1_o1_max_cycles:200
 # 𝑆e𝑚𝑎𝑥₁
@@ -157,6 +158,8 @@ ea_2_max_runs:3
 # 𝛭c𝑚𝑎𝑥
 ea_2_max_cycles:40
 # 𝛭e𝑚𝑎𝑥
+# max evals for meta ea determined by solver ea max runs, just setting to zero
+# or, use this as a higher level termination for all objectives
 ea_2_max_evals:0
 # 𝛭eₓ
 ea_2_evo_termination:0.05
@@ -179,7 +182,8 @@ ea_2_o1_max_cycles:50
 # 𝛭e𝑚𝑎𝑥₁
 ea_2_o1_max_evals:1000
 # 𝛭f𝑚𝑎𝑥₁
-ea_2_o1_max_fitness_evals:5
+# TODO change to derived value, should match solver ea max runs
+ea_2_o1_max_fitness_evals:3
 
 ea_2_o1_log_run_interval:1
 ea_2_o1_log_cycle_interval:1

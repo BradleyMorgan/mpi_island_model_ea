@@ -364,6 +364,8 @@ void solver_begin(ea_meta &meta, ea_solver &solver, topology &t, int runs = conf
     
     for(solver.solutions.run.id = 1; solver.solutions.run.id <= runs; ++solver.solutions.run.id) {
     
+        solver.solutions.run.cycle.eval.id = 0;
+        
         if(mpi.id == 0) {
             solver.offsets = generate_offsets(-2.5, 2.5, .5);
         }
