@@ -5,13 +5,15 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import os
 import numpy as np
+import importlib
 import importlib.util
 
 ex_size='256'
 ex_type='evo'
 
 trunk = os.getcwd()
-topos = trunk + '/results/logs/' + ex_size + '/' + ex_type + '/meta_001/stats/topos'
+#topos = trunk + '/results/logs/' + ex_size + '/' + ex_type + '/meta_001/stats/topos'
+topos = trunk
 
 for entry in os.scandir(topos):
 

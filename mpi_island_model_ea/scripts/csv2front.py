@@ -8,38 +8,36 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-print(argv[1])
-
 try:
-  logfn=argv[1]
-  if(not os.path.isfile(logfn)):
-    raise ValueError("Please specify an input file.")
-  pass
+    logfn = argv[1]
+    if (not os.path.isfile(logfn)):
+        raise ValueError("Please specify an input file.")
+    pass
 except Exception as e:
-  print(logfn + "Not found, please specify a valid input file.")
-  raise
+    print(logfn + "Not found, please specify a valid input file.")
+    raise
 
-cmaps = ['Blues_r','Oranges_r','Purples_r','Greens_r','Reds_r','Greys_r']
+cmaps = ['Blues_r', 'Oranges_r', 'Purples_r', 'Greens_r', 'Reds_r', 'Greys_r']
 
-df = pd.read_csv(logfn)
+df = pd.read_csv(logfn, usecols=['cycle', 'front', 'o1_fitness', 'o2_fitness'])
 
-#print(df)
 
 fig, ax = plt.subplots()
 
-ax.set_xlabel('Average Run Fitness')
-ax.set_ylabel('Average Run Time')
+fronts = df[df['cycle'] == 1].groupby(['front'])
+f1 = df[df['front'] == 1]
 
-ax.set_title('Front %d,%d' % (df['cycle'][0], df['rank'][0]))
+for f, front in fronts:
+    print(front)
+    plt.plot('o2_fitness', 'o1_fitness', '-o', data=front, label=f)
 
-front_groups = df.groupby(['rank','cycle'])
+plt.title("CYCLE")
+plt.legend(loc="upper left")
 
-#df.loc[ [('at', 1),('at', 3),('at', 5)], 'Dwell']
 
-for r, c in front_groups:
-  #fcolor=plt.cm.get_cmap('tab20')
-  #print('[%s,%s] (%f,%f) => ' % (f[0], f[1], fronts.nth(['o1_fitness'], fronts['o2_fitness'])))
-  #fronts.plot.line(ax=ax, x='o1_fitness', y='o2_fitness', color=fcolor(f[0]))
-            
-#ax.legend(loc='upper left', frameon=False)
-#plt.show()
+#plt.scatter('o1_fitness', 'o2_fitness', c='front', s='front', data=df)
+#plt.plot('o1_fitness', 'o2_fitness', data=df)
+#plt.plot.line('o1_fitness', 'o2_fitness', data=df)
+
+plt.show()
+

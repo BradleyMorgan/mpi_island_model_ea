@@ -480,6 +480,18 @@ template<typename e> void ea_meta::begin(e &target) {
                 
                 solver_begin(*this, target, this->topologies.population[i]);
                 
+                // perform an additional run for the first topology to avoid
+                // an observed runtime fitness skew
+                
+                if(i == 0) {
+                    
+                    this->topologies.population[i].stats = {};
+                    this->topologies.population[i].fitness = 0.0;
+                    
+                    solver_begin(*this, target, this->topologies.population[i]);
+                
+                }
+                
                 this->ea::end(this->topologies, this->topologies.run.cycle.eval, &this->topologies.population[i], target.solutions.run);
                 
             } // 𝛭𝜇 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
