@@ -25,19 +25,16 @@ send_cap:0.35
 #     0: fixed global mu, comm size based island mu, fixed island lambda
 #     1: comm size based global mu, fixed island mu, fixed island lambda
 #     2: comm size based global mu, fixed island mu, percentage island lambda ---
-# --- PARAMETER<mu_mode[1,2]>[mu_sub]: number of individuals per island (fixed island mu) ---
-# --- PARAMETER<mu_mode[0,1]>[int::lambda_sub]: number of children created per island evolution cycle (fixed island lambda) ---
-# --- PARAMETER<mu_modes<2>>[double::lambda_sub] island lambda determined as a percentage of island_mu (proportional island lambda) ---
+# --- PARAMETER<mu_mode[1|2]>[mu_sub]: number of individuals per island (fixed island mu) ---
+# --- PARAMETER<mu_mode[0|1]>[int::lambda_sub]: number of children created per island evolution cycle (fixed island lambda) ---
 # --- PARAMETER[migration_interval]: perform island migrations every 𝑒 generations ---
 
+# mu_mode 2: island lambda determined as a percentage of island_mu (proportional island lambda)
 mu_mode:2
+# mu sub deprecated in favor of ea defined subpopulation sizes
 mu_sub:128
 lambda_sub:0.20
-
-## use real number value for lambda sizing proportional to subpopulation mu
-## lambda_sub:0.20
-
-migration_interval:1
+migration_interval:10
 
 ##### END SUBSECTION: parallel parameters #####
 
@@ -98,13 +95,14 @@ stats_file:meta
 # 𝑆
 ea_1_name:SOLVER
 # 𝑆𝜇
-ea_1_mu:512
+# this value should be derived from mu mode calculations
+ea_1_mu:0
 # 𝑆𝜆
-ea_1_lambda:64
+ea_1_lambda:128
 # 𝑆𝑟𝑚𝑎𝑥
 ea_1_max_runs:30
 # 𝑆c𝑚𝑎𝑥
-ea_1_max_cycles:10000
+ea_1_max_cycles:20000
 # 𝑆e𝑚𝑎𝑥
 ea_1_max_evals:32512
 # 𝑆ₘₜ
@@ -121,22 +119,23 @@ ea_1_log_genome_interval:250
 ea_1_o1_name:solution
 
 # 𝑆r𝑚𝑎𝑥₁
-
-ea_1_o1_max_runs:3
+# determines number of meta ea max_cycles
+ea_1_o1_max_runs:5
 # 𝑆c𝑚𝑎𝑥₁
-ea_1_o1_max_cycles:200
+# determines number of meta ea max_evals
+ea_1_o1_max_cycles:1000
 # 𝑆e𝑚𝑎𝑥₁
-ea_1_o1_max_evals:16000
+ea_1_o1_max_evals:5000
 # 𝑆f𝑚𝑎𝑥₁
 ea_1_o1_max_fitness_evals:1
 
 ea_1_o1_log_run_interval:1
-ea_1_o1_log_cycle_interval:20
+ea_1_o1_log_cycle_interval:50
 ea_1_o1_log_eval_interval:0
 
 # assign to interval (run, cycle, or eval) in objective<genome> implementation
-ea_1_o1_log_population_interval:50
-ea_1_o1_log_island_interval:250
+ea_1_o1_log_population_interval:500
+ea_1_o1_log_island_interval:500
 ea_1_o1_log_genome_interval:1
 
 ## ea_1_evo_termination:0.05
@@ -150,25 +149,23 @@ ea_1_o1_log_genome_interval:1
 # 𝛭
 ea_2_name:META
 # 𝛭𝜇
-ea_2_mu:48
+ea_2_mu:56
 # 𝛭𝜆
-ea_2_lambda:12
+ea_2_lambda:18
 # 𝛭𝑟𝑚𝑎𝑥
 ea_2_max_runs:3
 # 𝛭c𝑚𝑎𝑥
-ea_2_max_cycles:40
+ea_2_max_cycles:50
 # 𝛭e𝑚𝑎𝑥
-# max evals for meta ea determined by solver ea max runs, just setting to zero
-# or, use this as a higher level termination for all objectives
+# max evals for meta ea determined by solver ea max runs, placeholder
 ea_2_max_evals:0
 # 𝛭eₓ
 ea_2_evo_termination:0.05
 # 𝛭ₘₜ
 ea_2_mutation_rate:0.20
-
 ea_2_log_run_interval:1
 ea_2_log_cycle_interval:1
-ea_2_log_eval_interval:2
+ea_2_log_eval_interval:1
 ea_2_log_population_interval:1
 ea_2_log_island_interval:10000
 ea_2_log_genome_interval:1000

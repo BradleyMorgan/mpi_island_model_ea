@@ -290,9 +290,7 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         // 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in solver_begin ...
         
         meta.ea::begin(meta.topologies, meta.topologies.run.cycle.eval, &(*it), solver.solutions.run);
-      
-        solver_begin(meta, solver, *it);
-                
+            solver_begin(meta, solver, *it);
         meta.ea::end(meta.topologies, meta.topologies.run.cycle.eval, &(*it), solver.solutions.run);
         
         meta.topologies.population.push_back(*it);
@@ -311,13 +309,11 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         std::vector<std::vector<topology*>> fronts = meta.topologies.define_fronts();
         
         LOG(2, 0, 0, "defined %lu fronts ...\r\n", fronts.size());
-        
         LOG(2, 0, 0, "assigning crowding distances for fronts ...\r\n");
         
         meta.topologies.crowding_distance(fronts);
         
         LOG(2, 0, 0, "assigned crowding distances for fronts ...\r\n");
-        
         LOG(2, mpi.id, 0, "FRONT %d: distance=%f, x=%f, y=%f\r\n", fronts[0][0]->id, fronts[0][0]->distance, fronts[0][0]->fitness, fronts[0][0]->fitness);
         
         meta.log_fronts(fronts);
@@ -327,13 +323,11 @@ void topology_evolve(ea_solver &solver, ea_meta &meta) {
         std::sort(meta.topologies.population.begin(), meta.topologies.population.end(), compare_multi<topology>);
 
         LOG(2, 0, 0, "sorted by multiple objective fitness i[0] = %f, i[mu] = %f...\r\n", meta.topologies.population[0].fitness, meta.topologies.population[meta.topologies.mu-1].fitness);
-        
         LOG(2, 0, 0, "truncating population size %lu...\r\n", meta.topologies.population.size());
         
         meta.topologies.population.erase(meta.topologies.population.begin()+meta.topologies.mu, meta.topologies.population.end());
 
         LOG(2, 0, 0, "truncated population size %lu...\r\n", meta.topologies.population.size());
-        
         LOG(2, 0, 0, "calculating aggregate fitness current = %f...\r\n", meta.topologies.aggregate.value.fitness);
         
         meta.topologies.fitness();
@@ -502,17 +496,18 @@ template<typename e> void ea_meta::begin(e &target) {
             
             this->topologies.crowding_distance(fronts);
             
-            // 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
+            // initial meta population evaluated, evolve
+            // with 𝑆r𝑚𝑎𝑥₁ solver runs, # 𝑆r𝑚𝑎𝑥₁ * 𝑆c𝑚𝑎𝑥₁ = 𝛭𝑒𝑚𝑎𝑥 iterations in solver_begin  ...
             
             for(this->topologies.run.cycle.id = 1; this->topologies.run.cycle.id <= this->topologies.run.cycle.max; this->topologies.run.cycle.id++) {
                
                 // 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations in topology_evolve
                 
                 this->ea::begin(this->topologies, this->topologies.run.cycle, this->topologies.run.local);
-                
-                this->topologies.evolve(target, *this, topology_evolve);
-                
+                    this->topologies.evolve(target, *this, topology_evolve);
                 this->ea::end(this->topologies, this->topologies.run.cycle);
+                
+                std::vector<std::vector<topology*>> fronts = this->topologies.define_fronts();
                 
             }  // 𝛭𝑒𝑚𝑎𝑥 * 𝛭𝜆 * 𝑆𝑟𝑚𝑎𝑥 * 𝑆𝑒𝑚𝑎𝑥 iterations
         
@@ -522,7 +517,7 @@ template<typename e> void ea_meta::begin(e &target) {
             
         } else {
 
-            //benchmark_topology(*this);
+            // benchmark_topology(*this);
             
             // 𝛭𝑒𝑚𝑎𝑥 iterations ...
             

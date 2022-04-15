@@ -161,7 +161,7 @@ template<> template<typename v> void objective<solution>::gather(v &variant) {
         this->run.cycle.stats.local_gather_t.value = MPI_Wtime() - gather_start;
         this->run.stats.local_gather_t.value += this->run.cycle.stats.local_gather_t.value;
         
-        LOG(4, 0, 0, "\r\nISLAND %d of %d GATHER END: %lu solutions from %d islands = (%d / %d) = island_mu = %d\r\n", mpi.id, mpi.size, this->population.size(), mpi.size, this->mu, mpi.size, config::mu_sub);
+        LOG(4, 0, 0, "\r\nISLAND %d of %d GATHER END: %lu solutions from %d islands = (%d / %d) = island_mu = %d\r\n", mpi.id, mpi.size, this->population.size(), mpi.size, this->mu, mpi.size, this->mu);
         
         std::sort(this->population.begin(), this->population.end(), compare_fitness<solution>);
         std::reverse(this->population.begin(), this->population.end());
